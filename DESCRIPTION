@@ -1,0 +1,49 @@
+Package: acre
+Type: Package
+Title: Acoustic spatial capture-recapture
+Version: 0.1.0
+Date: 2023-05-02
+Authors@R: c(
+    person("Ben", "Stevenson", email = "ben.stevenson@auckland.ac.nz", role = c("aut", "cre")),
+    person("Lingyu", "Hao", email = "lhao446@aucklanduni.ac.nz", role = "aut"))
+Depends:
+    R (>= 3.6.0),
+    Rcpp (>= 0.11.5),
+    testthat
+Imports:
+    CircStats,
+    fastGHQuad,
+    fields,
+    mgcv,
+    parallel,
+    plyr,
+    secr,
+    stats,
+    numDeriv,
+    utils,
+    viridis,
+    TMB,
+    RcppEigen,
+    Rcpp,
+    RANN,
+    ggplot2,
+    gganimate
+Suggests:
+    knitr,
+    xtable
+LinkingTo: Rcpp, TMB, RcppEigen
+VignetteBuilder: knitr
+Description: This package provides functions to fit spatial
+    capture-recapture (SCR) models, primarily to acoustic
+    data. Acoustic surveys are capable of collecting auxiliary
+    information in addition to capture histories that is informative
+    about the source location of detected cues; examples include
+    signal strengths, times of arrival, estimated bearings, and
+    estimated distances. The acre package fits a class of SCR model
+    that allows use of such information.
+License: GPL
+URL: https://github.com/b-steve/ascr
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.1
+Config/testthat/edition: 3
