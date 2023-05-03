@@ -3,7 +3,7 @@ compile.ascr <- function(dev = FALSE, debug.mode = FALSE){
   if(dev){
     dir = paste0(getwd(), '/inst/TMB/')
   } else {
-    dir = paste0(system.file(package = "ascr"), "/TMB/")
+    dir = paste0(system.file(package = "acre"), "/TMB/")
   }
   
   if(file.exists(paste0(dir, "ascrTmb.o"))) unlink(paste0(dir, "ascrTmb.o"))
