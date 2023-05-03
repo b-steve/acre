@@ -2,23 +2,23 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 find_incomplete_blocks <- function(mat) {
-    .Call('_ascr_find_incomplete_blocks', PACKAGE = 'ascr', mat)
+    .Call('_acre_find_incomplete_blocks', PACKAGE = 'acre', mat)
 }
 
 blockify <- function(block, reqss) {
-    .Call('_ascr_blockify', PACKAGE = 'ascr', block, reqss)
+    .Call('_acre_blockify', PACKAGE = 'acre', block, reqss)
 }
 
 detection_dists <- function(trap_dists, traps) {
-    .Call('_ascr_detection_dists', PACKAGE = 'ascr', trap_dists, traps)
+    .Call('_acre_detection_dists', PACKAGE = 'acre', trap_dists, traps)
 }
 
 detection_timediffs <- function(times, traps) {
-    .Call('_ascr_detection_timediffs', PACKAGE = 'ascr', times, traps)
+    .Call('_acre_detection_timediffs', PACKAGE = 'acre', times, traps)
 }
 
 min_skip_matrix <- function(skip, allocated) {
-    .Call('_ascr_min_skip_matrix', PACKAGE = 'ascr', skip, allocated)
+    .Call('_acre_min_skip_matrix', PACKAGE = 'acre', skip, allocated)
 }
 
 #' Calculating distances between two sets of points
@@ -35,7 +35,7 @@ min_skip_matrix <- function(skip, allocated) {
 #'
 #' @export
 distances <- function(a, b) {
-    .Call('_ascr_distances', PACKAGE = 'ascr', a, b)
+    .Call('_acre_distances', PACKAGE = 'acre', a, b)
 }
 
 #' Calculating bearings between two sets of points
@@ -52,18 +52,18 @@ distances <- function(a, b) {
 #'
 #' @export
 bearings <- function(a, b) {
-    .Call('_ascr_bearings', PACKAGE = 'ascr', a, b)
+    .Call('_acre_bearings', PACKAGE = 'acre', a, b)
 }
 
 make_toa_ssq <- function(capt, dists, sound_speed) {
-    .Call('_ascr_make_toa_ssq', PACKAGE = 'ascr', capt, dists, sound_speed)
+    .Call('_acre_make_toa_ssq', PACKAGE = 'acre', capt, dists, sound_speed)
 }
 
 find_local <- function(capt, dists, buffer) {
-    .Call('_ascr_find_local', PACKAGE = 'ascr', capt, dists, buffer)
+    .Call('_acre_find_local', PACKAGE = 'acre', capt, dists, buffer)
 }
 
 squarify <- function(mask, D_mask) {
-    .Call('_ascr_squarify', PACKAGE = 'ascr', mask, D_mask)
+    .Call('_acre_squarify', PACKAGE = 'acre', mask, D_mask)
 }
 
