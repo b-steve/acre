@@ -1,12 +1,12 @@
 #' Create mask object
 #'
 #' Creates a mask object to use with the function
-#' \code{\link{fit.ascr}}.
+#' \code{\link{fit.acre}}.
 #'
 #' @param buffer The minimum distance between trap locations and the
 #'     edge of the generated mask.
 #' @param ... Arguments to be passed to \link{make.mask}.
-#' @inheritParams fit.ascr
+#' @inheritParams fit.acre
 #'
 #' @return An object of class \code{mask}. The object has two useful attributes: \code{area} which gives the area of each grid cell in hectares and \code{buffer} which gives the value of \code{buffer} supplied to this function.
 #'
@@ -88,7 +88,7 @@ create.capt <- function(captures, traps = NULL, ind_model = NULL, n.sessions = N
     
     if ((!missing(n.traps) | !missing(n.sessions)) & is.null(traps)){
         warning("Arguments 'n.traps' and 'n.sessions' are deprecated. Please provide the the 'traps' argument instead.
-        Future versions of ascr will require the 'traps' argument to be provided to the 'create.capt()' function.")
+        Future versions of acre will require the 'traps' argument to be provided to the 'create.capt()' function.")
     }
     
     if(is.matrix(captures)) captures = as.data.frame(captures, stringsAsFactors = FALSE)
@@ -444,7 +444,7 @@ dist_nearest = function(from, to, col_name = 'dist_nearest'){
 
 #' Convert traps object
 #'
-#' Converts an \code{ascr} traps matrix to a \code{secr} traps
+#' Converts an \code{acre} traps matrix to a \code{secr} traps
 #' object.
 #'
 #' The returned object is suitable for use as the \code{traps}
@@ -452,7 +452,7 @@ dist_nearest = function(from, to, col_name = 'dist_nearest'){
 #'
 #' @param ss Logical, set to \code{TRUE} if a signal strength
 #'     detection function is to be used.
-#' @inheritParams fit.ascr
+#' @inheritParams fit.acre
 #'
 #' @return An object of class \code{traps} comprising a data frame of
 #'     x- and y-coordinates, the detector type ('single', 'multi',
@@ -476,13 +476,13 @@ convert.traps <- function(traps, ss = FALSE){
 
 #' Convert mask object
 #'
-#' Converts an \code{ascr} mask matrix to a \code{secr} mask
+#' Converts an \code{acre} mask matrix to a \code{secr} mask
 #' object.
 #'
 #' The returned object is suitable for use as the \code{mask}
 #' argument of the function \link{secr.fit}.
 #'
-#' @inheritParams fit.ascr
+#' @inheritParams fit.acre
 #'
 #' @return An object of class \code{mask}.
 #'
@@ -499,11 +499,11 @@ convert.mask <- function(mask){
 #' Capture history conversion.
 #'
 #' These functions convert a capture history object between the
-#' structures required for the \code{ascr} and \code{secr}
+#' structures required for the \code{acre} and \code{secr}
 #' packages.
 #'
 #' @param capt A \code{secr} capture history object for
-#'     \code{convert.capt.to.ascr}, or an \code{ascr} capture
+#'     \code{convert.capt.to.acre}, or an \code{acre} capture
 #'     history object for \code{convert.capt.to.secr}.
 #' @param capthist Logical, if \code{TRUE}, a \code{capthist} object
 #'     is returned. Otherwise a data frame is returned, which is
@@ -511,10 +511,10 @@ convert.mask <- function(mask){
 #'     \link{make.capthist} function.
 #' @param cutoff The signal strength threshold for detection, if
 #'     required.
-#' @inheritParams fit.ascr
+#' @inheritParams fit.acre
 #'
 #' @return A capture history object appropriate for analysis using
-#'     either the \code{ascr} or the \code{secr} package.
+#'     either the \code{acre} or the \code{secr} package.
 #' @examples capt <- convert.capt.to.secr(capt = example.data$capt, traps = example.data$traps, cutoff = example.data$cutoff)
 #'
 #' @name convert.capt
@@ -522,7 +522,7 @@ NULL
 
 #' @rdname convert.capt
 #' @export
-convert.capt.to.ascr <- function(capt){
+convert.capt.to.acre <- function(capt){
     bincapt <- capt[, 1, ]
     nr <- nrow(bincapt)
     nc <- ncol(bincapt)
@@ -540,7 +540,7 @@ convert.capt.to.ascr <- function(capt){
 ## Aliasing old convert.capt.to.admbsecr() function name.
 #' @rdname convert.capt
 #' @export
-convert.capt.to.admbsecr <- convert.capt.to.ascr
+convert.capt.to.admbsecr <- convert.capt.to.acre
 
 #' @rdname convert.capt
 #' @export
@@ -580,7 +580,7 @@ convert.capt.to.secr <- function(capt, traps, capthist = TRUE, cutoff = NULL){
 #' Create a capture history object from a PAMGuard output file
 #'
 #' Converts a PAMGuard output file to a capture history object
-#' suitable for use with the \link{fit.ascr} function. This uses
+#' suitable for use with the \link{fit.acre} function. This uses
 #' \link{make.acoustic.captures} to allocate call identities to
 #' detections.
 #'
@@ -628,7 +628,7 @@ convert.pamguard <- function(dets, mics, time.range = NULL,
 #' Create a capture history object from a Raven output file
 #'
 #' Converts a Raven output file to a capture history object
-#' suitable for use with the \link{fit.ascr} function. This uses
+#' suitable for use with the \link{fit.acre} function. This uses
 #' \link{make.acoustic.captures} to allocate call identities to
 #' detections.
 #'
