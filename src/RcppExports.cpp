@@ -132,22 +132,3 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-
-static const R_CallMethodDef CallEntries[] = {
-    {"_acre_find_incomplete_blocks", (DL_FUNC) &_acre_find_incomplete_blocks, 1},
-    {"_acre_blockify", (DL_FUNC) &_acre_blockify, 2},
-    {"_acre_detection_dists", (DL_FUNC) &_acre_detection_dists, 2},
-    {"_acre_detection_timediffs", (DL_FUNC) &_acre_detection_timediffs, 2},
-    {"_acre_min_skip_matrix", (DL_FUNC) &_acre_min_skip_matrix, 2},
-    {"_acre_distances", (DL_FUNC) &_acre_distances, 2},
-    {"_acre_bearings", (DL_FUNC) &_acre_bearings, 2},
-    {"_acre_make_toa_ssq", (DL_FUNC) &_acre_make_toa_ssq, 3},
-    {"_acre_find_local", (DL_FUNC) &_acre_find_local, 3},
-    {"_acre_squarify", (DL_FUNC) &_acre_squarify, 2},
-    {NULL, NULL, 0}
-};
-
-RcppExport void R_init_acre(DllInfo *dll) {
-    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
-    R_useDynamicSymbols(dll, FALSE);
-}

@@ -1,4 +1,4 @@
 library(testthat)
-library(ascr)
+library(acre)
 
-test_check("ascr")
+test_check("acre")

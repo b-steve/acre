@@ -1,4 +1,8 @@
-#include <TMB.hpp>
+#ifndef acreTMB_hpp
+#define acreTMB_hpp
+
+#undef TMB_OBJECTIVE_PTR
+#define TMB_OBJECTIVE_PTR obj
 
 //DIY functions
 template<class Type>
@@ -507,7 +511,7 @@ Type essx_ss_het(const Type &dx, const vector<Type> &param){
 //end of detection functions------------------------------------------------------------------------
 
 template<class Type>
-Type objective_function<Type>::operator() ()
+Type acreTMB(objective_function<Type>* obj)
 {
   Type nll = Type(0.0);
   Type *pointer_nll = &nll;
@@ -2072,4 +2076,9 @@ Type objective_function<Type>::operator() ()
   ADREPORT(esa);
   return nll;
 }
+
+#undef TMB_OBJECTIVE_PTR
+#define TMB_OBJECTIVE_PTR this
+
+#endif
 

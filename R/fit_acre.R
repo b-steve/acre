@@ -420,21 +420,13 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     map[[par_name]] = factor(rep(NA, length(parameters[[par_name]])))
   }
   
-  #dev is a logical variable for development environment, default is FALSE
-  dev = extra_args$dev
-  if(is.null(dev)) dev = FALSE
-  if(dev){
-    dyn.load(TMB::dynlib(paste0(getwd(), '/inst/TMB/acreTmb')))
-  } else {
-    dyn.load(TMB::dynlib(paste0(system.file(package = "acre"), "/TMB/acreTmb")))
-  }
   
   #browser()
   if(!gr_skip){
     if(!("ss.het" %in% bucket_info)){
-      obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acreTmb")
+      obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acre")
     } else {
-      obj <- TMB::MakeADFun(data = data, parameters = parameters, random = "u", map = map, slient = (!tracing), DLL="acreTmb")
+      obj <- TMB::MakeADFun(data = data, parameters = parameters, random = "u", map = map, slient = (!tracing), DLL="acre")
     }
     obj$hessian <- TRUE
     opt = stats::nlminb(obj$par, obj$fn, obj$gr)
@@ -442,9 +434,9 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   } else {
     
     if(!("ss.het" %in% bucket_info)){
-      obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acreTmb", type = 'Fun')
+      obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acre", type = 'Fun')
     } else {
-      obj <- TMB::MakeADFun(data = data, parameters = parameters, random = "u", map = map, slient = (!tracing), DLL="acreTmb", type = 'Fun')
+      obj <- TMB::MakeADFun(data = data, parameters = parameters, random = "u", map = map, slient = (!tracing), DLL="acre", type = 'Fun')
     }
     
     par_name_fitted = param.og.4cpp[which(!param.og.4cpp %in% name.fixed.par.4cpp)]
