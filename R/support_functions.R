@@ -855,7 +855,7 @@ ext_par_in_new_df = function(par_ext, new_covariates, extend_par_covariates){
 
 
 
-delta_method_ascr_tmb = function(cov_linked, param_values, link_funs = NULL, new_covariates = NULL,
+delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new_covariates = NULL,
                                  name_og = NULL, name_extend = NULL, par_ext_cov_provided = NULL, df_param = NULL,
                                  gam.model.full = NULL, gam.output = NULL, back_trans = TRUE){
   #delta method, G(x) is a vector of n functions, where x is a vector of m variables
@@ -1086,20 +1086,20 @@ confint_gaussian_cal = function(object, types, pars, new_covariates, q_lower, q_
   names(output) = types
   for(i in types){
     #if(i == 'linked'){
-    #  df_est = vector_to_df(coef.ascr_tmb(object, types = 'linked', pars = pars))
-    #  df_std = vector_to_df(stdEr.ascr_tmb(object, types = 'linked', pars = pars))
+    #  df_est = vector_to_df(coef.acre_tmb(object, types = 'linked', pars = pars))
+    #  df_std = vector_to_df(stdEr.acre_tmb(object, types = 'linked', pars = pars))
     #}
     
     if(i == 'fitted' | i == 'linked'){
       #browser()
       #"fitted" is just back transformed from "linked" confidence interval
-      df_est = vector_to_df(coef.ascr_tmb(object, types = 'linked', pars = pars, new_covariates = new_covariates))
-      df_std = vector_to_df(stdEr.ascr_tmb(object, types = 'linked', pars = pars, new_covariates = new_covariates, show_fixed_par = FALSE))
+      df_est = vector_to_df(coef.acre_tmb(object, types = 'linked', pars = pars, new_covariates = new_covariates))
+      df_std = vector_to_df(stdEr.acre_tmb(object, types = 'linked', pars = pars, new_covariates = new_covariates, show_fixed_par = FALSE))
     }
     
     if(i == 'derived'){
-      df_est = vector_to_df(coef.ascr_tmb(object, types = 'derived'))
-      df_std = vector_to_df(stdEr.ascr_tmb(object, types = 'derived', show_fixed_par = FALSE))
+      df_est = vector_to_df(coef.acre_tmb(object, types = 'derived'))
+      df_std = vector_to_df(stdEr.acre_tmb(object, types = 'derived', show_fixed_par = FALSE))
     }
     #browser()
     colnames(df_est) = c('par', 'est')
@@ -2032,7 +2032,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
     par_info = get_data_param(fit)
     par_info = subset(par_info, par == 'D')
     gam.model = get_gam(fit, 'D')
-    if(is(fit, 'ascr_boot')){
+    if(is(fit, 'acre_boot')){
       values_link = as.vector(coef(fit, types = 'linked', pars = 'D', correct_bias = control_boot$correct_bias))
     } else {
       values_link = as.vector(coef(fit, types = 'linked', pars = 'D'))
@@ -2050,7 +2050,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
     if(se_fit){
       DX = tem$DX
       
-      if(is(fit, 'ascr_boot')){
+      if(is(fit, 'acre_boot')){
         if(log_scale){
           type = 'linked'
         } else {

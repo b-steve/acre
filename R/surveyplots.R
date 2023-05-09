@@ -1,8 +1,8 @@
 
 #' Title
 #'
-#' @param fit an object generated from the model fitting function "fit.ascr_tmb()" or
-#'            the bootstrap process "boot.ascr()".
+#' @param fit an object generated from the model fitting function "fit.acre_tmb()" or
+#'            the bootstrap process "boot.acre()".
 #' @param new_covariates data.frame; contains any covariates will be used for all extended parameters (if not be skipped)
 #' @param param_extend_skip character; skip extended parameter, for skipped extended parameters,
 #'                          use its intercept as the value for this parameter
@@ -261,7 +261,7 @@ show_Dsurf <- function(fit, session = NULL, show.cv = FALSE, new_data = NULL, D_
 #' @export
 #'
 #' @examples
-plot.ascr_data <- function(dat, types = NULL, session = NULL, anime = FALSE, control = NULL,
+plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, control = NULL,
                            ask = TRUE, xlim = NULL, ylim = NULL, ...){
   if(is.null(types)) stop('please specify the argument "types".')
   n.sessions = length(dat$traps)
@@ -738,10 +738,10 @@ plot.ascr_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
 #' @export
 #'
 #' @examples
-plot.ascr_tmb = function(fit, types = NULL, session = NULL, anime = FALSE, control = NULL,
+plot.acre_tmb = function(fit, types = NULL, session = NULL, anime = FALSE, control = NULL,
                          ask = TRUE, xlim = NULL, ylim = NULL, ...){
   if(types %in% c('survey', 'capt', 'covariates')){
-    plot.ascr_data(fit$args, session = session, types = types, control = control, anime = anime,
+    plot.acre_data(fit$args, session = session, types = types, control = control, anime = anime,
                    ask = ask, xlim = xlim, ylim = ylim, ...)
   }
 }
