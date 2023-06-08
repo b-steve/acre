@@ -668,7 +668,11 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
     
     col_fn = viridis::viridis
     if(is.null(control$arg_col)) arg_col = list(n = 100, option = "D")
-    if(is.null(control$plot_contours)) plot_contours = TRUE
+    if(is.null(control$plot_contours)){
+        plot_contours = TRUE
+    } else {
+        plot_contours = control$plot_contours
+    }
     
     if(ask){
       ## Setting par(ask).
