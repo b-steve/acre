@@ -50,7 +50,7 @@ test_that("joint bearing/dist fitting -- half normal", {
                      4.150607, 2.099919, 8.034846), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -62,24 +62,17 @@ test_that("joint bearing/dist fitting -- half normal", {
                      4.106554, 2.066543,  8.002763), ncol = 2)
 
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(1.000000, 4.691513, 35.036661, 5.257433, 2023.722030, 1.000000, 5.287890,
-                            61.483431, 8.012114, 3032.799390), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = FALSE, level = 0.95)[pars_names,]
+  conf_95_fitted = matrix(c(1.000000, 4.700248, 36.693560, 5.390997, 2070.876621, 1.000000, 5.296980,
+                            63.472502, 8.165506, 3086.664919), ncol = 2)
+  o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  #test for argument "linked = T"
-  conf_95_fitted_linked = matrix(c(1.000000, 4.700248, 36.693560, 5.390997, 2070.876621, 1.000000, 5.296980,
-                                   63.472502, 8.165506, 3086.664919), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = TRUE, level = 0.95)[pars_names,]
-  relative.error = max(abs((o - conf_95_fitted_linked)/conf_95_fitted_linked))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   ############################################################################################################
@@ -128,7 +121,7 @@ test_that("heterogeneous density model with sigma extended -- half normal", {
 
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -141,7 +134,7 @@ test_that("heterogeneous density model with sigma extended -- half normal", {
                      -0.1550679, 9.1831143,  0.4670833), ncol = 2)
 
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -156,33 +149,23 @@ test_that("heterogeneous density model with sigma extended -- half normal", {
   pars_names_og_unfixed = pars_names_og[-1]
   
   expected_values = c(1, 5.728178, 830.341102)
-  o = coef(fit, new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(0.9222248, 400.2406206)
-  o = stdEr(fit, new_covariates = new_data)[pars_names_og_unfixed]
+  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og_unfixed]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
-  expected_values = matrix(c(1, 3.92065, 45.88390, 1, 7.535705, 1614.798303),
+  expected_values = matrix(c(1, 4.178061, 322.820254, 1, 7.853408, 2135.759253),
                            ncol = 2)
-  o = confint(fit, new_covariates = new_data)[pars_names_og,]
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  expected_values = matrix(c(6.721837, 0.4820195, 5.777096, 7.666577), nrow = 1)
-  o = predict(fit, type = 'link', newdata = new_data, confidence = T)
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  
-  expected_values = matrix(c(830.3411, 400.2406, 45.8839, 1614.798), nrow = 1)
-  o = predict(fit, type = 'response', newdata = new_data, confidence = T)
+  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
 })
+
 
 
 test_that("joint bearing/dist model with 2 sessions and g0 & sigma extended -- half normal", {
@@ -218,7 +201,7 @@ test_that("joint bearing/dist model with 2 sessions and g0 & sigma extended -- h
   
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -230,7 +213,7 @@ test_that("joint bearing/dist model with 2 sessions and g0 & sigma extended -- h
   conf_90 = matrix(c(-1.06245877, -3.31441897, 0.96339802, 0.03700037, 2.66951737, 0.68187531, 7.57669171,
                      4.1381881, 1.1803287, 1.2157738, 0.2915144, 4.3736037, 1.3760349, 8.1662100), ncol = 2)
 
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -241,17 +224,10 @@ test_that("joint bearing/dist model with 2 sessions and g0 & sigma extended -- h
   pars_names = c("g0.(Intercept)", "g0.weathersunny", "sigma.(Intercept)", "sigma.brandsony",
                  "kappa", "alpha", "D")
   
-  conf_95_fitted = matrix(c(-1.56061182, -3.74495623, 0.93922376, 0.01262129, -0.51676398, 1.64091053, 1700.67103015,
-                            4.6363412, 1.6108660, 1.2399480, 0.3158935, 68.1911480, 3.9553705, 3542.0610432), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = FALSE, level = 0.95)[pars_names,]
+  conf_95_fitted = matrix(c(-1.56061182, -3.74495623, 0.93922376, 0.01262129, 12.25934474, 1.85036704, 1844.97990856,
+                            4.6363412, 1.6108660, 1.2399480, 0.3158935, 93.3945155, 4.2313715, 3724.4632673), ncol = 2)
+  o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  #test for argument "linked = T"
-  conf_95_fitted_linked = matrix(c(-1.56061182, -3.74495623, 0.93922376, 0.01262129, 12.25934474, 1.85036704, 1844.97990856,
-                                   4.6363412, 1.6108660, 1.2399480, 0.3158935, 93.3945155, 4.2313715, 3724.4632673), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = TRUE, level = 0.95)[pars_names,]
-  relative.error = max(abs((o - conf_95_fitted_linked)/conf_95_fitted_linked))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   
@@ -261,19 +237,19 @@ test_that("joint bearing/dist model with 2 sessions and g0 & sigma extended -- h
   pars_names_og = c('g0', 'sigma', 'kappa', 'alpha', 'D')
   
   expected_values = c(0.6155777, 3.5037832, 33.8371920, 2.7981405, 2621.3660367)
-  o = coef(fit, new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(0.1210091, 0.2763892, 17.5278506, 0.5904343, 469.7509821)
-  o = stdEr(fit, new_covariates = new_data)[pars_names_og]
+  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
-  expected_values = matrix(c(0.3784042, 2.9620703, -0.5167640, 1.6409105, 1700.6710302,
-                             0.8527513, 4.0454960, 68.1911480, 3.9553705, 3542.0610432),
+  expected_values = matrix(c(0.370184, 3.001870, 12.259345, 1.850367, 1844.979909,
+                             0.8135231, 4.0896168, 93.3945155, 4.2313715, 3724.4632673),
                            ncol = 2)
-  o = confint(fit, new_covariates = new_data)[pars_names_og,]
+  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -324,7 +300,7 @@ test_that("cue rate included -- hazard half normal", {
   conf_95 = matrix(c(1.250034, 1.133669, 5.934887, 1.560017, 1.905664, 6.471917), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -335,22 +311,16 @@ test_that("cue rate included -- hazard half normal", {
   conf_90 = matrix(c(1.274953, 1.195727, 5.978057, 1.535099, 1.843605, 6.428747), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(3.443943, 2.806420, 361.666938, 4.707320, 6.334977, 627.189873), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = FALSE, level = 0.95)[pars_names,]
+  conf_95_fitted = matrix(c(3.490462, 3.107034, 377.997397, 4.758904, 6.723868, 646.722570), ncol = 2)
+  o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  #test for argument "linked = T"
-  conf_95_fitted_linked = matrix(c(3.490462, 3.107034, 377.997397, 4.758904, 6.723868, 646.722570), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = TRUE, level = 0.95)[pars_names,]
-  relative.error = max(abs((o - conf_95_fitted_linked)/conf_95_fitted_linked))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   ############################################################################################################
@@ -405,7 +375,7 @@ test_that("Signal strength & toa model", {
                      4.524742, 1.456104, 2.325242, -6.229420, 8.007583), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -417,24 +387,17 @@ test_that("Signal strength & toa model", {
                      4.520334, 1.440107, 2.309614, -6.256657, 7.976243), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(8.731559e+01, 3.496629e+00, 8.379336e+00, 1.381685e-03, 1.989856e+03,
-                            9.223808e+01, 4.269339e+00, 1.018385e+01, 1.945317e-03, 2.953482e+03), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = FALSE, level = 0.95)[pars_names,]
+  conf_95_fitted = matrix(c(8.734902e+01, 3.515228e+00, 8.421802e+00, 1.404263e-03, 2.033909e+03,
+                            9.227213e+01, 4.289214e+00, 1.022916e+01, 1.970595e-03, 3.003649e+03), ncol = 2)
+  o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  #test for argument "linked = T"
-  conf_95_fitted_linked = matrix(c(8.734902e+01, 3.515228e+00, 8.421802e+00, 1.404263e-03, 2.033909e+03,
-                                   9.227213e+01, 4.289214e+00, 1.022916e+01, 1.970595e-03, 3.003649e+03), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = TRUE, level = 0.95)[pars_names,]
-  relative.error = max(abs((o - conf_95_fitted_linked)/conf_95_fitted_linked))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   ############################################################################################################
@@ -478,7 +441,7 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -491,7 +454,7 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
                      0.8949694, 2.2792952, -6.4596420, 19.0265387, 0.2981176, 2.4004958), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -505,36 +468,19 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   pars_names_og = c('sigma', 'lambda0', 'sigma.toa', 'D', 'mu')
   
   expected_values = c(2.162743e+00, 6.266772e+00, 1.308608e-03, 9.464759e+02, 8.721441e+00)
-  o = coef(fit, new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(1.625058e-01, 1.691736e+00, 1.425272e-04, 1.374890e+03, 1.244500e+00)
-  o = stdEr(fit, new_covariates = new_data)[pars_names_og]
+  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
-  expected_values = matrix(c(1.844237e+00, 2.951030e+00, 1.029260e-03, -1.748258e+03, 6.282266e+00,
-                             2.481248e+00, 9.582514e+00, 1.587956e-03, 3.641210e+03, 1.116062e+01),
+  expected_values = matrix(c(1.866580094, 3.691978393, 0.001057063, 54.905962639, 6.593661321,
+                             2.505896e+00, 1.063723e+01, 1.620012e-03, 1.631547e+04, 1.153586e+01),
                            ncol = 2)
-  o = confint(fit, new_covariates = new_data)[pars_names_og,]
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  expected_values = matrix(c(6.852746, 1.452641, 4.005622, 9.699869), nrow = 1)
-  o = predict(fit, type = 'link', newdata = new_data, confidence = T)
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  
-  expected_values = matrix(c(946.4759, 1374.89, -1748.258, 3641.21), nrow = 1)
-  o = predict(fit, type = 'response', newdata = new_data, confidence = T)
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  
-  expected_values = matrix(c(946.4759, 54.90596, 16315.47), nrow = 1)
-  o = predict(fit, type = 'response', newdata = new_data, linked = T, confidence = T)
+  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -587,7 +533,7 @@ test_that("signal strength model with log link and individual identity", {
                      1.679966, -2.501994, 2.336626, 4.871292, 2.288036), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -599,25 +545,18 @@ test_that("signal strength model with log link and individual identity", {
                      1.679417, -2.506851, 2.328692, 4.816414, 2.267907), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(5.32882417, 0.07708277, 9.36209207, 61.09365602, 7.60705450,
-                            5.36533978, 0.08188483, 10.33407809, 124.41486199, 9.78447314), ncol = 2)
+  conf_95_fitted = matrix(c(5.32885530, 0.07711868, 9.37388885, 65.93141820, 7.67245027,
+                            5.36537098, 0.08192147, 10.34626944, 130.48942065, 9.85556188), ncol = 2)
   
-  o = confint(fit, types = 'fitted', linked = FALSE, level = 0.95)[pars_names,]
+  o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  #test for argument "linked = T"
-  conf_95_fitted_linked = matrix(c(5.32885530, 0.07711868, 9.37388885, 65.93141820, 7.67245027,
-                                   5.36537098, 0.08192147, 10.34626944, 130.48942065, 9.85556188), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = TRUE, level = 0.95)[pars_names,]
-  relative.error = max(abs((o - conf_95_fitted_linked)/conf_95_fitted_linked))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   ############################################################################################################
@@ -672,7 +611,7 @@ test_that("signal strength model with spherical link and individual identity", {
                      4.6681639, -0.4834148, 2.3601167, 4.6267429, 2.3759144), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -684,25 +623,18 @@ test_that("signal strength model with spherical link and individual identity", {
                      4.6617003, -0.6757045, 2.3513026, 4.5637209, 2.3552956), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(98.19224173, -0.03655491, 9.47739826, 41.97951330, 8.25168944,
-                            106.4182138, 0.4095105, 10.5768399, 96.1093417, 10.6795690), ncol = 2)
+  conf_95_fitted = matrix(c(98.27382219, 0.05638956, 9.49219541, 46.65394249, 8.32630792,
+                            106.5020104, 0.6166739, 10.5921879, 102.1807100, 10.7608483), ncol = 2)
   
-  o = confint(fit, types = 'fitted', linked = FALSE, level = 0.95)[pars_names,]
+  o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  #test for argument "linked = T"
-  conf_95_fitted_linked = matrix(c(98.27382219, 0.05638956, 9.49219541, 46.65394249, 8.32630792,
-                                   106.5020104, 0.6166739, 10.5921879, 102.1807100, 10.7608483), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = TRUE, level = 0.95)[pars_names,]
-  relative.error = max(abs((o - conf_95_fitted_linked)/conf_95_fitted_linked))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   ############################################################################################################
@@ -750,7 +682,7 @@ test_that("heterogeneous density model with sigma extended -- half normal - no g
   
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -763,7 +695,7 @@ test_that("heterogeneous density model with sigma extended -- half normal - no g
                      -0.1550680, 9.1831064,  0.4670824), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -778,29 +710,18 @@ test_that("heterogeneous density model with sigma extended -- half normal - no g
   pars_names_og_unfixed = pars_names_og[-1]
   
   expected_values = c(1, 5.728178, 830.341085)
-  o = coef(fit, new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(0.9222219, 400.2402285)
-  o = stdEr(fit, new_covariates = new_data)[pars_names_og_unfixed]
+  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og_unfixed]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
 
-  expected_values = matrix(c(1, 3.920656, 45.884652, 1, 7.535699, 1614.797518),
+  expected_values = matrix(c(1, 4.178065, 322.820540, 1, 7.8534, 2135.7573),
                            ncol = 2)
-  o = confint(fit, new_covariates = new_data)[pars_names_og,]
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  expected_values = matrix(c(6.721837, 0.4820191, 5.777097, 7.666577), nrow = 1)
-  o = predict(fit, type = 'link', newdata = new_data, confidence = T)
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  
-  expected_values = matrix(c(830.3411, 400.2402, 45.88465, 1614.798), nrow = 1)
-  o = predict(fit, type = 'response', newdata = new_data, confidence = T)
+  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -853,7 +774,7 @@ test_that("Signal strength & toa model - no gradient", {
                      4.524742, 1.456104, 2.325242, -6.229420, 8.007583), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -865,24 +786,17 @@ test_that("Signal strength & toa model - no gradient", {
                      4.520334, 1.440107, 2.309614, -6.256656, 7.976243), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(8.731560e+01, 3.496629e+00, 8.379336e+00, 1.381685e-03, 1.989856e+03,
-                            9.223807e+01, 4.269340e+00, 1.018385e+01, 1.945317e-03, 2.953482e+03), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = FALSE, level = 0.95)[pars_names,]
+  conf_95_fitted = matrix(c(8.734903e+01, 3.515228e+00, 8.421803e+00, 1.404263e-03, 2.033909e+03,
+                            9.227212e+01, 4.289214e+00, 1.022916e+01, 1.970595e-03, 3.003649e+03), ncol = 2)
+  o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  #test for argument "linked = T"
-  conf_95_fitted_linked = matrix(c(8.734903e+01, 3.515228e+00, 8.421803e+00, 1.404263e-03, 2.033909e+03,
-                                   9.227212e+01, 4.289214e+00, 1.022916e+01, 1.970595e-03, 3.003649e+03), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = TRUE, level = 0.95)[pars_names,]
-  relative.error = max(abs((o - conf_95_fitted_linked)/conf_95_fitted_linked))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   ############################################################################################################
@@ -926,7 +840,7 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -939,7 +853,7 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
                      0.8949682, 2.2792934, -6.4596422, 19.0265364, 0.2981175, 2.4004958), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -953,36 +867,19 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   pars_names_og = c('sigma', 'lambda0', 'sigma.toa', 'D', 'mu')
   
   expected_values = c(2.162743e+00, 6.266772e+00, 1.308608e-03, 9.464758e+02, 8.721442e+00)
-  o = coef(fit, new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(1.625042e-01, 1.691730e+00, 1.425270e-04, 1.374889e+03, 1.244500e+00)
-  o = stdEr(fit, new_covariates = new_data)[pars_names_og]
+  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
-  expected_values = matrix(c(1.844240e+00, 2.951043e+00, 1.029260e-03, -1.748257e+03, 6.282266e+00,
-                             2.481245e+00, 9.582501e+00, 1.587956e-03, 3.641209e+03, 1.116062e+01),
+  expected_values = matrix(c(1.866582775, 3.691986084, 0.001057063, 54.905971702, 6.593661864,
+                             2.505893e+00, 1.063721e+01, 1.620012e-03, 1.631546e+04, 1.153586e+01),
                            ncol = 2)
-  o = confint(fit, new_covariates = new_data)[pars_names_og,]
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  expected_values = matrix(c(6.852745, 1.452641, 4.005622, 9.699869), nrow = 1)
-  o = predict(fit, type = 'link', newdata = new_data, confidence = T)
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  
-  expected_values = matrix(c(946.4758, 1374.889, -1748.257, 3641.209), nrow = 1)
-  o = predict(fit, type = 'response', newdata = new_data, confidence = T)
-  relative.error = max(abs((o - expected_values)/expected_values))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  
-  expected_values = matrix(c(946.4758, 54.90597, 16315.46), nrow = 1)
-  o = predict(fit, type = 'response', newdata = new_data, linked = T, confidence = T)
+  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -1034,7 +931,7 @@ test_that("signal strength model with spherical link and individual identity - n
                      4.6681478, -0.4837633, 2.3601156, 4.6267309, 2.3759162), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.95)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
   
   relative.error = max(abs((o - conf_95)/conf_95))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -1046,27 +943,19 @@ test_that("signal strength model with spherical link and individual identity - n
                      4.6616870, -0.6759927, 2.3513015, 4.5637083, 2.3552975), ncol = 2)
   
   
-  o = confint(fit, types = 'linked', linked = FALSE, level = 0.9)[pars_link_names,]
+  o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
   
   relative.error = max(abs((o - conf_90)/conf_90))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(98.19404116, -0.03648596, 9.47739355, 41.97868473, 8.25170694,
-                            106.4165789, 0.4094514, 10.5768284, 96.1081041, 10.6795883), ncol = 2)
+  conf_95_fitted = matrix(c(98.2755539, 0.0564122, 9.4921905, 46.6531090, 8.3263254,
+                            106.5003050, 0.6164591, 10.5921762, 102.1794778, 10.7608676), ncol = 2)
   
-  o = confint(fit, types = 'fitted', linked = FALSE, level = 0.95)[pars_names,]
+  o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
   expect_equal(relative.error, 0, tolerance = 1e-4)
-  
-  #test for argument "linked = T"
-  conf_95_fitted_linked = matrix(c(98.2755539, 0.0564122, 9.4921905, 46.6531090, 8.3263254,
-                                   106.5003050, 0.6164591, 10.5921762, 102.1794778, 10.7608676), ncol = 2)
-  o = confint(fit, types = 'fitted', linked = TRUE, level = 0.95)[pars_names,]
-  relative.error = max(abs((o - conf_95_fitted_linked)/conf_95_fitted_linked))
-  expect_equal(relative.error, 0, tolerance = 1e-4)
-  
   ############################################################################################################
   #since this model has no parameter been extended, skip the test for 
   

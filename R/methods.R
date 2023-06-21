@@ -709,7 +709,7 @@ confint.acre_tmb = function(object, types = NULL, level = 0.95, pars = NULL, new
   }
   
   output = do.call('rbind', output)
-  
+  colnames(output) = col_name
   return(output)
 }
 
@@ -916,7 +916,7 @@ predict.acre_tmb = function(fit, type = 'response', newdata = NULL, se.fit = TRU
         } else {
           output[[i]]$Lower = numeric(n_row)
           output[[i]]$Upper = numeric(n_row)
-          output[[i]][, c('Lower', 'Upper')] = confint(fit, types = type, new_covariates = newdata, pars = i)
+          output[[i]][, c('Lower', 'Upper')] = confint(fit, types = type, level = level, new_covariates = newdata, pars = i)
         }
 
       }
