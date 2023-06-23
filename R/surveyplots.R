@@ -271,7 +271,6 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
   if(types == 'survey'){
     if(is.null(session)){
       session = 1
-      message("Argument 'session' is missing, the 1st session is plotted by default.")
     }
     
     stopifnot(session <= n.sessions)
@@ -331,7 +330,6 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
     #currently, animation could only be applied for single session.
     if(any(!is.null(control$animal_ID), !is.null(control$ID), anime) & session == 0){
       session = 1
-      message("Argument 'session' is missing, the 1st session is plotted by default.")
     }
     
     if(animal.model){
@@ -344,7 +342,7 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
         stopifnot(length(a_id) == 1)
         if(anime){
           anime = FALSE
-          message("Animation will not be generated as animal_ID is provided.")
+          #message("Animation will not be generated as animal_ID is provided.")
         }
       }
     }
@@ -355,7 +353,7 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
       c_id = control$ID
       if(anime){
         anime = FALSE
-        message("Animation will not be generated as ID is provided.")
+        #message("Animation will not be generated as ID is provided.")
       }
     } 
     
@@ -631,7 +629,6 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
   if(types == 'covariates'){
     if(is.null(session)){
       session = 1
-      message("Argument 'session' is missing, the 1st session is plotted by default.")
     }
     
     masks = as.data.frame(get_mask_from_data(dat)[[session]])
@@ -667,7 +664,8 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
     
     
     col_fn = viridis::viridis
-    if(is.null(control$arg_col)) arg_col = list(n = 100, option = "D")
+    if(is.null(control$arg_col)) arg_col = list(n = 100, option = "D") else arg_col = control$arg_col
+    
     if(is.null(control$plot_contours)){
         plot_contours = TRUE
     } else {
@@ -687,7 +685,7 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
       if(is(D_cov_for_model[[i]], 'numeric')){
         
         z <- squarify(masks_mat, D_cov_for_model[[i]])
-        zlim <- c(0, max(z, na.rm = TRUE))
+        zlim <- range(z, na.rm = TRUE)
         fields::image.plot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = do.call("col_fn", arg_col), 
                            asp = 1, xlim = xlim, ylim = ylim, xlab = "", ylab = "",
                            main = paste0("Plot of covariate ", i, ", for session ", session))
