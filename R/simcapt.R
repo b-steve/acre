@@ -313,7 +313,7 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
                           ss.opts, cue.rates, sound.speed){
   #firstly generate the number of animals for each mask
   dat.density$n_animals = rpois(nrow(dat.density), dat.density$D)
-  dat.density = subset(dat.density, n_animals != 0)
+  dat.density = subset(dat.density, dat.density$n_animals != 0)
   
   
   if(nrow(dat.density) == 0){
@@ -327,7 +327,7 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
   if(random.location){
       tem_list = vector('list', dims$n.sessions)
     for(s in 1:dims$n.sessions){
-      tem_density = subset(dat.density, session == s)
+      tem_density = subset(dat.density, dat.density$session == s)
       
       #calculate the side length of each mask, since the mask points are evenly spread,
       #and each mask is a square, we only need to calculate average interval of x or y
@@ -405,7 +405,7 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
   }
   
   dat_capt$bincapt = stats::rbinom(nrow(dat_capt), 1, dat_capt[['det_prob']])
-  dat_capt = subset(dat_capt, bincapt == 1)
+  dat_capt = subset(dat_capt, dat_capt$bincapt == 1)
   
   if(nrow(dat_capt) == 0){
     #if no simulated detection, return an empty data frame

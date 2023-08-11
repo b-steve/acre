@@ -198,7 +198,6 @@ mask.fun = function(mask, dims, animal.model, data.traps, data.full, bucket_info
   data.mask = do.call('rbind', data.mask)
   
   
-  ################################################################################
   #deal with local argument
   
   all.which.local <- vector(mode = "list", length = n.sessions)
@@ -263,7 +262,7 @@ mask.fun = function(mask, dims, animal.model, data.traps, data.full, bucket_info
   #temporarily to be animal_ID-ID as well until in the later step where we restore it
   for(i in 1:n.sessions){
     if(n.IDs[i] > 0){
-      tem = subset(data.full, session == i)
+      tem = subset(data.full, data.full$session == i)
 
       if(animal.model){
         u.id = unique(paste(tem[['animal_ID']], tem[['ID']], sep = '---'))
@@ -915,7 +914,8 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
     }
     
     
-    ##################################################################
+    
+    
     #simple check and simple argument adjustment
     if(all(c("ss.dir", "ss.het") %in% bucket_info)){
       stop("Fitting of models with both heterogeneity in source signal strength
@@ -945,8 +945,8 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
     
     
     
-    data.ss = subset(data.full, !is.na(ID))
-    data.no.det.session = subset(data.full, is.na(ID))
+    data.ss = subset(data.full, !is.na(data.full$ID))
+    data.no.det.session = subset(data.full, is.na(data.full$ID))
     
     
     #adjust all capture history to zero if "ss" < cutoff, and then remove the observations if
@@ -958,7 +958,7 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
     
     keep = agg_sort(data.ss, 'bincapt', c('session', 'animal_ID'[animal.model], 'ID'), sum)
     
-    keep = subset(keep, x > 0)
+    keep = subset(keep, keep$x > 0)
     if(nrow(keep) == 0) stop("None of signal received is greater than the cut off threshold.")
     colnames(keep)[which(colnames(keep) == 'x')] = "keep"
     data.ss = merge(data.ss, keep, by = c("session", "animal_ID"[animal.model], "ID"), all = TRUE)
@@ -995,10 +995,10 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
     if(ID.removed){
       #when any ID is deleted due to the cut off of ss
       if("animal_ID" %in% colnames(data.full)){
-        data.ID_mask = subset(data.ID_mask, paste(session, animal_ID, ID, sep = "-") %in%
+        data.ID_mask = subset(data.ID_mask, paste(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$ID, sep = "-") %in%
                                 unique(paste(data.full$session, data.full$animal_ID,data.full$ID, sep = "-")))
       } else {
-        data.ID_mask = subset(data.ID_mask, paste(session, ID, sep = "-") %in%
+        data.ID_mask = subset(data.ID_mask, paste(data.ID_mask$session, data.ID_mask$ID, sep = "-") %in%
                                 unique(paste(data.full$session, data.full$ID, sep = "-")))
       }
       data.ID_mask = sort.data(data.ID_mask, "data.ID_mask")

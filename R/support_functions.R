@@ -19,8 +19,8 @@ natural_number_check = function(session, key){
 
 convert_natural_number = function(dat, is.animalID, which.convert = 'both'){
   
-  dat.na = subset(dat, is.na(ID))
-  dat = subset(dat, !is.na(ID))
+  dat.na = subset(dat, is.na(dat$ID))
+  dat = subset(dat, !is.na(dat$ID))
   
   if(which.convert == 'ID'){
     if(is.animalID){
@@ -406,7 +406,7 @@ default.sv = function(param, info){
       return(easy.out)
     } else {
       tem = data.full[!duplicated(data.full[,c("session", "animal_ID"[is.animal_ID], "ID", "trap")]), ]
-      tem = subset(tem, !is.na(bincapt) & bincapt == 1)
+      tem = subset(tem, !is.na(tem$bincapt) & tem$bincapt == 1)
       u.id = unique(tem[, c('session', "animal_ID"[is.animal_ID], "ID")])
       u.id = paste(u.id$session, u.id$animal_ID[is.animal_ID], u.id$ID, sep = "_")
       
@@ -433,9 +433,9 @@ default.sv = function(param, info){
     }
   } else if(param == "D"){
     session_to_use = which(dims$n.IDs > 0)[1]
-    tem.mask = subset(data.mask, session == session_to_use)
+    tem.mask = subset(data.mask, data.mask$session == session_to_use)
     mask = as.matrix(unique(tem.mask[, c('x', 'y')]))
-    tem.trap = subset(data.full, session == session_to_use)
+    tem.trap = subset(data.full, data.full$session == session_to_use)
     traps = tem.trap[, c('trap', 'trap_x', 'trap_y')]
     traps = traps[!duplicated(traps[['trap']]), ]
     traps = as.matrix(traps[order(traps$trap), c('trap_x', 'trap_y')])
@@ -679,9 +679,9 @@ numeric_het_method = function(het_method){
 
 cal_n_det = function(data, is_uid = FALSE){
   if(is_uid){
-    data = subset(data, !is.na(u_id))
+    data = subset(data, !is.na(data$u_id))
   } else {
-    data = subset(data, !is.na(ID))
+    data = subset(data, !is.na(data$ID))
   }
 
   if("animal_ID" %in% colnames(data)){
@@ -707,12 +707,12 @@ cal_n_det = function(data, is_uid = FALSE){
 
 
 extract_unique_id = function(data.full, dims){
-  dat = subset(data.full,!is.na(ID))
+  dat = subset(data.full,!is.na(data.full$ID))
   data.u.id.match = data.frame(session = numeric(0), ID = numeric(0), u_id = numeric(0))
   n.u.id = numeric(0)
   n.u.id.session = numeric(dims$n.sessions)
   for(s in 1:dims$n.sessions){
-    tem = subset(dat, session == s)
+    tem = subset(dat, dat$session == s)
     if(nrow(tem) > 0){
       tem = aggregate(tem$bincapt, list(ID = tem$ID), function(x) t(x))
       u.bin = unique(tem$x)
@@ -911,7 +911,7 @@ delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new
       x = param_values[index_p]
       len_p = length(index_p)
       
-      tem = subset(df_param, par == par_name)
+      tem = subset(df_param, df_param$par == par_name)
       if(back_trans){
         #when a par is extended but not all covariates provided, assign the link as 'identity' as well
         #becuase in this case, we will show such as "D_int_link", "D_beta1_link"
@@ -1912,7 +1912,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
       if(!is.null(old_loc_cov)){
         mask_level_dat_extract = TRUE
         if('session' %in% colnames(old_loc_cov)){
-          old_loc_cov = subset(old_loc_cov, session == session_select)
+          old_loc_cov = subset(old_loc_cov, old_loc_cov$session == session_select)
         }
         
         #when locations/mask in prediction is assigned by xlim/ylim or new_data, we use
@@ -2030,7 +2030,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
     }
     
     par_info = get_data_param(fit)
-    par_info = subset(par_info, par == 'D')
+    par_info = subset(par_info, par_info$par == 'D')
     gam.model = get_gam(fit, 'D')
     if(is(fit, 'acre_boot')){
       values_link = as.vector(coef(fit, types = 'linked', pars = 'D', correct_bias = control_boot$correct_bias))
@@ -2118,7 +2118,7 @@ var_from_res = function(res, fixed = NULL){
 
   n_pars = ncol(res)
   
-  se <- apply(res, 2, sd, na.rm = TRUE)
+  se <- apply(res, 2, "sd", na.rm = TRUE)
   names(se) <- par_names
   
   corr <- diag(n_pars)
@@ -2143,7 +2143,7 @@ var_from_res = function(res, fixed = NULL){
 mce_from_res = function(res, coefs, M, seed_mce){
   n_pars = ncol(res)
   par_names = colnames(res)
-  bias <- apply(res, 2, mean, na.rm = TRUE) - as.vector(coefs)
+  bias <- apply(res, 2, "mean", na.rm = TRUE) - as.vector(coefs)
   ## Bootstrap to calculate MCE for bias and standard errors.
   bias.mce <- numeric(n_pars)
   se.mce <- numeric(n_pars)
@@ -2255,7 +2255,7 @@ res_transform = function(res, new_covariates, pars, object, back_trans = TRUE){
   
   for(j in pars){
     values_link = res[, which(col_name_og == j), drop = FALSE]
-    par_info = subset(df_param, par == j)
+    par_info = subset(df_param, df_param$par == j)
     link = par_info$link
     
     if(j %in% name_extend){

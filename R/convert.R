@@ -147,7 +147,7 @@ create.capt <- function(captures, traps = NULL, ind_model = NULL, n.sessions = N
     
     #check if "trap" is labeled by natural numbers
     for(i in 1:n.sessions){
-        tem = subset(captures, session == i)
+        tem = subset(captures, captures$session == i)
         if(nrow(tem) > 0){
             if(any(!tem$trap %in% 1:tem.n.traps.capt[i])) {
                 stop('labels of traps must be successive natural numbers')
@@ -232,9 +232,9 @@ create.capt <- function(captures, traps = NULL, ind_model = NULL, n.sessions = N
             stopifnot(n.sessions == 1)
             
             if(is.animalID){
-                stopifnot(is(x, 'data.frame'))
+                stopifnot(is(mrds.locs, 'data.frame'))
             } else {
-                stopifnot(any(is(x, 'data.frame'), is(x, 'matrix')))
+                stopifnot(any(is(mrds.locs, 'data.frame'), is(mrds.locs, 'matrix')))
             }
             
             #convert it to a list with one element only, to make it be in consistent format of multi-session case
@@ -381,12 +381,12 @@ create.capt <- function(captures, traps = NULL, ind_model = NULL, n.sessions = N
         tem_session = vector('list', n.sessions)
         for(s in 1:n.sessions){
             if(n_animals[s] > 0){
-                tem0 = subset(captures, session == s)
+                tem0 = subset(captures, captures$session == s)
                 u.animal = unique(tem0$animal_ID)
                 tem_animal = vector('list', n_animals[s])
                 for(i in 1:n_animals[s]){
                     animal_label = u.animal[i]
-                    tem1 = subset(tem0, animal_ID == animal_label)
+                    tem1 = subset(tem0, tem0$animal_ID == animal_label)
                     u.id = unique(tem1$ID)
                     tem_animal[[i]] = data.frame(session = s, animal_ID = animal_label, 
                                                  ID = rep(u.id, each = n.traps[s]),

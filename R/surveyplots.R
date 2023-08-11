@@ -165,6 +165,7 @@ show_detfn <- function(fit, new_covariates = NULL, param_extend_skip = NULL, xli
 #' @param add 
 #' @param control_convert_loc2mask
 #' @param arg_col 
+#' @param trap_plot 
 #' @param ... 
 #'
 #' @return
@@ -173,8 +174,7 @@ show_detfn <- function(fit, new_covariates = NULL, param_extend_skip = NULL, xli
 #' @examples
 show_Dsurf <- function(fit, session = NULL, show.cv = FALSE, new_data = NULL, D_cov = NULL, xlim = NULL, ylim = NULL,
                         x_pixels = 50, y_pixels = 50, zlim = NULL, scale = 1, plot_contours = TRUE,
-                        add = FALSE, control_convert_loc2mask= NULL, arg_col = list(n = 100), ...){
-  extra_args = list(...)
+                        add = FALSE, control_convert_loc2mask= NULL, arg_col = list(n = 100), trap_plot = NULL, ...){
   
   pred = predict_D_for_plot(fit, session_select = ifelse(is.null(session), 1, session), 
                             new_data = new_data, D_cov = D_cov, xlim = xlim, ylim = ylim,
@@ -225,7 +225,6 @@ show_Dsurf <- function(fit, session = NULL, show.cv = FALSE, new_data = NULL, D_
   
   if(!is.null(session)){
     traps = get_trap(fit)[[session]]
-    trap_plot = extra_args$trap_plot
     if(is.null(trap_plot$col)) trap_col = 1
     if(is.null(trap_plot$pch)) trap_pch = 4
     if(is.null(trap_plot$lwd)) trap_lwd = 2
@@ -247,25 +246,31 @@ show_Dsurf <- function(fit, session = NULL, show.cv = FALSE, new_data = NULL, D_
 
 #' Title
 #'
-#' @param dat 
-#' @param session 
-#' @param types a character, "survey", "capt" or "covariates"
-#' @param control a list,
-#' @param anime 
-#' @param ask 
-#' @param xlim 
-#' @param ylim 
-#' @param ...
+#' @param x
+#' @param ... 
 #'
 #' @return
 #' @export
 #'
 #' @examples
-plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, control = NULL,
-                           ask = TRUE, xlim = NULL, ylim = NULL, ...){
-  if(is.null(types)) stop('please specify the argument "types".')
-  n.sessions = length(dat$traps)
+plot.acre_data <- function(x, ...){
+  
   extra_args = list(...)
+  types = extra_args$types
+  session = extra_args$session
+  anime = extra_args$anime
+  if(is.null(anime)) anime = FALSE
+  control = extra_args$control
+  ask = extra_args$ask
+  if(is.null(ask)) ask = TRUE
+  xlim = extra_args$xlim
+  ylim = extra_args$ylim
+  
+  
+  
+  
+  if(is.null(types)) stop('please specify the argument "types".')
+  n.sessions = length(x$traps)
   stopifnot(types %in% c('survey', 'capt', 'covariates'))
   ################################################################################################
   if(types == 'survey'){
@@ -275,7 +280,7 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
     
     stopifnot(session <= n.sessions)
     
-    masks = get_mask_from_data(dat)[[session]]
+    masks = get_mask_from_data(x)[[session]]
     
     if(is.null(control$pch_mask)) pch_mask = "." else pch_mask = control$pch_mask
     if(is.null(control$pch_trap)) pch_trap = 16 else pch_trap = control$pch_trap
@@ -284,8 +289,8 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
     if(is.null(control$cex_mask)) cex_mask = 2 else cex_mask = control$cex_mask
     if(is.null(control$cex_trap)) cex_trap = 1 else cex_trap = control$cex_trap
     
-    plot(masks, pch = pch_mask, cex = cex_mask, asp = 1, col = col_mask, ...)
-    points(get_trap_from_data(dat)[[session]], pch = pch_trap, col = col_trap, cex = cex_trap)
+    plot(masks, pch = pch_mask, cex = cex_mask, asp = 1, col = col_mask)
+    points(get_trap_from_data(x)[[session]], pch = pch_trap, col = col_trap, cex = cex_trap)
   }
   
   
@@ -317,7 +322,7 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
     #get capture history from data
     #be careful that, in this function, the animal_ID and ID will be
     #converted to natural successive numbers
-    capt = get_capt_for_plot(dat)
+    capt = get_capt_for_plot(x)
     c_names = colnames(capt)
     if("bearing" %in% c_names) is.bearing = TRUE else is.bearing = FALSE
     if("dist" %in% c_names) is.dist = TRUE else is.dist = FALSE
@@ -358,8 +363,8 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
     } 
     
 
-    t_list = get_trap_from_data(dat)
-    m_list = get_mask_from_data(dat)
+    t_list = get_trap_from_data(x)
+    m_list = get_mask_from_data(x)
     ##################################################################################
     if(anime == TRUE){
       s = session
@@ -396,34 +401,34 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
       #plot basic info
 
       if(is.ss){
-        base_plot = ggplot(data = masks, mapping = aes(x = x, y = y)) + 
+        base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
           coord_quickmap(xlim = xlim, ylim = ylim)
         
         point_out_plot = c(max(masks$x) + 100 * (max(masks$x) - min(masks$y)),
                            max(masks$y) + 100 * (max(masks$y) - min(masks$y)))
         
         base_plot = base_plot + 
-          geom_point(data = capt_session, mapping = aes(x = point_out_plot[1], y = point_out_plot[2], colour = ss)) +
+          geom_point(data = capt_session, mapping = aes(x = point_out_plot[1], y = point_out_plot[2], colour = capt_session$ss)) +
           guides(colour = guide_colourbar(order = 1))
         
       } else {
-        base_plot = ggplot(data = masks, mapping = aes(x = x, y = y)) + 
+        base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
           coord_quickmap(xlim = xlim, ylim = ylim)
       }
       
       trap_plot = base_plot + 
-        geom_point(data = traps, mapping = aes(x = trap_x, y = trap_y, shape = 4), size = cex_det) + 
+        geom_point(data = traps, mapping = aes(x = traps$trap_x, y = traps$trap_y, shape = 4), size = cex_det) + 
         scale_shape_identity()
       
       
       if(is.ss){
         #browser()
         capt_plot = trap_plot +
-          geom_point(data = capt_session, mapping = aes(x = trap_x, y = trap_y, group = keys, colour = ss),
+          geom_point(data = capt_session, mapping = aes(x = capt_session$trap_x, y = capt_session$trap_y, group = capt_session$keys, colour = capt_session$ss),
                      size = cex_capt)
       } else {
         capt_plot = trap_plot +
-          geom_point(data = capt_session, mapping = aes(x = trap_x, y = trap_y, group = keys),
+          geom_point(data = capt_session, mapping = aes(x = capt_session$trap_x, y = capt_session$trap_y, group = capt_session$keys),
                      size = cex_capt, colour = "red")
       }
       
@@ -432,19 +437,19 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
         if(is.dist){
 
           capt_plot = capt_plot +
-            geom_segment(data = capt_session, mapping = aes(x = trap_x, y = trap_y,
-                                                            xend = trap_x + sin(bearing) * dist,
-                                                            yend = trap_y + cos(bearing) * dist,
-                                                            group = keys),
+            geom_segment(data = capt_session, mapping = aes(x = capt_session$trap_x, y = capt_session$trap_y,
+                                                            xend = capt_session$trap_x + sin(capt_session$bearing) * capt_session$dist,
+                                                            yend = capt_session$trap_y + cos(capt_session$bearing) * capt_session$dist,
+                                                            group = capt_session$keys),
                          arrow = arrow(length = unit(0.02, "npc")), colour = "blue") +
             labs(caption = "arrow length shows dist.")
         } else {
           if(is.null(control$arrow_len)) arrow_len = 0.382 * buffer else arrow_len = control$arrow_len
           capt_plot = capt_plot +
-            geom_segment(data = capt_session, mapping = aes(x = trap_x, y = trap_y,
-                                                            xend = trap_x + sin(bearing) * arrow_len,
-                                                            yend = trap_y + cos(bearing) * arrow_len,
-                                                            group = keys),
+            geom_segment(data = capt_session, mapping = aes(x = capt_session$trap_x, y = capt_session$trap_y,
+                                                            xend = capt_session$trap_x + sin(capt_session$bearing) * arrow_len,
+                                                            yend = capt_session$trap_y + cos(capt_session$bearing) * arrow_len,
+                                                            group = capt_session$keys),
                          arrow = arrow(length = unit(0.02, "npc")), colour = "blue")
 
         }
@@ -455,7 +460,7 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
         data_cir = circleFun(centre = capt_session[,c('trap_x', 'trap_y')], r = capt_session$dist, npoints = npoints)
         data_cir$keys = rep(capt_session$key, each = npoints)
         capt_plot = capt_plot + 
-          geom_path(data = data_cir, mapping = aes(x = x, y = y, group = interaction(keys, cir_index)), colour = "blue")
+          geom_path(data = data_cir, mapping = aes(x = data_cir$x, y = data_cir$y, group = interaction(data_cir$keys, data_cir$cir_index)), colour = "blue")
       }
       
 
@@ -506,15 +511,15 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
         
         if(animal.model){
           if(a_id != 0){
-            capt_session = subset(capt_session, animal_ID %in% a_id)
+            capt_session = subset(capt_session, capt_session$animal_ID %in% a_id)
             if(all(c_id != 0)){
-              capt_session = subset(capt_session, ID %in% c_id)
+              capt_session = subset(capt_session, capt_session$ID %in% c_id)
             }
           }
           keys = paste(capt_session$animal_ID, capt_session$ID)
         } else {
           if(all(c_id != 0)){
-            capt_session = subset(capt_session, ID %in% c_id)
+            capt_session = subset(capt_session, capt_session$ID %in% c_id)
           }
           keys = capt_session$ID
         }
@@ -539,24 +544,24 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
         
         #plot basic info
         if(is.ss){
-          base_plot = ggplot(data = masks, mapping = aes(x = x, y = y)) + 
+          base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
             coord_quickmap(xlim = xlim_plot, ylim = ylim_plot)
           
           point_out_plot = c(max(masks$x) + 100 * (max(masks$x) - min(masks$y)),
                              max(masks$y) + 100 * (max(masks$y) - min(masks$y)))
           
           base_plot = base_plot + 
-            geom_point(data = capt_session, mapping = aes(x = point_out_plot[1], y = point_out_plot[2], colour = ss)) +
+            geom_point(data = capt_session, mapping = aes(x = point_out_plot[1], y = point_out_plot[2], colour = capt_session$ss)) +
             guides(colour = guide_colourbar(order = 1))
           
         } else {
-          base_plot = ggplot(data = masks, mapping = aes(x = x, y = y)) + 
+          base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
             coord_quickmap(xlim = xlim_plot, ylim = ylim_plot)
         }
 
         
         trap_plot = base_plot + 
-          geom_point(data = traps, mapping = aes(x = x, y = y, shape = 4), size = cex_det) + 
+          geom_point(data = traps, mapping = aes(x = traps$x, y = traps$y, shape = 4), size = cex_det) + 
           scale_shape_identity()
         
         
@@ -577,10 +582,10 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
           
           if(is.ss){
             plot_one_call = plot_with_lab + 
-              geom_point(data = actived_traps, mapping = aes(x = x, y = y, colour = one_call$ss), size = cex_capt)
+              geom_point(data = actived_traps, mapping = aes(x = actived_traps$x, y = actived_traps$y, colour = one_call$ss), size = cex_capt)
           } else {
             plot_one_call = plot_with_lab + 
-              geom_point(data = actived_traps, mapping = aes(x = x, y = y), size = cex_capt, colour = "red")
+              geom_point(data = actived_traps, mapping = aes(x = actived_traps$x, y = actived_traps$y), size = cex_capt, colour = "red")
           }
           
           #if is.bearing, draw arrows (arrow length will be 0.382 * buffer or dist if is.dist);
@@ -594,9 +599,9 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
             }
             
             plot_one_call = plot_one_call + 
-              geom_segment(data = actived_traps, mapping = aes(x = x, y = y,
-                                                               xend = x + sin(one_call$bearing) * arrow_len,
-                                                               yend = y + cos(one_call$bearing) * arrow_len),
+              geom_segment(data = actived_traps, mapping = aes(x = actived_traps$x, y = actived_traps$y,
+                                                               xend = actived_traps$x + sin(one_call$bearing) * arrow_len,
+                                                               yend = actived_traps$y + cos(one_call$bearing) * arrow_len),
                            arrow = arrow(length = unit(0.02, "npc")), colour = "blue")
             
           } else if(is.dist){
@@ -604,12 +609,12 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
             data_cir = circleFun(centre = actived_traps, r = one_call$dist, npoints = npoints)
             
             plot_one_call = plot_one_call + 
-              geom_path(data = data_cir, mapping = aes(x = x, y = y, group = cir_index), colour = "blue")
+              geom_path(data = data_cir, mapping = aes(x = data_cir$x, y = data_cir$y, group = data_cir$cir_index), colour = "blue")
             
           }
           
           
-          print(plot_one_call)
+          suppressWarnings(print(plot_one_call))
           #end of plot for one call
         }
         
@@ -631,7 +636,7 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
       session = 1
     }
     
-    masks = as.data.frame(get_mask_from_data(dat)[[session]])
+    masks = as.data.frame(get_mask_from_data(x)[[session]])
     masks$mask = seq(nrow(masks))
     
     if(is.null(xlim)) xlim <- range(masks[, 'x'])
@@ -640,7 +645,7 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
     masks = subset(masks, masks$x <= xlim[2] & masks$x >= xlim[1] & masks$y <= ylim[2] & masks$y >= ylim[1])
     
     masks_mat = as.matrix(masks[, c('x', 'y'), drop = FALSE])
-    D_cov_for_model = dat$par.extend$data$mask
+    D_cov_for_model = x$par.extend$data$mask
 
     
     if(is.null(D_cov_for_model)){
@@ -726,24 +731,34 @@ plot.acre_data <- function(dat, types = NULL, session = NULL, anime = FALSE, con
 
 #' Title
 #'
-#' @param fit 
-#' @param session 
-#' @param types 
-#' @param control 
-#' @param anime 
-#' @param ask 
-#' @param xlim 
-#' @param ylim 
+#' @param x 
 #' @param ... 
 #' 
 #' @return
 #' @export
 #'
 #' @examples
-plot.acre_tmb = function(fit, types = NULL, session = NULL, anime = FALSE, control = NULL,
-                         ask = TRUE, xlim = NULL, ylim = NULL, ...){
+plot.acre_tmb = function(x, ...){
+  extra_args = list(...)
+  types = extra_args$types
+  
+  if(is.null(types)){
+    stop('argument "types" is needed, which should be either "survey", "capt", "coveriates", "detfn", or "Dsurf".')
+  }
+  
   if(types %in% c('survey', 'capt', 'covariates')){
-    plot.acre_data(fit$args, session = session, types = types, control = control, anime = anime,
-                   ask = ask, xlim = xlim, ylim = ylim, ...)
+    plot.acre_data(x = x$args, ...)
+  } else if(types == 'detfn'){
+    args_pass = list(fit = x, ...)
+    args_pass$types = NULL
+    do.call('show_detfn', args_pass)
+    
+  } else if(types == 'Dsurf'){
+    args_pass = list(fit = x, ...)
+    args_pass$types = NULL
+    do.call('show_Dsurf', args_pass)
+    
+  } else {
+    stop('invalid input for "types", which should be either "survey", "capt", "coveriates", "detfn", or "Dsurf".')
   }
 }

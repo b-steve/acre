@@ -60,7 +60,7 @@ get_trap = function(fit){
   output = vector('list', n.sessions)
   
   for(s in 1:n.sessions){
-    output[[s]] = as.matrix(subset(df.traps, session == s, select = c('x', 'y')))
+    output[[s]] = as.matrix(subset(df.traps, df.traps$session == s, select = c('x', 'y')))
   }
   
   return(output)
@@ -370,13 +370,13 @@ get_capt_for_boot = function(captures, dims, infotypes, animal.model){
   
   tem_data_head = vector('list', n.sessions)
   for(s in 1:n.sessions){
-    capt_session = subset(captures, session == s)
+    capt_session = subset(captures, captures$session == s)
     if(nrow(capt_session) > 0){
       if(animal.model){
         n.animal = max(capt_session$animal_ID)
         tem = vector('list', n.animal)
         for(a in 1:n.animal){
-          n.ID = max(subset(capt_session, animal_ID == a)$ID)
+          n.ID = max(subset(capt_session, capt_session$animal_ID == a)$ID)
           tem[[a]] = data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]), 
                                 trap = rep(seq(n.traps[s]), n.ID), animal_ID = a)
         }
@@ -411,7 +411,7 @@ get_capt_for_boot = function(captures, dims, infotypes, animal.model){
   if(!animal.model){
     n.IDs = numeric(n.sessions)
     for(s in 1:n.sessions){
-      tem = subset(captures, session == s)
+      tem = subset(captures, captures$session == s)
       if(nrow(tem) > 0) n.IDs[s] = max(tem$ID)
     }
     
@@ -509,7 +509,7 @@ get_capt_for_plot = function(dat){
   }
   
   data.capt = sort.data(data.capt, "data.full")
-  data.capt = subset(data.capt, bincapt == 1)
+  data.capt = subset(data.capt, data.capt$bincapt == 1)
   data.capt = data.capt[, -which(colnames(data.capt) == 'bincapt')]
   
   return(data.capt)
