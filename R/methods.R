@@ -14,6 +14,7 @@
 #'                       
 #' @param pars a character vector containing any parameter names.
 #' @param new_covariates a data frame containing the values of covariates of any extended parameter.
+#' @param ... 
 #'
 #' @return a named numeric vector
 #' @export
@@ -640,7 +641,7 @@ stdEr.acre_boot = function(object, types = NULL, pars = NULL, new_covariates = N
 
 #' S3 method for the output of stdEr.acre_tmb
 #'
-#' @param x 
+#' @param x object with class std_acre_tmb
 #' @param ... 
 #'
 #' @export

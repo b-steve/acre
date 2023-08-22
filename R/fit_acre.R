@@ -395,6 +395,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     parameters[[name.cpp]] = sv.input[[name.r]]
   }
   
+  
   parameters$u = numeric(sum(dims$n.IDs))
   
   #set the "map" argument for fixed parameters

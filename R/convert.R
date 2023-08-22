@@ -1,23 +1,10 @@
 #' Create mask object
 #'
 #' Creates a mask object to use with the function
-#' \code{\link{fit.acre}}.
 #'
-#' @param buffer The minimum distance between trap locations and the
-#'     edge of the generated mask.
-#' @param ... Arguments to be passed to \link{make.mask}.
-#' @inheritParams fit.acre
-#'
-#' @return An object of class \code{mask}. The object has two useful attributes: \code{area} which gives the area of each grid cell in hectares and \code{buffer} which gives the value of \code{buffer} supplied to this function.
-#'
-#' @seealso \link{convert.mask} to convert a mask compatible with the
-#'     \link{secr} package.
-#'
-#' @examples
-#' mask <- create.mask(traps = example.data$traps, buffer = 20)
-#'
-#' # calculate the area of the mask (in hectares)
-#' mask_area <- attr(mask, "area") * nrow(mask)
+#' @param traps a data frame or a list. contains the coordinates of the detectors
+#' @param buffer a scaler, the furthest distance that a detector could detect
+#' @param ... 
 #'
 #' @export
 create.mask <- function(traps, buffer, ...){
@@ -452,7 +439,7 @@ dist_nearest = function(from, to, col_name = 'dist_nearest'){
 #'
 #' @param ss Logical, set to \code{TRUE} if a signal strength
 #'     detection function is to be used.
-#' @inheritParams fit.acre
+#' @param traps a matrix or a data frame, contains one session's detectors' coordinates
 #'
 #' @return An object of class \code{traps} comprising a data frame of
 #'     x- and y-coordinates, the detector type ('single', 'multi',
@@ -464,7 +451,7 @@ dist_nearest = function(from, to, col_name = 'dist_nearest'){
 #'
 #' @export
 convert.traps <- function(traps, ss = FALSE){
-    if (is.list(traps)){
+    if (is(traps, "list")){
         stop("The convert.traps() function will only convert single-session trap objects.")
     }
     n.traps <- nrow(traps)
