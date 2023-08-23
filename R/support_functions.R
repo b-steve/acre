@@ -1238,10 +1238,17 @@ location_cov_to_mask = function(mask, loc_cov, control_nn2 = NULL, control_weigh
   
   if(is(loc_cov, 'data.frame') | is(loc_cov, 'matrix')){
     stopifnot(all(c('x', 'y') %in% colnames(loc_cov)))
-    stopifnot(ncol(loc_cov) > 2)
-    loc_cov = loc_cov[!duplicated(loc_cov[,c('x', 'y')]), ]
+    if("session" %in% colnames(loc_cov)){
+      stopifnot(ncol(loc_cov) > 3)
+      loc_cov = loc_cov[!duplicated(loc_cov[,c('session', 'x', 'y')]), ]
+      name_cov = colnames(loc_cov)[-which(colnames(loc_cov) %in% c('session', 'x', 'y'))]
+    } else {
+      stopifnot(ncol(loc_cov) > 2)
+      loc_cov = loc_cov[!duplicated(loc_cov[,c('x', 'y')]), ]
+      name_cov = colnames(loc_cov)[-which(colnames(loc_cov) %in% c('x', 'y'))]
+    }
+
     n_loc_cov = 1
-    name_cov = colnames(loc_cov)[-which(colnames(loc_cov) %in% c('x', 'y'))]
     #this is the index to indicate which covariate is extracted from which element of loc_cov
     index_name_cov = rep(1, length(name_cov))
     loc_cov = list(loc_cov)
@@ -1252,17 +1259,27 @@ location_cov_to_mask = function(mask, loc_cov, control_nn2 = NULL, control_weigh
     #this is the index to indicate which covariate is extracted from which element of loc_cov
     index_name_cov = vector('list', n_loc_cov)
     for(i in 1:n_loc_cov){
-      stopifnot(all(c('x', 'y') %in% colnames(loc_cov[[i]])))
-      stopifnot(ncol(loc_cov[[i]]) > 2)
-      loc_cov[[i]] = loc_cov[[i]][!duplicated(loc_cov[[i]][,c('x', 'y')]), ]
-      name_cov[[i]] = colnames(loc_cov[[i]])[-which(colnames(loc_cov[[i]]) %in% c('x', 'y'))]
+      tem = loc_cov[[i]]
+      stopifnot(all(c('x', 'y') %in% colnames(tem)))
+      if('session' %in% colnames(tem)){
+        stopifnot(ncol(tem) > 3)
+        tem = tem[!duplicated(tem[,c('session', 'x', 'y')]), ]
+        name_cov[[i]] = colnames(tem)[-which(colnames(tem) %in% c('session', 'x', 'y'))]
+      } else {
+        stopifnot(ncol(tem) > 2)
+        tem = tem[!duplicated(tem[,c('x', 'y')]), ]
+        name_cov[[i]] = colnames(tem)[-which(colnames(tem) %in% c('x', 'y'))]
+      }
       index_name_cov[[i]] = rep(i, length(name_cov[[i]]))
+      loc_cov[[i]] = tem
     }
 
     name_cov = do.call('c', name_cov)
     index_name_cov = do.call('c', index_name_cov)
   }
-
+  
+  
+  
   if(any(duplicated(name_cov))) stop('duplicated covariates found.')
   
 
@@ -1291,6 +1308,11 @@ location_cov_to_mask = function(mask, loc_cov, control_nn2 = NULL, control_weigh
     #each i denote one loc_cov data frame provided, it might contain multiple covariates
     for(i in 1:n_loc_cov){
       tem_cov = loc_cov[[i]]
+      if('session' %in% colnames(tem_cov)){
+        tem_cov = subset(tem_cov, tem_cov$session == s)
+        if(nrow(tem_cov) == 0) stop('session has been provided in loc_cov, please make sure all sessions are included.')
+        tem_cov = tem_cov[,-which(colnames(tem_cov) == 'session')]
+      }
       tem_nn2_par = control_nn2
       tem_nn2_par$k = min(tem_nn2_par$k, nrow(tem_cov))
       tem_nn2_par$data = tem_cov[, c('x', 'y')]
@@ -1371,7 +1393,7 @@ location_cov_to_mask = function(mask, loc_cov, control_nn2 = NULL, control_weigh
     for(j in name_cov){
       #firstly, locate the index of element from where we got this covariate
       i = index_name_cov[which(j == name_cov)]
-      values = loc_cov[[i]][, j]
+      values = tem_cov[, j]
       
       if(is.numeric(values)){
         #generate a matrix with the same dimension as o_nn2[[i]]$nn.idx, and
