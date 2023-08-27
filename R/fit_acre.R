@@ -288,6 +288,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     data.ID_mask = data.ID_mask[order(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$mask, data.ID_mask$ID), ]
   }
   
+  #browser()
   
   data <- list(n_sessions = dims$n.sessions,
                n_animals = dims$n.animals,
@@ -669,6 +670,10 @@ fit.acre = function(dat, par_extend_model = NULL, detfn = NULL, sv = NULL, bound
 #' @param loc_cov a list or a data frame. When a data frame, it must contain columns "x" and "y" and columns
 #'                of covariates, so it is a set of locations with covariates values. When a list, each element
 #'                is a data frame, so it can contains different sets of locations with covariates values.
+#' @param time_loc_cov a list or a data frame. It must contain columns "x", "y" and "time", and columns of covariates
+#'                     related to location but could change over time. When this argument is provided, please also
+#'                     fill in the "time" as a covariate in the argument "session_cov" to help with identifying
+#'                     the time for each session to allocate these covariates.
 #' @param control_convert_loc2mask a list with 3 possible elements to control an embedded function inside
 #'                                 this package to convert the location related data provided by "loc_cov"
 #'                                 to masks level using imputation method. The 3 possible elments are:
@@ -715,14 +720,13 @@ fit.acre = function(dat, par_extend_model = NULL, detfn = NULL, sv = NULL, bound
 #'                          time unit in data is "millisecond", then assign 0.001 here.
 #' @param ...
 #'
- 
 #'
 #' @return
 #' @export
 #'
 #' @examples
 read.acre = function(captures, traps, mask = NULL, 
-                    control_create_mask = list(), control_create_capt = list(), loc_cov = NULL, 
+                    control_create_mask = list(), control_create_capt = list(), loc_cov = NULL, time_loc_cov = NULL,
                     control_convert_loc2mask = list(), session_cov = NULL, trap_cov = NULL, dist_cov = NULL,
                     cue.rates = NULL, survey.length = NULL, sound.speed = 331, unit_convert_dist = 1,
                     unit_convert_time = 1, ...){
@@ -776,7 +780,8 @@ read.acre = function(captures, traps, mask = NULL,
   #set up the data for par.extend
   par.extend = par_extend_create(loc_cov = loc_cov, dist_cov = dist_cov, mask = mask,
                                  control_convert_loc2mask = control_convert_loc2mask,
-                                 session_cov = session_cov, trap_cov = trap_cov)
+                                 session_cov = session_cov, trap_cov = trap_cov,
+                                 time_loc_cov = time_loc_cov)
   
   output$capt = capt
   output$traps = traps
