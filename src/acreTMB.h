@@ -1552,9 +1552,14 @@ Type acreTMB(objective_function<Type>* obj)
             //the initial index in data_IDmask for this id
             index_data_IDmask = lookup_data_IDmask(is_animalID, s, 0, id, 1,
                                                   0, n_IDs, 0, n_masks);
+            if(is_toa == 1){
+              p_toa_ssq = &toa_ssq[index_data_IDmask];  
+            }
             
-            p_toa_ssq = &toa_ssq[index_data_IDmask];
-            p_index_local = &index_local[index_data_IDmask];
+            if(is_local == 1){
+              p_index_local = &index_local[index_data_IDmask];  
+            }
+            
             
             p_sigma_toa_mask = &sigma_toa_vec_mask[index_data_mask];
             p_kappa_mask = &kappa_vec_mask[index_data_mask];
@@ -1769,9 +1774,15 @@ Type acreTMB(objective_function<Type>* obj)
 		  index_data_IDmask = lookup_data_IDmask(is_animalID, s, a, 1, 1,
 			n_animals, n_IDs, n_calls_each_animal, n_masks);
 		
-
-		  p_toa_ssq = &toa_ssq[index_data_IDmask];
-		  p_index_local = &index_local[index_data_IDmask];
+      if(is_toa == 1){
+        p_toa_ssq = &toa_ssq[index_data_IDmask];
+      }
+      
+      if(is_local == 1){
+        p_index_local = &index_local[index_data_IDmask];
+      }
+		  
+		  
 		  
 		  p_sigma_toa_mask = &sigma_toa_vec_mask[index_data_mask];
 		  p_kappa_mask = &kappa_vec_mask[index_data_mask];

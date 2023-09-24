@@ -288,6 +288,17 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     data.ID_mask = data.ID_mask[order(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$mask, data.ID_mask$ID), ]
   }
   
+  if(!any(c('local', 'toa') %in% bucket_info)){
+    data.ID_mask = data.ID_mask[1,, drop = FALSE]
+  } else {
+    if(!'local' %in% bucket_info){
+      data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'local'), drop = FALSE]
+    }
+    if(!"toa" %in% bucket_info){
+      data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'toa_ssq'), drop = FALSE]
+    }
+  }
+  
   #browser()
   
   data <- list(n_sessions = dims$n.sessions,
@@ -396,7 +407,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     parameters[[name.cpp]] = sv.input[[name.r]]
   }
   
-  
+  #browser()
   parameters$u = numeric(sum(dims$n.IDs))
   
   #set the "map" argument for fixed parameters
