@@ -1901,12 +1901,22 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
     
     old_covariates = as.data.frame(mask)
     
-    old_loc_cov = get_loc_cov(fit)
     
-    #when we cannot find loc_cov from the model fitting object, it is possible the D is
-    #not mask-level extended, it is also possible that the model fitting object comes
-    #from simulation_study
-    mask_level_dat_extract = FALSE
+    
+    if(original_mask&is.null(control_convert_loc2mask)&is.null(D_cov)){
+      #when there is no sign of any modification, assign old_loc_cov to NULL to make sure
+      #the function can enter the process to try to obtain mask level data, to avoid re-interpolation
+      old_loc_cov = NULL
+    } else {
+      old_loc_cov = get_loc_cov(fit)
+      #when we cannot find loc_cov from the model fitting object, it is possible the D is
+      #not mask-level extended, it is also possible that the model fitting object comes
+      #from simulation_study
+      mask_level_dat_extract = FALSE
+    }
+    
+    
+
     if(is.null(old_loc_cov)){
       old_loc_cov = get_par_extend_data(fit)$mask
       if(!is.null(old_loc_cov)){
