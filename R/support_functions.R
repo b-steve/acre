@@ -1470,83 +1470,10 @@ par_extend_create = function(loc_cov = NULL, mask = NULL, control_convert_loc2ma
     #for the covariates with area edge, nearest distance to each mask point will be assigned
     #as mask - level covariates. Here calculate the distances and assign to loc_cov, then
     #they will be solved together with other location related covariates.
-    if(!is.null(dist_cov)){
-      if(!is(dist_cov, 'list')) stop('dist_cov must be a named list.')
-      n = length(dist_cov)
-      cov_names = names(dist_cov)
-      if(is.null(cov_names)) stop('dist_cov must be a named list.')
-      
-      if(is.null(loc_cov)){
-        n_loc_cov = 0
-        loc_cov = vector('list', n)
-      } else {
-        if(is(loc_cov, 'data.frame')){
-          loc_cov = list(loc_cov)
-          n_loc_cov = 1
-        } else if(is(loc_cov, 'list')){
-          n_loc_cov = length(loc_cov)
-        } else {
-          stop('invlid input of the argument loc_cov.')
-        }
-      }
-      
-      
-      for(i in 1:n){
-        cov_name = cov_names[i]
-        stopifnot(all(c('x', 'y') %in% colnames(dist_cov[[cov_name]])))
-        
-        tem = dist_nearest(from = do.call('rbind', mask),
-                           to = dist_cov[[cov_name]][, c('x', 'y')], col_name = cov_name)
-        
-        loc_cov[[n_loc_cov + i]] = tem[!duplicated(tem[, c('x', 'y')]),]
-      }
-      
-    }
     
-    
-    if(!is.null(time_loc_cov)){
-      if(is.null(session_cov)) stop('please provide session_cov with column time')
-      if(!all(c("session", "time") %in% colnames(session_cov))) stop('please provide information of session and time.')
-      if(is(time_loc_cov, 'data.frame')) time_loc_cov = list(time_loc_cov)
-      if(!is(time_loc_cov, 'list')) stop('time_loc_cov should be a data frame or a list.')
-      
-      n = length(time_loc_cov)
-      
-      if(is.null(loc_cov)){
-        loc_cov = vector('list', n)
-        n_loc_cov = 0
-      } else {
-        if(is(loc_cov, 'list')){
-          n_loc_cov = length(loc_cov)
-        } else {
-          loc_cov = list(loc_cov)
-          n_loc_cov = 1
-        }
-      }
-      
-      session_time = session_cov[,c('session', 'time'), drop = FALSE]
-      for(i in 1:n){
-        tem = time_loc_cov[[i]]
-        stopifnot(is(tem, 'data.frame'))
-        stopifnot(all(c('time', 'x', 'y') %in% colnames(tem)))
-        stopifnot(nrow(tem) > 3)
-        u_time_from_session = unique(session_time$time)
-        u_time_from_loc_cov = unique(tem$time)
-        
-        if(any(length(u_time_from_loc_cov) != length(u_time_from_session),
-               !all(u_time_from_loc_cov %in% u_time_from_session))){
-          stop('time provided in session_cov and time_loc_cov should match.')
-        }
-        
-        tem = merge(session_time, tem, by = 'time', all = T)
-        
-        tem = tem[,-which(colnames(tem) == 'time'), drop = FALSE]
-        
-        loc_cov[[n_loc_cov + i]] = tem[order(tem$session, tem$x, tem$y), ]
-      }
-      
-      #end of time_loc_cov
-    }
+    loc_cov = convert_dist_cov_to_loc_cov(dist_cov = dist_cov, loc_cov = loc_cov, mask = mask)
+
+    loc_cov = convert_time_loc_cov_to_loc_cov(time_loc_cov = time_loc_cov, loc_cov = loc_cov, session_cov = session_cov)
     
     
     #browser()
@@ -1560,8 +1487,6 @@ par_extend_create = function(loc_cov = NULL, mask = NULL, control_convert_loc2ma
       mask_cov = NULL
     }
 
-
-    
     
     
     par.extend$data = list()
@@ -1572,7 +1497,7 @@ par_extend_create = function(loc_cov = NULL, mask = NULL, control_convert_loc2ma
     par.extend = NULL
   )
   
-  return(par.extend)
+  return(list(output = par.extend, loc_cov = loc_cov))
 }
 
 
@@ -1964,7 +1889,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
     #to trim the plot instead of building "mask"
     stopifnot(any(is(new_data, 'data.frame'), is(new_data, 'matrix')))
     stopifnot(all(c('x', 'y') %in% colnames(new_data)))
-    mask = new_data[, c('x', 'y')]
+    mask = new_data[, c('x', 'y'), drop = FALSE]
   }
   
   
@@ -2392,5 +2317,96 @@ res_mod_for_CI = function(res, est, correct_bias){
 
 erf <- function(x){
   2*pnorm(x*sqrt(2)) - 1
+}
+
+
+convert_dist_cov_to_loc_cov = function(dist_cov, loc_cov, mask){
+
+  
+  if(!is.null(dist_cov)){
+    if(!is(dist_cov, 'list')) stop('dist_cov must be a named list.')
+    n = length(dist_cov)
+    cov_names = names(dist_cov)
+    if(is.null(cov_names)) stop('dist_cov must be a named list.')
+    
+    if(is.null(loc_cov)){
+      n_loc_cov = 0
+      loc_cov = vector('list', n)
+    } else {
+      if(is(loc_cov, 'data.frame')){
+        loc_cov = list(loc_cov)
+        n_loc_cov = 1
+      } else if(is(loc_cov, 'list')){
+        n_loc_cov = length(loc_cov)
+      } else {
+        stop('invlid input of the argument loc_cov.')
+      }
+    }
+    
+    
+    for(i in 1:n){
+      cov_name = cov_names[i]
+      stopifnot(all(c('x', 'y') %in% colnames(dist_cov[[cov_name]])))
+      
+      tem = dist_nearest(from = do.call('rbind', mask),
+                         to = dist_cov[[cov_name]][, c('x', 'y')], col_name = cov_name)
+      
+      loc_cov[[n_loc_cov + i]] = tem[!duplicated(tem[, c('x', 'y')]),]
+    }
+    
+  }
+  
+  return(loc_cov)
+  
+}
+
+convert_time_loc_cov_to_loc_cov = function(time_loc_cov, loc_cov, session_cov){
+  
+  
+  if(!is.null(time_loc_cov)){
+    if(is.null(session_cov)) stop('please provide session_cov with column time')
+    if(!all(c("session", "time") %in% colnames(session_cov))) stop('please provide information of session and time.')
+    if(is(time_loc_cov, 'data.frame')) time_loc_cov = list(time_loc_cov)
+    if(!is(time_loc_cov, 'list')) stop('time_loc_cov should be a data frame or a list.')
+    
+    n = length(time_loc_cov)
+    
+    if(is.null(loc_cov)){
+      loc_cov = vector('list', n)
+      n_loc_cov = 0
+    } else {
+      if(is(loc_cov, 'list')){
+        n_loc_cov = length(loc_cov)
+      } else {
+        loc_cov = list(loc_cov)
+        n_loc_cov = 1
+      }
+    }
+    
+    session_time = session_cov[,c('session', 'time'), drop = FALSE]
+    for(i in 1:n){
+      tem = time_loc_cov[[i]]
+      stopifnot(is(tem, 'data.frame'))
+      stopifnot(all(c('time', 'x', 'y') %in% colnames(tem)))
+      stopifnot(nrow(tem) > 3)
+      u_time_from_session = unique(session_time$time)
+      u_time_from_loc_cov = unique(tem$time)
+      
+      if(any(length(u_time_from_loc_cov) != length(u_time_from_session),
+             !all(u_time_from_loc_cov %in% u_time_from_session))){
+        stop('time provided in session_cov and time_loc_cov should match.')
+      }
+      
+      tem = merge(session_time, tem, by = 'time', all = T)
+      
+      tem = tem[,-which(colnames(tem) == 'time'), drop = FALSE]
+      
+      loc_cov[[n_loc_cov + i]] = tem[order(tem$session, tem$x, tem$y), ]
+    }
+    
+    #end of time_loc_cov
+  }
+  
+  return(loc_cov)
 }
 

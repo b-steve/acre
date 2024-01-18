@@ -789,11 +789,14 @@ read.acre = function(captures, traps, mask = NULL,
 
 
   #set up the data for par.extend
-  par.extend = par_extend_create(loc_cov = loc_cov, dist_cov = dist_cov, mask = mask,
+  tem = par_extend_create(loc_cov = loc_cov, dist_cov = dist_cov, mask = mask,
                                  control_convert_loc2mask = control_convert_loc2mask,
                                  session_cov = session_cov, trap_cov = trap_cov,
                                  time_loc_cov = time_loc_cov)
   
+  par.extend = tem$output
+  arg.input$loc_cov = tem$loc_cov
+   
   output$capt = capt
   output$traps = traps
   output$mask = mask
