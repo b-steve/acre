@@ -1,9 +1,12 @@
 #' Create mask object
 #'
-#' Creates a mask object to use with the function
+#' Creates a mask object to use with the function read.acre
 #'
-#' @param traps a data frame or a list. contains the coordinates of the detectors
-#' @param buffer a scaler, the furthest distance that a detector could detect
+#' @param traps a matrix or a data frame with two columns or a list of such matrices or data frames for a multi-session model.
+#'              Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
+#'              In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
+#'              If the detector locations stayed the same across several sessions, only one matrix/data frame is required.
+#' @param buffer a scalar, the furthest distance that a detector could detect (in metres)
 #' @param ...
 #'
 #' @export
@@ -32,20 +35,39 @@ create.mask <- function(traps, buffer, ...){
 }
 
 
-#' Title
+#' Create captures object
 #'
-#' @param captures a list or a data frame with at least 4 columns. The column 1, 2, 4 will be fixed as "session", "ID" and "trap",
-#'                 each row will be regarded as one detection. Extra information could be provided as columns "bearing", "dist"
-#'                 ,"ss", "toa", "occasion". And "animal_ID" could be provided if individuals could be distinguished from their acoustic detection.
-#'                 In addition, any individuals from different sessions will be treated as independent ones. The defualt unit for any
-#'                 distance related value should be 'meter', and for time related value should be 'seconds'.
-#' @param traps a list or a matrix or a data frame. If it is a data frame or a matrix, it should contains only two columns with the
-#'              Cartesian coordinates of the traps. If it is a list, its length will be treated as the number of sessions, and each
-#'              element is a data frame or a matrix contains the Cartesian coordinates of the traps in the corresponding session.
-#'              If it is a list with only one element, or a data frame, or a matrix, the number of session will be determined
-#'              by the argument "n.sessions" or max(captures$session) if "n.sessions" is not provided. This setting is prepared
-#'              for the scenario that the survey is conducted with the same detectors for multiple sessions. The unit of the
-#'              coordinates should be 'meter' by default.
+#' Create a captures object to use with the function read.acre
+#'
+#' @section Captures argument
+#' The `captures` argument will be passed to the function `create.capt`. The main arguments provided are the session, the
+#' identification number of the detected animal or sound, and the identification number of the trap which made the detection
+#' (where the identification number is the row number of the corresponding trap in the matrix of trap locations. These columns
+#' must be exactly labelled "session", "ID" and "trap" respectively.
+#'
+#' Additional columns can specify the auxiliary information collected over the course of the survey:
+#'
+#' \itemize{
+#'  \item A column named `bearing`, containing estimated bearings (in radians) from the detector to each detected animal or sound.
+#'
+#'  \item A column named `dist`, containing the estimated distance between the detected animal or sound.
+#'
+#'  \item A column named `ss` containing the measured signal strengh of the detected sound.
+#'
+#'  \item A column named `toa` containing the measured time of arrival (in seconds) since the start of the survey (or some other
+#' reference time) of the detected sound (only possible when the detectors are microphones).
+#'
+#'  \item A column named `animal_ID` containing the identification number of animals can be provided if individuals could be distinguished by
+#'  their acoustic detection.
+#'  }
+#'
+#' @param captures a data frame with capture data. Columns named "session", "ID" and "trap" are required, with
+#'                 each row being regarded as one detection. Extra information can be provided as columns "bearing", "dist"
+#'                 ,"ss", "toa", "animal_ID". See 'Captures argument'.
+#' @param traps a matrix or a data frame with two columns or a list of such matrices or data frames for a multi-session model.
+#'              Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
+#'              In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
+#'              If the detector locations stayed the same across all sessions, only one matrix/data frame is required.
 #' @param ind_model a logical value indicates whether to include individual identification which should be recorded as "animal_ID",
 #'                  a column in the argument "captures". By default, it will be NULL, so the model will determine it automatically
 #'                  depend on whether this information is provided in "captures".
