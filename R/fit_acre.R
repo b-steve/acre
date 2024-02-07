@@ -569,14 +569,15 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 #' @param control_create_mask a list. If it is provided, and the argument "mask" is not provided, it will be used together
 #'                            with "traps" in the "dat" to expend masks. Elements should be corresponding the arguments of
 #'                            the function "create.mask()".
-#' @param detfn a string indicating the detection function. Currently, 'hn', 'hhn', 'hr', 'th', 'lth', 'ss'
-#'              are supported.
-#' @param sv a list. Each element should be a named element with the name of the parameter and the
-#'           start value of it.
-#' @param bounds a list. Each element should be a named element with the name of the parameter and the
-#'               range of it. The range is expressed by a vector with two numbers: (lower limit, upper limit).
-#' @param fix a list. Each element should be a named element with the name of the parameter and the
-#'            fixed value of it. If a parameter is fixed, it will not be estimated by the model.
+#' @param detfn  character string specifying the detection function to be used. One of "hn" (halfnormal),
+#'                "hhn" (hazard halfnormal), "hr" (hazard rate), "th" (threshold), "lth" (log-link threshold), or "ss" (signal strength).
+#'                If the latter is used, signal strength information must be provided in capt.
+#' @param sv a named list of parameter start values. Element names are parameter names, and each element is a start value for the associated parameter.
+#'            See 'Details' for further information on the parameters to be fitted.
+#' @param bounds A named list of parameter bounds. Element names are parameter names, and each element is a vector of length two, specifying the upper and
+#'              lower bounds for the associated parameter.
+#' @param fix a named list of fixed parameter values. Element names are parameter names to be fixed, and each element is the fixed value for the associated parameter.
+#'            If a parameter is fixed, it will not be estimated by the model.
 #' @param ss.opts a list. It could contain 3 elements related to signal strength model.
 #'                cutoff - the threshold of signal strength could be detected,
 #'                         must be included if signal strength is provided.
@@ -720,10 +721,10 @@ fit.acre = function(dat, par_extend_model = NULL, detfn = NULL, sv = NULL, bound
 #'                     the time for each session to allocate these covariates.
 #' @param control_convert_loc2mask a list with 3 possible elements to control an embedded function inside
 #'                                 this package to convert the location related data provided by "loc_cov"
-#'                                 to masks level using imputation method. The 3 possible elments are:
+#'                                 to masks level using imputation method. The 3 possible elements are:
 #'                                 control_nn2, control_weight and control_char.
 #'                                 =======================================================================
-#'                                 control_nn2: a list contains the arugments for the function RANN::nn2(),
+#'                                 control_nn2: a list contains the arguments for the function RANN::nn2(),
 #'                                 please refer to the help document in that package for further details;
 #'                                 control_weight: a list contains 3 elements control the weighted method.
 #'                                 The function RANN:nn2() gives us a M * k matrix, where M is the number
