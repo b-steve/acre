@@ -269,7 +269,7 @@ plot.acre_data <- function(x, ...){
   
   
   
-  if(is.null(types)) stop('please specify the argument "types".')
+  if(is.null(types)) stop('argument "type" is missing, with no default')
   n.sessions = length(x$traps)
   stopifnot(types %in% c('survey', 'capt', 'covariates'))
   ################################################################################################
