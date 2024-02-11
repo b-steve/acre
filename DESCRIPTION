@@ -27,7 +27,8 @@ Imports:
     Rcpp,
     RANN,
     ggplot2,
-    gganimate
+    gganimate,
+    methods
 Suggests:
     knitr,
     xtable
