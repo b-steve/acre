@@ -269,9 +269,9 @@ plot.acre_data <- function(x, ...){
   
   
   
-  if(is.null(types)) stop('argument "type" is missing, with no default')
+  if(is.null(types)) stop('argument "types" is needed, which should be either "survey", "capt" or "covariates".')
   n.sessions = length(x$traps)
-  stopifnot(types %in% c('survey', 'capt', 'covariates'))
+  if(!(types %in% c('survey', 'capt', 'covariates'))) stop('invalid input for "types", which should be either "survey", "capt" or "covariates".')
   ################################################################################################
   if(types == 'survey'){
     if(is.null(session)){
@@ -743,7 +743,7 @@ plot.acre_tmb = function(x, ...){
   types = extra_args$types
   
   if(is.null(types)){
-    stop('argument "types" is needed, which should be either "survey", "capt", "coveriates", "detfn", or "Dsurf".')
+    stop('argument "types" is needed, which should be either "survey", "capt", "covariates", "detfn", or "Dsurf".')
   }
   
   if(types %in% c('survey', 'capt', 'covariates')){
@@ -759,6 +759,6 @@ plot.acre_tmb = function(x, ...){
     do.call('show_Dsurf', args_pass)
     
   } else {
-    stop('invalid input for "types", which should be either "survey", "capt", "coveriates", "detfn", or "Dsurf".')
+    stop('invalid input for "types", which should be either "survey", "capt", "covariates", "detfn", or "Dsurf".')
   }
 }
