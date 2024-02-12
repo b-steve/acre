@@ -40,7 +40,7 @@ Description: This package provides functions to fit spatial
     signal strengths, times of arrival, estimated bearings, and
     estimated distances. The acre package fits a class of SCR model
     that allows use of such information.
-License: GPL + file LICENSE
+License: GPL
 URL: https://github.com/b-steve/acre
 Encoding: UTF-8
 LazyData: true
