@@ -20,16 +20,17 @@ Imports:
     utils,
     viridis,
     TMB,
-    RcppEigen,
-    Rcpp,
     RANN,
     ggplot2,
     gganimate,
-    methods
+    methods,
+    stringr
 Suggests:
     knitr,
     xtable,
-    testthat
+    testthat,
+    RcppEigen,
+    Rcpp
 LinkingTo: Rcpp, TMB, RcppEigen
 VignetteBuilder: knitr
 Description: This package provides functions to fit spatial
