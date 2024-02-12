@@ -118,7 +118,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   #we didn't modify the 'animal_ID' and 'ID' to successive natural number because in 'animal_ID' level
   #extend covariates data, the user may want to assign some covariates to each 'animal_ID', so we must keep
   #it as original input, but after dealing with 'par.extend', there is no interaction with users about
-  #'animal_ID' or 'ID', so we modify them to make sure design matrices are in right order
+  # 'animal_ID' or 'ID', so we modify them to make sure design matrices are in right order
 
   #(additional notes in 09/09/2022: we may not include animal_ID level covariates, there are quite a few reasons,
   #for example, if we add it, the simulation will not work as animal_ID is an item to be simulated, the output
@@ -126,7 +126,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   #no need to change this part.)
 
   #in the 'convert_natural_number()', the key component is as.numeric(as.factor(xxx)). Both 'data.full' and
-  #'data.ID_mask' contains the same combination of 'animal_ID' and 'ID', but they may be in different order,
+  # 'data.ID_mask' contains the same combination of 'animal_ID' and 'ID', but they may be in different order,
   #to make sure as.numeric(as.factor(xxx)) output the same numeric value to the same 'animal_ID' or 'ID',
   #sort these two data set first, so they will have the same content and the same order, there should be no
   #possibility result in different output
