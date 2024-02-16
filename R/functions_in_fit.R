@@ -787,139 +787,26 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
 ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_info, sv, fix){
   cutoff <- ss.opts[["cutoff"]]
   ss.link <- ss.opts[["ss.link"]]
-  directional <- ss.opts[["directional"]]
-  het.source <- ss.opts[["het.source"]]
-  het.source.method <- ss.opts[["het.source.method"]]
-  n.dir.quadpoints <- ss.opts[["n.dir.quadpoints"]]
-  n.het.source.quadpoints <- ss.opts[["n.het.source.quadpoints"]]
-  
+  # directional <- ss.opts[["directional"]]
+  # het.source <- ss.opts[["het.source"]]
+  # het.source.method <- ss.opts[["het.source.method"]]
+  # n.dir.quadpoints <- ss.opts[["n.dir.quadpoints"]]
+  # n.het.source.quadpoints <- ss.opts[["n.het.source.quadpoints"]]
+  # 
   
   if("ss" %in% bucket_info){
     if(is.null(ss.opts)) stop("Argument 'ss.opts' is missing.")
     if(is.null(cutoff)) stop("The 'cutoff' component of 'ss.opts' must be specified.")
     ## Warning for unexpected component names.
-    if (!all(names(ss.opts) %in% c("cutoff", "het.source", "het.source.method",
-                                   "n.het.source.quadpoints", "directional",
-                                   "n.dir.quadpoints", "ss.link"))){
-      warning("Components of 'ss.opts' may only consist of \"cutoff\", \"het.source\",
-            \"het.source.method\", \"n.het.source.quadpoints\", \"directional\",
-            \"n.dir.quadpoints\", \"ss.link\";
+    if (!all(names(ss.opts) %in% c("cutoff", "ss.link"))){
+      warning("Components of 'ss.opts' may only consist of \"cutoff\", \"ss.link\";
             others are being ignored.")
     }
     
-    ## Setting default values for het.source and directional, ss.link.
-    
-    ## By default, directional calling model is only used if b2.ss appears in sv or fix.
-    if (is.null(directional)){
-      if (is.null(sv$b2.ss) & is.null(fix$b2.ss)){
-        directional <- FALSE
-      } else {
-        directional <- TRUE
-      }
-    }
-    
-    #make detailed and final judgment about ss.dir, and settle some basic settings
-    if (!directional){
-      if (!is.null(sv$b2.ss) | !is.null(fix$b2.ss)){
-        warning("Since the 'directional' component of 'ss.opts' is FALSE,
-        the values of parameter b2.ss in 'sv' and 'fix' are being ignored")
-      }
-      n.dir.quadpoints = NULL
-    } else {
-      if(!is.null(fix$b2.ss)){
-        if(fix$b2.ss != 0) {
-          bucket_info = c(bucket_info, "ss.dir")
-        } else {
-          warning("'fix$b2.ss' is zero,
-                  all corresponding parameters of 'directional' are ignored")
-          directional = FALSE
-          n.dir.quadpoints = NULL
-        }
-      } else {
-        bucket_info = c(bucket_info, "ss.dir")
-      }
-    }
-    
-    #after settling down all basic info of ss.dir, set default n.dir.quadpoints
-    if (directional){
-      if (is.null(n.dir.quadpoints)){
-        n.dir.quadpoints <- 8
-      }
-    } else {
-      n.dir.quadpoints <- 1
-    }
-    
-    ## By default, heterogeneity source strength model is only
-    ## used if sigma.b0.ss appears in sv or fix, or het.source.method is specified
-    if (is.null(het.source)){
-      if (all(is.null(sv$sigma.b0.ss),
-              is.null(fix$sigma.b0.ss),
-              is.null(het.source.method))){
-        het.source <- FALSE
-      } else {
-        het.source <- TRUE
-      }
-    }
-    
-    #make detailed and final judgment about ss.het, and settle some basic settings
-    if (het.source){
-      if (is.null(het.source.method)){
-        het.source.method <- "GH"
-      } else {
-        if(het.source.method %in% c("GH", "rect")) stop(paste0("Only 'GH' and 'rect' are ",
-                                                               "supported as het.source.method."))
-      }
-      if(!is.null(fix$sigma.b0.ss)){
-        if(fix$sigma.b0.ss != 0) {
-          bucket_info = c(bucket_info, "ss.het")
-        } else {
-          warning("'fix$sigma.b0.ss' is zero,
-                  all corresponding parameters of 'het.source' are ignored")
-          het.source = FALSE
-          het.source.method = NULL
-          n.het.source.quadpoints = NULL
-        }
-      } else {
-        bucket_info = c(bucket_info, "ss.het")
-      }
-    } else {
-      ## Fixing sigma.b0.ss to 0 if a heterogeneous source
-      ## strength model is not being used.
-      if (!is.null(sv$sigma.b0.ss) | !is.null(fix$sigma.b0.ss)){
-        warning("As the 'het.source' component of 'ss.opts' is FALSE,
-        the values of the parameter sigma.b0.ss in 'sv' and 'fix' are being ignored")
-      }
-      het.source.method = NULL
-      n.het.source.quadpoints = NULL
-    }
-    
-    #after settling down basic settings, assign default value to n.het...
-    if(het.source){
-      if(is.null(n.het.source.quadpoints)){
-        n.het.source.quadpoints <- 15
-      }
-    } else {
-      n.het.source.quadpoints <- 1
-    }
-    
-    
-    het.source.nodes <- 0
-    het.source.weights <- 0
-    if(het.source){
-      if(het.source.method == "GH"){
-        GHd <- fastGHQuad::gaussHermiteData(n.het.source.quadpoints)
-        het.source.nodes <- GHd$x
-        het.source.weights <- GHd$w
-      }
-    }
-    
-    
-    
-    
-    #simple check and simple argument adjustment
-    if(all(c("ss.dir", "ss.het") %in% bucket_info)){
-      stop("Fitting of models with both heterogeneity in source signal strength
-       and directional calling is not yet implemented.")
+    # Warning for heterogeneity and directional calling models
+    if(any(c("ss.dir", "ss.het") %in% bucket_info)){
+      stop("Fitting of models with either heterogeneity in source signal strength
+       or directional calling is not yet implemented.")
     }
     
     #set default for ss.link
@@ -929,21 +816,7 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
       stop("Component 'ss.link' in 'ss.opts' must be \"identity\", \"log\", or \"spherical\".")
     }
     
-    ## Error thrown for model with heterogeneity in source strength and a log-link function.
-    if ("ss.het" %in% bucket_info){
-      if (ss.link != "identity"){
-        stop("Fitting of signal strength models with heterogeneity in source
-         signal strength is only implemented with an identity link function.")
-      }
-    }
-    
-    if('ss.dir' %in% bucket_info){
-      if(!('toa' %in% bucket_info)){
-        stop('"toa" is required for directional signal strength model.')
-      }
-    }
-    
-    
+
     
     data.ss = subset(data.full, !is.na(data.full$ID))
     data.no.det.session = subset(data.full, is.na(data.full$ID))
@@ -1005,14 +878,8 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
     }
     
     #modified ss.opts, contains much condensed and regular information
-    ss.opts = list(het.source.method = het.source.method,
-                   n.dir.quadpoints = n.dir.quadpoints,
-                   n.het.source.quadpoints = n.het.source.quadpoints,
-                   het.source.nodes = het.source.nodes,
-                   het.source.weights = het.source.weights,
-                   ss.link = ss.link,
+    ss.opts = list(ss.link = ss.link,
                    cutoff = cutoff)
-    
     
   } else {
     if (!is.null(ss.opts)){
@@ -1035,9 +902,7 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
                      "'sv' or 'fix' will be ignored"))
     }
   }
-  
-  
-  
+
   return(list(data.full = data.full, dims = dims, data.ID_mask = data.ID_mask,
               ss.opts = ss.opts, bucket_info = bucket_info))
 }
@@ -1114,13 +979,7 @@ param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn
     #to be restored as original at very end of 'fit' function
     #ss_het only support ss.link == 'identity', but this has been checked in ss.fun
     if("ss" %in% bucket_info){
-      if("ss.het" %in% bucket_info){
-        detfn = 'ss_het'
-      } else if("ss.dir" %in% bucket_info){
-        detfn = 'ss_dir'
-      } else {
-        detfn = 'ss'
-      }
+      detfn = 'ss'
     } else {
       detfn = "hn"
     }
@@ -1129,14 +988,8 @@ param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn
       if(detfn != 'ss'){
         warning('signal strenth is provided, therefore the specified "detfn" is ignored')
       }
-      
-      if("ss.het" %in% bucket_info){
-        detfn = 'ss_het'
-      } else if("ss.dir" %in% bucket_info){
-        detfn = 'ss_dir'
-      } else {
-        detfn = 'ss'
-      }
+      detfn = 'ss'
+
       
     } else {
       if(detfn == 'ss'){
@@ -1202,7 +1055,7 @@ param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn
       design.matrices.mask[[i]] = matrix(0, ncol = 2, nrow = 2)
     }
     
-    #because intercept is in "data.full", so this design matrix always has someting
+    #because intercept is in "data.full", so this design matrix always has something
     design.matrices.full[[i]] = as.matrix(data.full[, which(clean.names.full == i), drop = FALSE])
     
     if(i %in% param.og){
