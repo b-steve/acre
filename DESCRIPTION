@@ -12,7 +12,6 @@ Depends:
     testthat
 Imports:
     CircStats,
-    fastGHQuad,
     fields,
     mgcv,
     parallel,
