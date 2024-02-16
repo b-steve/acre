@@ -165,9 +165,7 @@ mask.fun = function(mask, dims, animal.model, data.traps, data.full, bucket_info
     
     mask[[i]] <- as.matrix(mask[[i]])
     dists[[i]] <- distances(as.matrix(traps), mask[[i]])
-    #based on the main procedure, at this stage, we don't know whether it is "ss.dir",
-    #since it should be determined at later stage when deal with "ss"
-    #so we generate bearings anyway.
+
     thetas[[i]] = bearings(as.matrix(traps), mask[[i]])
     
     data.dists.thetas[[i]] = data.frame(session = rep(i, n.masks[i] * n.traps[i]),
@@ -787,13 +785,7 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
 ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_info, sv, fix){
   cutoff <- ss.opts[["cutoff"]]
   ss.link <- ss.opts[["ss.link"]]
-  # directional <- ss.opts[["directional"]]
-  # het.source <- ss.opts[["het.source"]]
-  # het.source.method <- ss.opts[["het.source.method"]]
-  # n.dir.quadpoints <- ss.opts[["n.dir.quadpoints"]]
-  # n.het.source.quadpoints <- ss.opts[["n.het.source.quadpoints"]]
-  # 
-  
+
   if("ss" %in% bucket_info){
     if(is.null(ss.opts)) stop("Argument 'ss.opts' is missing.")
     if(is.null(cutoff)) stop("The 'cutoff' component of 'ss.opts' must be specified.")
@@ -977,7 +969,6 @@ param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn
   if(is.null(detfn)){
     #the detfn in 'ss' is a little different from original, may be needed
     #to be restored as original at very end of 'fit' function
-    #ss_het only support ss.link == 'identity', but this has been checked in ss.fun
     if("ss" %in% bucket_info){
       detfn = 'ss'
     } else {
