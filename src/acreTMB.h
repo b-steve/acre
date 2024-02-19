@@ -463,6 +463,7 @@ Type essx_ss_spherical(const Type &dx, const vector<Type> &param){
 }
 
 //ss_dir
+//currently not in use
 template<class Type>
 Type essx_ss_dir_identical(const Type &dx, const vector<Type> &param){
   Type b0_ss = param(0);
@@ -499,6 +500,7 @@ Type essx_ss_dir_spherical(const Type &dx, const vector<Type> &param){
 }
 
 //ss_het
+//currently not in use
 template<class Type>
 Type essx_ss_het(const Type &dx, const vector<Type> &param){
   Type b0_ss = param(0);
@@ -542,11 +544,6 @@ Type acreTMB(objective_function<Type>* obj)
   DATA_SCALAR(sound_speed);
   DATA_SCALAR(cue_rates);
   
-  DATA_INTEGER(het_method);
-  DATA_INTEGER(n_dir_quadpoints);
-  DATA_INTEGER(n_het_source_quadpoints);
-  DATA_VECTOR(het_source_nodes);
-  DATA_VECTOR(het_source_weights);
   DATA_SCALAR(cutoff);
   
   
@@ -560,8 +557,6 @@ Type acreTMB(objective_function<Type>* obj)
   DATA_INTEGER(is_animalID);
   DATA_INTEGER(is_ss);
   DATA_INTEGER(is_ss_origin);
-  DATA_INTEGER(is_ss_het);
-  DATA_INTEGER(is_ss_dir);
   DATA_INTEGER(is_bearing);
   DATA_INTEGER(is_toa);
   DATA_INTEGER(is_dist);
@@ -674,18 +669,6 @@ Type acreTMB(objective_function<Type>* obj)
       detfn = essx_ss_spherical;
     }
     n_detfn_param = 2;
-  } else if(detfn_index == 7){
-    if(ss_link == 1){
-      detfn = essx_ss_dir_identical;
-    } else if(ss_link == 2){
-      detfn = essx_ss_dir_log;
-    } else if(ss_link == 4){
-      detfn = essx_ss_dir_spherical;
-    }
-    n_detfn_param = 4;
-  } else if(detfn_index == 8){
-    detfn = essx_ss_het;
-    n_detfn_param = 3;
   }
   //define the parameter vector which will be used later
   vector<Type> detfn_param(n_detfn_param);
@@ -1380,27 +1363,7 @@ Type acreTMB(objective_function<Type>* obj)
           detfn_param(0) = b0_ss_tem;
           detfn_param(1) = b1_ss_tem;
           
-        } else if(detfn_index == 7){
-          *p_b0_ss_tem = *p_b0_ss_full + *p_b0_ss_mask;
-          trans(p_b0_ss_tem, par_link(8));
-          *p_b1_ss_tem = *p_b1_ss_full + *p_b1_ss_mask;
-          trans(p_b1_ss_tem, par_link(9));
-          *p_b2_ss_tem = *p_b2_ss_full + *p_b2_ss_mask;
-          trans(p_b2_ss_tem, par_link(10));
-          
-          p_b0_ss_full++;
-          p_b1_ss_full++;
-          p_b2_ss_full++;
-          
-          
-          detfn_param(0) = b0_ss_tem;
-          detfn_param(1) = b1_ss_tem;
-          detfn_param(2) = b2_ss_tem;
-          detfn_param(3) = *p_theta;
-          
-          p_theta++;
         } 
-        //het is detfn_index == 8, not sure how to do it yet
         
         
         
@@ -1497,7 +1460,7 @@ Type acreTMB(objective_function<Type>* obj)
                 if(is_ss == 0){
                   fw(m - 1) *= pow(p_k(m - 1, t - 1), capt_bin_uid(index_data_uid)) * 
                     pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin_uid(index_data_uid)));
-                } else if(is_ss_het == 0){
+                } else {
                   //pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
                   fw(m - 1) *= pow((1 - p_k(m - 1, t - 1)), (1 -capt_bin_uid(index_data_uid)));
                 }
@@ -1520,7 +1483,7 @@ Type acreTMB(objective_function<Type>* obj)
                   if(is_ss == 0){
                     fw(m - 1) *= pow(p_k(m - 1, t - 1), capt_bin_uid(index_data_uid)) * 
                       pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin_uid(index_data_uid)));
-                  } else if(is_ss_het == 0){
+                  } else {
                     //pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
                     fw(m - 1) *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin_uid(index_data_uid)));
                   }
@@ -1800,7 +1763,7 @@ Type acreTMB(objective_function<Type>* obj)
 				  if(is_ss == 0){
 					l_w *= pow(p_k(m - 1, t - 1), capt_bin[index_data_full]) *
 					  pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
-				  } else if(is_ss_het == 0){
+				  } else {
 					//pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
 					l_w *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
 				  }
@@ -1941,7 +1904,7 @@ Type acreTMB(objective_function<Type>* obj)
 					if(is_ss == 0){
 					  l_w *= pow(p_k(m - 1, t - 1), capt_bin[index_data_full]) *
 						pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
-					} else if(is_ss_het == 0){
+					} else {
 					  //pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
 					  l_w *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
 					}
