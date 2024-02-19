@@ -263,16 +263,8 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
 
   if(is.null(ss.opts)){
-    n_dir_quadpoints = 0
-    n_het_source_quadpoints = 0
-    het_source_nodes = 0
-    het_source_weights = 0
     cutoff = 0
   } else {
-    n_dir_quadpoints = ss.opts$n.dir.quadpoints
-    n_het_source_quadpoints = ss.opts$n.het.source.quadpoints
-    het_source_nodes = ss.opts$het.source.nodes
-    het_source_weights = ss.opts$het.source.weights
     cutoff = ss.opts$cutoff
   }
 
@@ -328,17 +320,10 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                sound_speed = sound.speed,
                cue_rates = mean.cue.rates,
 
-               #code of het_method:
-               #1:NULL, 2:GH, 3:rect
-               het_method = numeric_het_method(ss.opts$het.source.method),
-               n_dir_quadpoints = n_dir_quadpoints,
-               n_het_source_quadpoints = n_het_source_quadpoints,
-               het_source_nodes = het_source_nodes,
-               het_source_weights = het_source_weights,
+            
                cutoff = cutoff,
                #code of detfn_index:
-               #1:hn, 2:hhn, 3:hr, 4:th, 5:lth, 6:ss, 7:ss_dir, 8:ss_het
-               #temporarily ss_dir and ss_het are not supported
+               #1:hn, 2:hhn, 3:hr, 4:th, 5:lth, 6:ss
                detfn_index = numeric_detfn(detfn),
 
 
@@ -359,11 +344,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
                is_animalID = as.numeric(animal.model),
                is_ss = as.numeric("ss" %in% bucket_info),
-               is_ss_origin = as.numeric(all("ss" %in% bucket_info,
-                                             !"ss.het" %in% bucket_info,
-                                             !"ss.dir" %in% bucket_info)),
-               is_ss_het = as.numeric("ss.het" %in% bucket_info),
-               is_ss_dir = as.numeric("ss.dir" %in% bucket_info),
+               is_ss_origin = as.numeric("ss" %in% bucket_info),
                is_bearing = as.numeric("bearing" %in% bucket_info),
                is_toa = as.numeric("toa" %in% bucket_info),
                is_dist = as.numeric("dist" %in% bucket_info),
@@ -421,9 +402,9 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   #in case there is any duplication, delete them
   name.fixed.par.4cpp = unique(name.fixed.par.4cpp)
 
-  if(!("ss.het" %in% bucket_info)){
-    name.fixed.par.4cpp = c(name.fixed.par.4cpp, "u")
-  }
+
+  name.fixed.par.4cpp = c(name.fixed.par.4cpp, "u")
+
 
   map = vector('list', length(name.fixed.par.4cpp))
   names(map) = name.fixed.par.4cpp
@@ -436,21 +417,12 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
   #browser()
   if(!gr_skip){
-    if(!("ss.het" %in% bucket_info)){
-      obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acre")
-    } else {
-      obj <- TMB::MakeADFun(data = data, parameters = parameters, random = "u", map = map, slient = (!tracing), DLL="acre")
-    }
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acre")
     obj$hessian <- TRUE
     opt = stats::nlminb(obj$par, obj$fn, obj$gr)
     o = TMB::sdreport(obj)
   } else {
-
-    if(!("ss.het" %in% bucket_info)){
-      obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acre", type = 'Fun')
-    } else {
-      obj <- TMB::MakeADFun(data = data, parameters = parameters, random = "u", map = map, slient = (!tracing), DLL="acre", type = 'Fun')
-    }
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acre", type = 'Fun')
 
     par_name_fitted = param.og.4cpp[which(!param.og.4cpp %in% name.fixed.par.4cpp)]
     #the name of this ini_par_val is not right, do it later
@@ -746,9 +718,7 @@ read.acre = function(captures, traps, mask = NULL,
   arg.input <- vector('list', length(arg.names))
   names(arg.input) <- arg.names
   for(i in arg.names) {
-    if(!is.null(get(i))){
-      arg.input[[i]] = get(i)
-    }
+    arg.input[[i]] = get(i)
   }
 
 
