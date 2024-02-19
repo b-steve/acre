@@ -256,7 +256,7 @@ show_Dsurf <- function(fit, session = NULL, show.cv = FALSE, new_data = NULL, D_
 plot.acre_data <- function(x, ...){
   
   extra_args = list(...)
-  types = extra_args$types
+  type = extra_args$type
   session = extra_args$session
   anime = extra_args$anime
   if(is.null(anime)) anime = FALSE
@@ -269,11 +269,11 @@ plot.acre_data <- function(x, ...){
   
   
   
-  if(is.null(types)) stop('argument "types" is needed, which should be either "survey", "capt" or "covariates".')
+  if(is.null(type)) stop('argument "type" is needed, which should be either "survey", "capt" or "covariates".')
   n.sessions = length(x$traps)
-  if(!(types %in% c('survey', 'capt', 'covariates'))) stop('invalid input for "types", which should be either "survey", "capt" or "covariates".')
+  if(!(type %in% c('survey', 'capt', 'covariates'))) stop('invalid input for "type", which should be either "survey", "capt" or "covariates".')
   ################################################################################################
-  if(types == 'survey'){
+  if(type == 'survey'){
     if(is.null(session)){
       session = 1
     }
@@ -295,14 +295,14 @@ plot.acre_data <- function(x, ...){
   
   
   ################################################################################################
-  if(types == 'capt'){
+  if(type == 'capt'){
     #when session is not assigned, plot all capture history by default
     if(is.null(session)) session = 0
     
     stopifnot(session <= n.sessions)
     
     
-    #in this "types", argument cex (cex_det) is used to control the traps' symbol
+    #in this "type", argument cex (cex_det) is used to control the traps' symbol
     #and the cex of the circle used to show the activated traps (cex_capt) should be always cex_det + 2
     #in order to cover the symbol of detectors
     if(is.null(extra_args$cex)){
@@ -625,13 +625,13 @@ plot.acre_data <- function(x, ...){
       #end of non-anime plot
     }
   
-  #end of types "capt"
+  #end of type "capt"
   }
   
 
   ################################################################################################
 
-  if(types == 'covariates'){
+  if(type == 'covariates'){
     if(is.null(session)){
       session = 1
     }
@@ -722,7 +722,7 @@ plot.acre_data <- function(x, ...){
         
       }
     }
-    #end of types == 'covariates'
+    #end of type == 'covariates'
   }
   
     
@@ -740,25 +740,25 @@ plot.acre_data <- function(x, ...){
 #' @examples
 plot.acre_tmb = function(x, ...){
   extra_args = list(...)
-  types = extra_args$types
+  type = extra_args$type
   
-  if(is.null(types)){
-    stop('argument "types" is needed, which should be either "survey", "capt", "covariates", "detfn", or "Dsurf".')
+  if(is.null(type)){
+    stop('argument "type" is needed, which should be either "survey", "capt", "covariates", "detfn", or "Dsurf".')
   }
   
-  if(types %in% c('survey', 'capt', 'covariates')){
+  if(type %in% c('survey', 'capt', 'covariates')){
     plot.acre_data(x = x$args, ...)
-  } else if(types == 'detfn'){
+  } else if(type == 'detfn'){
     args_pass = list(fit = x, ...)
-    args_pass$types = NULL
+    args_pass$type = NULL
     do.call('show_detfn', args_pass)
     
-  } else if(types == 'Dsurf'){
+  } else if(type == 'Dsurf'){
     args_pass = list(fit = x, ...)
-    args_pass$types = NULL
+    args_pass$type = NULL
     do.call('show_Dsurf', args_pass)
     
   } else {
-    stop('invalid input for "types", which should be either "survey", "capt", "covariates", "detfn", or "Dsurf".')
+    stop('invalid input for "type", which should be either "survey", "capt", "covariates", "detfn", or "Dsurf".')
   }
 }
