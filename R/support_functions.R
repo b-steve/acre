@@ -214,53 +214,20 @@ detfn.params = function(detfn){
   if(detfn == 'ss'){
     param.og = c('b0.ss', 'b1.ss', 'sigma.ss')
   }
-  if(detfn == 'ss_dir'){
-    param.og = c('b0.ss', 'b1.ss', 'sigma.ss', 'b2.ss')
-  }
-  if(detfn == 'ss_het'){
-    param.og = c('b0.ss', 'b1.ss', 'sigma.ss', 'sigma.b0.ss')
-  }
+  
   return(param.og)
 }
 
-p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL, ss_dir = NULL,
+p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL, 
                           ss.link = NULL, pars = NULL, A, n.quadpoints = 8){
-
   dists <- distances(traps, points)
-
-  if(ss_dir){
-    n.traps <- nrow(traps)
-    n.points <- nrow(points)
-    dirs <- (0:(n.quadpoints - 1))*2*pi/n.quadpoints
-    probs <- numeric(n.points)
-    ## Integrating over all possible directions.
-    ## in the future: Write all this in C++.
-    for (i in 1:n.quadpoints){
-      dir <- dirs[i]
-      bearings <- bearings(traps, points)
-      orientations <- abs(dir - bearings)
-      for (j in 1:n.points){
-        ## Probabilities of detection given orientation.
-        o.prob <- numeric(n.traps)
-        for (k in 1:n.traps){
-          o.prob[k] <- det_prob(detfn, pars, dists[k, j], ss.link
-            #direction ss is not supported yet, hide this part
-                                  #      , orientations[k, j]
-                                  )
-        }
-        probs[j] <- probs[j] + (1/n.quadpoints)*(1 - prod(1 - o.prob))
-      }
-    }
-    out <- probs
-  } else {
-    probs <- det_prob(detfn, pars, dists, ss.link)
-    if(detfn == 'ss'){
-      sigma.ss <- pars$sigma.ss
-      cutoff <- pars$cutoff
-      probs = 1 - pnorm(cutoff, mean = probs, sd = sigma.ss)
-    }
-    out <- plyr::aaply(probs, 2, function(x) 1 - prod(1 - x))
+  probs <- det_prob(detfn, pars, dists, ss.link)
+  if(detfn == 'ss'){
+    sigma.ss <- pars$sigma.ss
+    cutoff <- pars$cutoff
+    probs = 1 - pnorm(cutoff, mean = probs, sd = sigma.ss)
   }
+  out <- plyr::aaply(probs, 2, function(x) 1 - prod(1 - x))
 
   out <- A*sum(out)
 
@@ -445,10 +412,9 @@ default.sv = function(param, info){
     detpar.names = param.og[which(!(param.og %in% c('kappa', 'alpha', 'sigma.toa', 'D')))]
     pars <- sv[detpar.names]
 
-    if(detfn == 'ss_het') ss_het = TRUE else ss_het = FALSE
-    if(detfn == 'ss_dir') ss_dir = TRUE else ss_dir = FALSE
 
-    if(ss_het | ss_dir | detfn == 'ss'){
+
+    if(detfn == 'ss'){
       detfn = 'ss'
       pars[["sigma.b0.ss"]] <- 0
       if(!any(detpar.names == 'b2.ss')) pars[['b2.ss']] = 0
@@ -457,7 +423,7 @@ default.sv = function(param, info){
     if (!is.null(cutoff)){
       pars$cutoff <- cutoff
     }
-    esa <- p.dot.defaultD(points = mask, traps = traps, detfn = detfn, ss_dir = ss_dir,
+    esa <- p.dot.defaultD(points = mask, traps = traps, detfn = detfn,
                           ss.link = ss.link, pars = pars, A = A, n.quadpoints = 8)
     if(animal.model){
       return(dims$n.animals[session_to_use]/(esa*survey.length))
@@ -664,17 +630,6 @@ numeric_detfn = function(detfn){
   if(detfn == 'th') return(4)
   if(detfn == 'lth') return(5)
   if(detfn == 'ss') return(6)
-  if(detfn == 'ss_dir') return(7)
-  if(detfn == 'ss_het') return(8)
-}
-
-numeric_het_method = function(het_method){
-  if(is.null(het_method)) {
-    return(1)
-  } else {
-    if(het_method == "GH") return(2)
-    if(het_method == "rect") return(3)
-  }
 }
 
 cal_n_det = function(data, is_uid = FALSE){

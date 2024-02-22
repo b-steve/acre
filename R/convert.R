@@ -88,10 +88,12 @@ create.mask <- function(traps, buffer, ...){
 create.capt <- function(captures, traps = NULL, ind_model = NULL, n.sessions = NULL, n.traps = NULL,
                         mrds.locs = NULL){
 
-    #captures must be provided as a matrix or data frame with at least 4 columns
-    #traps could be list, matrix or data frame
-    #traps, or (n.traps & n.sessions), one of them must be provided
-    stopifnot(is.data.frame(captures) | is.matrix(captures), ncol(captures) >= 4,
+    # Make sure captures is DF or matrix
+    # Make sure required columns are included in captures (at least 4)
+    # Make sure traps is either list, matrix, data frame or NULL
+    # Make sure at least one of traps, or (n.traps & n.sessions) provided
+    stopifnot(is.data.frame(captures) | is.matrix(captures),
+              ncol(captures) >= 4,
               any(is.null(traps), is.list(traps), is.matrix(traps), is.data.frame(traps)),
               any(!is.null(traps), !is.null(n.traps) & !is.null(n.sessions)))
 
@@ -111,9 +113,11 @@ create.capt <- function(captures, traps = NULL, ind_model = NULL, n.sessions = N
     #------------------------------------------------------------------------------------------------------
     #deal with n.sessions
 
-    #generate n.sessions based on "captures" data
+
+    #determine the maximum "captures" session number, and assume this is # sessions we are using
     tem.n.sessions.capt = max(captures$session)
 
+    #if we have traps
     if(!is.null(traps)){
         #generate n.sessions based on "traps" data
         tem.n.sessions.trap = ifelse(is(traps, 'list'), length(traps), 1)
