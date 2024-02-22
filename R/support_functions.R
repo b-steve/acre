@@ -1539,7 +1539,7 @@ sim_args_generator = function(sim_name){
   #generate some common settings
   traps = demo_traps()
   control.mask = list(buffer = 30)
-  par_extend_model = NULL
+  model = NULL
   survey.length = NULL
   ss.opts = NULL
   cue.rates = NULL
@@ -1570,13 +1570,13 @@ sim_args_generator = function(sim_name){
   } else if(sim_name == 'ihd'){
     param = list(g0 = 1, sigma = 5.38, D = c(8.3, -0.2, -0.1))
     detfn = 'hn'
-    par_extend_model = list(D = ~forest_volumn)
+    model = list(D = ~forest_volumn)
     session.cov = NULL
     trap.cov = NULL
   } else if(sim_name == 'ihd_ext'){
     param = list(g0 = 1, sigma = c(1.95, -0.25), D = c(8.3, -0.1))
     detfn = 'hn'
-    par_extend_model = list(D = ~noise, sigma = ~brand)
+    model = list(D = ~noise, sigma = ~brand)
     session.cov = NULL
   } else if(sim_name == 'mul_ses'){
     param = list(g0 = 0.7135, sigma = 3.3, kappa = 14.8, alpha = 3.77, D = 2533)
@@ -1596,7 +1596,7 @@ sim_args_generator = function(sim_name){
     trap.cov = rbind(trap.cov, demo_trap_cov2())
     trap.cov$session = c(rep(1, 6), rep(2, 3))
     loc.cov = NULL
-    par_extend_model = list(g0 = ~weather, sigma = ~brand)
+    model = list(g0 = ~weather, sigma = ~brand)
 
   } else if(sim_name == 'simple_hhn'){
     param = list(sigma = 3.66, lambda0 = 4.29, D = 2657)
@@ -1638,7 +1638,7 @@ sim_args_generator = function(sim_name){
     detfn = 'hn'
     control.mask = list(buffer = 15)
     loc.cov = NULL
-    par_extend_model = list(D = ~weather, alpha = ~brand)
+    model = list(D = ~weather, alpha = ~brand)
     n.sessions = 3
     survey.length = c(1, 2, 1)
   } else if(sim_name == 'ind_toa_hhn'){
@@ -1647,7 +1647,7 @@ sim_args_generator = function(sim_name){
     control.mask = list(buffer = 15)
     session.cov = NULL
     trap.cov = NULL
-    par_extend_model = list(D = ~noise)
+    model = list(D = ~noise)
     n.sessions = 2
 
   } else if(sim_name == 'ind_ss'){
@@ -1655,7 +1655,7 @@ sim_args_generator = function(sim_name){
     detfn = 'ss'
     control.mask = list(buffer = 15)
     session.cov = NULL
-    par_extend_model = list(D=~noise, b0.ss=~brand)
+    model = list(D=~noise, b0.ss=~brand)
     n.sessions = 3
     ss.opts = list(cutoff = 60)
   } else if(sim_name == 'ind_ss_log'){
@@ -1688,7 +1688,7 @@ sim_args_generator = function(sim_name){
   #include all arguments that may differ from default
   output$detfn = detfn
   output$param = param
-  output$par_extend_model = par_extend_model
+  output$model = model
   output$traps = traps
   output$control.mask = control.mask
   output$session.cov = session.cov

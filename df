@@ -1,0 +1,31 @@
+[35mR/data_doc.R[m[36m:[m[32m10[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m41[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m70[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m102[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m135[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m172[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m207[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m241[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m268[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m299[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m327[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m357[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m393[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m435[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m475[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m515[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/data_doc.R[m[36m:[m[32m552[m[36m:[m#'    \item{[1;31mcontrol_create_mask[m}{a list with the basic argument "buffer", which is the max detectable distance,
+[35mR/simcapt.R[m[36m:[m[32m6[m[36m:[m#' @param [1;31mcontrol_create_mask[m 
+[35mR/simcapt.R[m[36m:[m[32m21[m[36m:[msim.capt = function(fit, detfn, param, par_extend_model = NULL, traps, [1;31mcontrol_create_mask[m = list(), session_cov = NULL, trap_cov = NULL, loc_cov = NULL,
+[35mR/simcapt.R[m[36m:[m[32m50[m[36m:[m    stopifnot(all(!missing(detfn), !missing(param), !missing(traps), !is.null([1;31mcontrol_create_mask[m$buffer)))
+[35mR/simcapt.R[m[36m:[m[32m67[m[36m:[m    [1;31mcontrol_create_mask[m$traps = traps
+[35mR/simcapt.R[m[36m:[m[32m68[m[36m:[m    mask = do.call('create.mask', [1;31mcontrol_create_mask[m)
+[35mR/support_functions.R[m[36m:[m[32m1541[m[36m:[m  [1;31mcontrol_create_mask[m = list(buffer = 30)
+[35mR/support_functions.R[m[36m:[m[32m1584[m[36m:[m    [1;31mcontrol_create_mask[m = list(buffer = 15)
+[35mR/support_functions.R[m[36m:[m[32m1593[m[36m:[m    [1;31mcontrol_create_mask[m = list(buffer = 15)
+[35mR/support_functions.R[m[36m:[m[32m1639[m[36m:[m    [1;31mcontrol_create_mask[m = list(buffer = 15)
+[35mR/support_functions.R[m[36m:[m[32m1647[m[36m:[m    [1;31mcontrol_create_mask[m = list(buffer = 15)
+[35mR/support_functions.R[m[36m:[m[32m1656[m[36m:[m    [1;31mcontrol_create_mask[m = list(buffer = 15)
+[35mR/support_functions.R[m[36m:[m[32m1666[m[36m:[m    [1;31mcontrol_create_mask[m = list(buffer = 15)
+[35mR/support_functions.R[m[36m:[m[32m1678[m[36m:[m    [1;31mcontrol_create_mask[m = list(buffer = 15)
+[35mR/support_functions.R[m[36m:[m[32m1693[m[36m:[m  output$[1;31mcontrol_create_mask[m = [1;31mcontrol_create_mask[m

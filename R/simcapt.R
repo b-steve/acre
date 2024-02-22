@@ -1,7 +1,7 @@
 #' @param fit
 #' @param detfn
 #' @param param
-#' @param par_extend_model
+#' @param model
 #' @param traps
 #' @param control.mask
 #' @param session.cov
@@ -18,7 +18,7 @@
 #' @param sound.speed
 #'
 #' @export
-sim.capt = function(fit, detfn, param, par_extend_model = NULL, traps, control.mask = list(), session.cov = NULL, trap.cov = NULL, loc.cov = NULL,
+sim.capt = function(fit, detfn, param, model = NULL, traps, control.mask = list(), session.cov = NULL, trap.cov = NULL, loc.cov = NULL,
                     dist.cov = NULL, time.loc.cov = NULL, control_convert_loc2mask = list(), survey.length = NULL, ss.opts = NULL,
                     cue.rates = NULL, n.sessions = NULL, n.rand = 1, random.location = FALSE, sound.speed = 331){
   if(!missing(fit)){
@@ -66,11 +66,11 @@ sim.capt = function(fit, detfn, param, par_extend_model = NULL, traps, control.m
     #create mask, traps is guaranteed to be a list, so mask must be a list
     control.mask$traps = traps
     mask = do.call('create.mask', control.mask)
-    #if par_extend_model is assigned, we need to construct "par.extend" for simulation
+    #if model is assigned, we need to construct "par.extend" for simulation
     par.extend = par_extend_create(loc.cov = loc.cov, mask = mask, dist.cov = dist.cov, time.loc.cov = time.loc.cov,
                                    control_convert_loc2mask = control_convert_loc2mask,
                                    session.cov = session.cov, trap.cov = trap.cov)$output
-    par.extend$model = par_extend_model
+    par.extend$model = model
   }
 
   #write.csv(par.extend$data$mask, 'df_m_sim.csv', row.names = F)

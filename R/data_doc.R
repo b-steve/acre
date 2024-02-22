@@ -96,7 +96,7 @@
 #' @format a list with all necessary input for the model:
 #'  \describe{
 #'    \item{detfn}{detechtion function: "hn" - half normal}
-#'    \item{par_extend_model}{a list with the name of coefficients to be modeled with additional covariates
+#'    \item{model}{a list with the name of coefficients to be modeled with additional covariates
 #'                            as the elements names, and each element contains a formula for that modeled coefficient.}
 #'    \item{traps}{a data frame with the coordinates of the acoustic detectors}
 #'    \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
@@ -129,7 +129,7 @@
 #' @format a list with all necessary input for the model:
 #'  \describe{
 #'    \item{detfn}{detechtion function: "hn" - half normal}
-#'    \item{par_extend_model}{a list with the name of coefficients to be modeled with additional covariates
+#'    \item{model}{a list with the name of coefficients to be modeled with additional covariates
 #'                            as the elements names, and each element contains a formula for that modeled coefficient.}
 #'    \item{traps}{a data frame with the coordinates of the acoustic detectors}
 #'    \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
@@ -201,7 +201,7 @@
 #' @format a list with all necessary input for the model:
 #'  \describe{
 #'    \item{detfn}{detechtion function: "hn" - half normal}
-#'    \item{par_extend_model}{a list with the name of coefficients to be modeled with additional covariates
+#'    \item{model}{a list with the name of coefficients to be modeled with additional covariates
 #'                            as the elements names, and each element contains a formula for that modeled coefficient.}
 #'    \item{traps}{a list with a data frame with the coordinates of the acoustic detectors as each of its element}
 #'    \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
@@ -387,7 +387,7 @@
 #' @format a list with all necessary input for the model:
 #'  \describe{
 #'    \item{detfn}{detechtion function: "hn" - half normal}
-#'    \item{par_extend_model}{a list with the name of coefficients to be modeled with additional covariates
+#'    \item{model}{a list with the name of coefficients to be modeled with additional covariates
 #'                            as the elements names, and each element contains a formula for that modeled coefficient.}
 #'    \item{traps}{a data frame with the coordinates of the acoustic detectors}
 #'    \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
@@ -429,7 +429,7 @@
 #' @format a list with all necessary input for the model:
 #'  \describe{
 #'    \item{detfn}{detechtion function: "hhn" - hazard half normal}
-#'    \item{par_extend_model}{a list with the name of coefficients to be modeled with additional covariates
+#'    \item{model}{a list with the name of coefficients to be modeled with additional covariates
 #'                            as the elements names, and each element contains a formula for that modeled coefficient.}
 #'    \item{traps}{a data frame with the coordinates of the acoustic detectors}
 #'    \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
@@ -469,7 +469,7 @@
 #' @format a list with all necessary input for the model:
 #'  \describe{
 #'    \item{detfn}{detechtion function: "ss" - signal strength}
-#'    \item{par_extend_model}{a list with the name of coefficients to be modeled with additional covariates
+#'    \item{model}{a list with the name of coefficients to be modeled with additional covariates
 #'                            as the elements names, and each element contains a formula for that modeled coefficient.}
 #'    \item{traps}{a data frame with the coordinates of the acoustic detectors}
 #'    \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
