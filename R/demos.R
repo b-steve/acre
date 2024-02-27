@@ -20,8 +20,6 @@ demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL
   dat[c('par_extend_model', 'sv', 'fix', 'bounds', 'detfn', 'ss.opts')] = NULL
   
   
-
-  
   dat_model = list()
   
   dat_model$dat = do.call('read.acre', dat)

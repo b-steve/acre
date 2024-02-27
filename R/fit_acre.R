@@ -364,7 +364,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                dx = data.dists.thetas$dx,
                theta = data.dists.thetas$theta,
 
-               index_local = data.ID_mask$local,
+               index_local = as.numeric(data.ID_mask$local),
                toa_ssq = data.ID_mask$toa_ssq
   )
 
