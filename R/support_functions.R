@@ -1412,7 +1412,7 @@ location_cov_to_mask = function(mask, loc.cov, control_nn2 = NULL, control_weigh
 }
 
 
-par_extend_create = function(loc.cov = NULL, mask = NULL, control_convert_loc2mask = list(),
+par_extend_create = function(loc.cov = NULL, mask = NULL, convert.loc2mask = list(),
                              dist.cov = NULL, session.cov = NULL, trap.cov = NULL, time.loc.cov = NULL){
 
 
@@ -1434,10 +1434,10 @@ par_extend_create = function(loc.cov = NULL, mask = NULL, control_convert_loc2ma
     #browser()
     #if location related covariates provided, convert it to mask-level data frame
     if(!is.null(loc.cov)){
-      control_convert_loc2mask$loc.cov = loc.cov
-      control_convert_loc2mask$mask = mask
+      convert.loc2mask$loc.cov = loc.cov
+      convert.loc2mask$mask = mask
 
-      mask_cov = do.call('location_cov_to_mask', control_convert_loc2mask)
+      mask_cov = do.call('location_cov_to_mask', convert.loc2mask)
     } else {
       mask_cov = NULL
     }
@@ -1815,7 +1815,7 @@ homo_digit = function(x){
 
 predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = NULL, xlim = NULL, ylim = NULL,
                               x_pixels = 50, y_pixels = 50, se_fit = FALSE, log_scale = FALSE, set_zero = NULL,
-                              control_convert_loc2mask = NULL,
+                              convert.loc2mask = NULL,
                               control_boot = list(correct_bias = FALSE, from_boot = TRUE), ...){
 
 
@@ -1852,13 +1852,13 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
 
     #build the old_covariates
     ##we interpolate it again no matter there is new mask grid or not because in theory, user
-    ##could use the same mask grid but different control_convert_loc2mask
+    ##could use the same mask grid but different convert.loc2mask
 
     old_covariates = as.data.frame(mask)
 
 
 
-    if(original_mask&is.null(control_convert_loc2mask)&is.null(D_cov)){
+    if(original_mask&is.null(convert.loc2mask)&is.null(D_cov)){
       #when there is no sign of any modification, assign old_loc_cov to NULL to make sure
       #the function can enter the process to try to obtain mask level data, to avoid re-interpolation
       old_loc_cov = NULL
@@ -1909,14 +1909,14 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
       if(mask_level_dat_extract & original_mask){
         cov_mask = old_loc_cov
       } else {
-        if(is.null(control_convert_loc2mask)){
-          control_convert_loc2mask = vector('list', 2)
-          names(control_convert_loc2mask) = c('mask', 'loc.cov')
+        if(is.null(convert.loc2mask)){
+          convert.loc2mask = vector('list', 2)
+          names(convert.loc2mask) = c('mask', 'loc.cov')
         }
-        control_convert_loc2mask$mask = list(mask)
-        control_convert_loc2mask$loc.cov = old_loc_cov
+        convert.loc2mask$mask = list(mask)
+        convert.loc2mask$loc.cov = old_loc_cov
 
-        cov_mask = do.call('location_cov_to_mask', control_convert_loc2mask)
+        cov_mask = do.call('location_cov_to_mask', convert.loc2mask)
       }
 
       if(any(colnames(cov_mask) %in% c('session', 'mask'))){
@@ -1965,15 +1965,15 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
 
       #build the new_covariates based on all information we could have
       if(!is.null(D_cov$location)){
-        if(is.null(control_convert_loc2mask)){
-          control_convert_loc2mask = vector('list', 2)
-          names(control_convert_loc2mask) = c('mask', 'loc.cov')
+        if(is.null(convert.loc2mask)){
+          convert.loc2mask = vector('list', 2)
+          names(convert.loc2mask) = c('mask', 'loc.cov')
         }
-        control_convert_loc2mask$mask = list(mask)
-        control_convert_loc2mask$loc.cov = D_cov$location
+        convert.loc2mask$mask = list(mask)
+        convert.loc2mask$loc.cov = D_cov$location
 
 
-        cov_mask = do.call('location_cov_to_mask', control_convert_loc2mask)
+        cov_mask = do.call('location_cov_to_mask', convert.loc2mask)
         new_covariates = cbind(new_covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
       }
 

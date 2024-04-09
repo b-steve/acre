@@ -163,7 +163,7 @@ show_detfn <- function(fit, new_covariates = NULL, param_extend_skip = NULL, xli
 #' @param scale 
 #' @param plot_contours 
 #' @param add 
-#' @param control_convert_loc2mask
+#' @param convert.loc2mask
 #' @param arg_col 
 #' @param trap_plot 
 #' @param ... 
@@ -174,12 +174,12 @@ show_detfn <- function(fit, new_covariates = NULL, param_extend_skip = NULL, xli
 #' @examples
 show_Dsurf <- function(fit, session = NULL, show.cv = FALSE, new_data = NULL, D_cov = NULL, xlim = NULL, ylim = NULL,
                         x_pixels = 50, y_pixels = 50, zlim = NULL, scale = 1, plot_contours = TRUE,
-                        add = FALSE, control_convert_loc2mask= NULL, arg_col = list(n = 100), trap_plot = NULL, ...){
+                        add = FALSE, convert.loc2mask= NULL, arg_col = list(n = 100), trap_plot = NULL, ...){
   
   pred = predict_D_for_plot(fit, session_select = ifelse(is.null(session), 1, session), 
                             new_data = new_data, D_cov = D_cov, xlim = xlim, ylim = ylim,
                             x_pixels = x_pixels, y_pixels = y_pixels, se_fit = show.cv,
-                            control_convert_loc2mask= control_convert_loc2mask)
+                            convert.loc2mask= convert.loc2mask)
   #browser()
   mask = as.matrix(pred[, c('x', 'y')])
   if(!show.cv){

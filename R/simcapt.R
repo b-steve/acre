@@ -8,7 +8,7 @@
 #' @param trap.cov
 #' @param time.loc.cov
 #' @param loc.cov
-#' @param control_convert_loc2mask
+#' @param convert.loc2mask
 #' @param survey.length
 #' @param ss.opts
 #' @param cue.rates
@@ -19,7 +19,7 @@
 #'
 #' @export
 sim.capt = function(fit, detfn, param, model = NULL, traps, control.mask = list(), session.cov = NULL, trap.cov = NULL, loc.cov = NULL,
-                    dist.cov = NULL, time.loc.cov = NULL, control_convert_loc2mask = list(), survey.length = NULL, ss.opts = NULL,
+                    dist.cov = NULL, time.loc.cov = NULL, convert.loc2mask = list(), survey.length = NULL, ss.opts = NULL,
                     cue.rates = NULL, n.sessions = NULL, n.rand = 1, random.location = FALSE, sound.speed = 331){
   if(!missing(fit)){
     #if 'fit' is provided, get all information from the fitted object
@@ -68,7 +68,7 @@ sim.capt = function(fit, detfn, param, model = NULL, traps, control.mask = list(
     mask = do.call('create.mask', control.mask)
     #if model is assigned, we need to construct "par.extend" for simulation
     par.extend = par_extend_create(loc.cov = loc.cov, mask = mask, dist.cov = dist.cov, time.loc.cov = time.loc.cov,
-                                   control_convert_loc2mask = control_convert_loc2mask,
+                                   convert.loc2mask = convert.loc2mask,
                                    session.cov = session.cov, trap.cov = trap.cov)$output
     par.extend$model = model
   }
