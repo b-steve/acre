@@ -21,7 +21,7 @@
 sim.capt = function(fit, detfn, param, par_extend_model = NULL, traps, control_create_mask = list(), session_cov = NULL, trap_cov = NULL, loc_cov = NULL,
                     dist_cov = NULL, time_loc_cov = NULL, control_convert_loc2mask = list(), survey.length = NULL, ss.opts = NULL, 
                     cue.rates = NULL, n.sessions = NULL, n.rand = 1, random.location = FALSE, sound.speed = 331){
-  if(!missing(fit)){
+  if(!missing(fit)) {
     #if 'fit' is provided, get all information from the fitted object
     
     detfn = get_detfn(fit)
@@ -52,7 +52,6 @@ sim.capt = function(fit, detfn, param, par_extend_model = NULL, traps, control_c
     if(is(traps, 'list')){
       if(!is.null(n.sessions)) warning("'n.sessions' will be ignored as 'traps' is a list.")
       n.sessions = length(traps)
-
     } else {
       stopifnot(any(is(traps, 'matrix'), is(traps, 'data.frame')))
       if(is.null(n.sessions)){

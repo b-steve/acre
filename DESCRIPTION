@@ -26,7 +26,12 @@ Imports:
     Rcpp,
     RANN,
     ggplot2,
-    gganimate
+    gganimate,
+    forestplot,
+    grid,
+    hrbrthemes,
+    foreach,
+    doParallel
 Suggests:
     knitr,
     xtable

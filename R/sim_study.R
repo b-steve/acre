@@ -9,7 +9,7 @@
 #' @export
 #'
 #' @examples
-sim_study = function(sim_name, n.rand = 1, fit = FALSE, seed = 810){
+sim_study = function(sim_name, n.rand = 1, fit = FALSE, seed = 810, proportion_missing=0.0){
   sim_args = sim_args_generator(sim_name)
   sim_args$n.rand = n.rand
   set.seed(seed)
@@ -43,43 +43,111 @@ sim_study = function(sim_name, n.rand = 1, fit = FALSE, seed = 810){
       est_values = vector('list', n.rand)
       fit_args$tracing = FALSE
       
-      for(i in 1:n.rand){
-        fit_args$capt = create.capt(simulated_capt$capt[[i]], fit_args$traps)
-        sim_fit = do.call('fit_og', fit_args)
-        est_values[[i]] = get_coef(sim_fit)
-        message(paste0("finished: ", i, "/", n.rand))
-        #write.csv(sim_fit$args$par.extend$data$mask, paste0('df_m_fit', i, '.csv'), row.names = F)
+      # Setup parallel computing stuff
+      num_cores <- parallel::detectCores() - 1
+      # Initialize cluster
+      cl <- parallel::makeCluster(num_cores)
+      
+      doParallel::registerDoParallel(cl)
+   
+      `%dopar%` <- foreach::`%dopar%`
+      
+      # for(i in 1:n.rand) {
+      foreach::foreach(i = 1:n.rand, .packages = 'acre') %dopar% {
+        fit_sim_study(i,
+                      simulated_capt = simulated_capt,
+                      proportion_missing = proportion_missing,
+                      sim_name = sim_name,
+                      fit_args = fit_args,
+                      est_values = est_values,
+                      n.rand = n.rand)
       }
       
-      
-      #remove the capture history and output the rest of arguments for model fitting
-      fit_args$capt = NULL
-      output$sim_fit_args = fit_args
-      #we only output the linked scale of estimated coefficients
-      output$sim_fit_coef_link = est_values
+      parallel::stopCluster(cl)
       
       
-      #plot the est_values
-
-      for(i in names(true_values)){
-        for(j in 1:length(true_values[[i]])){
-          #extract estimations as a vector and the true value
-          est = sapply(est_values, function(x) x[[i]][j])
-          tru = true_values[[i]][j]
-          
-          hist(est, xlim = range(est, tru),
-               main = paste0(i, '[', j, ']_link: Sim vs. True'),
-               xlab = 'Value')
-          
-          abline(v = tru, col = 2)
-          legend('topright', 'true value', col = 2, lty = 1)
-          box()
-        }
-      }
+      # #remove the capture history and output the rest of arguments for model fitting
+      # fit_args$capt = NULL
+      # output$sim_fit_args = fit_args
+      # #we only output the linked scale of estimated coefficients
+      # output$sim_fit_coef_link = est_values
+      # 
+      # 
+      # #plot the est_values
+      # 
+      # for(i in names(true_values)){
+      #   for(j in 1:length(true_values[[i]])){
+      #     #extract estimations as a vector and the true value
+      #     est = sapply(est_values, function(x) x[[i]][j])
+      #     tru = true_values[[i]][j]
+      #     
+      #     hist(est, xlim = range(est, tru),
+      #          main = paste0(i, '[', j, ']_link: Sim vs. True'),
+      #          xlab = 'Value')
+      #     
+      #     abline(v = tru, col = 2)
+      #     legend('topright', 'true value', col = 2, lty = 1)
+      #     box()
+      #   }
+      # }
       
     }
   }
   
   return(output)
-  
 }
+
+fit_sim_study <- function(i,
+                          simulated_capt,
+                          proportion_missing,
+                          sim_name,
+                          fit_args,
+                          est_values,
+                          n.rand) {
+  n_missing <- floor(proportion_missing * nrow(simulated_capt$capt[[i]]))
+  
+  # Removes no data by default (n_missing defaults to 0)
+  simulated_capt$capt[[i]] <- remove_capt_data_from_sim(
+    simulated_capt$capt[[i]],
+    sim_name,
+    n_missing
+  )
+
+  fit_args$capt = create.capt(simulated_capt$capt[[i]], fit_args$traps)
+
+
+  sim_fit = do.call('fit_og', fit_args)
+  est_values[[i]] = get_coef(sim_fit)
+
+  #############################################
+  #############################################
+  #############################################
+  # Save the data to test_fits/sim/sim_name_i
+  save_to_location <- paste0("test_fits/sim/", sim_name, "/missing_",
+                             proportion_missing, "/")
+  save_to_name <- paste0(sim_name, "_", i)
+  save_to <- paste0(save_to_location, save_to_name)
+
+  conf_int <- confint.acre_tmb(sim_fit)
+  coefs <- coef.acre_tmb(sim_fit)
+  errs <- stdEr.acre_tmb(sim_fit)
+
+  fit_data <- data.frame(conf_int = conf_int,
+                         coefs = as.vector(coefs),
+                         errs = as.vector(errs))
+
+  # Update column names
+  names(fit_data)[1] <- "conf_int_2.5"
+  names(fit_data)[2] <- "conf_int_97.5"
+
+  saveRDS(fit_data, save_to)
+  #############################################
+  #############################################
+  #############################################
+  
+  # message(paste0("Saved sim fit data to: ", save_to_location))
+  # message(paste0("finished: ", i, "/", n.rand))
+  print(paste0("finished: ", i, "/", n.rand))
+  #write.csv(sim_fit$args$par.extend$data$mask, paste0('df_m_fit', i, '.csv'), row.names = F)
+}
+
