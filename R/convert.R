@@ -471,9 +471,6 @@ dist_nearest = function(from, to, col_name = 'dist_nearest'){
 #'     'proximity', 'count', 'polygon' etc.), and possibly other
 #'     attributes.
 #'
-#' @examples
-#' traps <- convert.traps(traps = example.data$traps)
-#'
 #' @export
 convert.traps <- function(traps, ss = FALSE){
     if (is(traps, "list")){
@@ -497,8 +494,6 @@ convert.traps <- function(traps, ss = FALSE){
 #' @inheritParams fit.acre
 #'
 #' @return An object of class \code{mask}.
-#'
-#' @examples mask <- convert.mask(mask = example.data$mask)
 #'
 #' @export
 convert.mask <- function(mask){
@@ -527,7 +522,6 @@ convert.mask <- function(mask){
 #'
 #' @return A capture history object appropriate for analysis using
 #'     either the \code{acre} or the \code{secr} package.
-#' @examples capt <- convert.capt.to.secr(capt = example.data$capt, traps = example.data$traps, cutoff = example.data$cutoff)
 #'
 #' @name convert.capt
 NULL

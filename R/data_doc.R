@@ -22,9 +22,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("bearing_dist_hn")
 "bearing_dist_hn"
 
 
@@ -52,9 +49,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("bearing_hn")
 "bearing_hn"
 
 
@@ -81,9 +75,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("dist_hn")
 "dist_hn"
 
 
@@ -114,9 +105,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ihd")
 "ihd"
 
 
@@ -150,9 +138,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ihd_ext")
 "ihd_ext"
 
 
@@ -184,9 +169,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("mul_ses")
 "mul_ses"
 
 
@@ -224,9 +206,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("mul_ses_ext")
 "mul_ses_ext"
 
 
@@ -250,9 +229,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("simple_hhn")
 "simple_hhn"
 
 
@@ -280,9 +256,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("hhn_cue")
 "hhn_cue"
 
 
@@ -309,9 +282,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("simple_hr")
 "simple_hr"
 
 
@@ -340,9 +310,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ss")
 "ss"
 
 #' Data to showcase a "ss_toa" demo
@@ -371,9 +338,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ss_toa")
 "ss_toa"
 
 
@@ -413,9 +377,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ind_bearing_dist")
 "ind_bearing_dist"
 
 
@@ -450,9 +411,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ind_toa_hhn")
 "ind_toa_hhn"
 
 
@@ -495,9 +453,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ind_ss")
 "ind_ss"
 
 
@@ -531,9 +486,6 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ind_ss_log")
 "ind_ss_log"
 
 
@@ -568,7 +520,4 @@
 #'  }
 #'
 #' @source created from the simulation
-#'
-#' @examples
-#' o_demo = demo_fit("ind_ss_sp")
 "ind_ss_sp"
