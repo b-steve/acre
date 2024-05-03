@@ -188,7 +188,7 @@ show.detfn <- function(fit, new.covariates = NULL, skip.extend.param = NULL, xli
 #'
 #' @examples
 show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.cov = NULL, xlim = NULL, ylim = NULL,
-                        x.pixels = 50, y.pixels = 50, zlim = NULL, scale = 1, plot.contours = TRUE,
+                        x.pixels = 50, y.pixels = 50, zlim = NULL, scale = 1, plot.contours = FALSE,
                         add = FALSE, convert.loc2mask= NULL, arg.col = list(n = 100), trap.plot = NULL, ...){
   
   pred = predict_D_for_plot(fit, session_select = ifelse(is.null(session), 1, session), 
@@ -687,7 +687,7 @@ plot.acre_data <- function(x, ...){
     if(is.null(control$arg.col)) arg.col = list(n = 100, option = "D") else arg.col = control$arg.col
     
     if(is.null(control$plot.contours)){
-        plot.contours = TRUE
+        plot.contours = FALSE
     } else {
         plot.contours = control$plot.contours
     }
