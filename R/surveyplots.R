@@ -192,7 +192,7 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
                         add = FALSE, convert.loc2mask= NULL, arg.col = list(n = 100), trap.plot = NULL, ...){
   
   pred = predict_D_for_plot(fit, session_select = ifelse(is.null(session), 1, session), 
-                            new.data = new.data, D.cov = D.cov, xlim = xlim, ylim = ylim,
+                            new_data = new.data, D.cov = D.cov, xlim = xlim, ylim = ylim,
                             x.pixels = x.pixels, y.pixels = y.pixels, se_fit = show.cv,
                             convert.loc2mask= convert.loc2mask)
   #browser()
