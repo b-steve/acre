@@ -9,7 +9,7 @@
   types = NULL,
   level = 0.95,
   pars = NULL,
-  new_covariates = NULL,
+  new.covariates = NULL,
   correct_bias = FALSE,
   from_boot = TRUE,
   ...
@@ -24,7 +24,7 @@
 
 \item{pars}{a character vector, the same as "coef.acre_tmb()".}
 
-\item{new_covariates}{a data frame, the same as "coef.acre_tmb()".}
+\item{new.covariates}{a data frame, the same as "coef.acre_tmb()".}
 
 \item{correct_bias}{a logical value indicates whether to apply a bias correction method to
 the confidence interval. Default is FALSE, and the naive percentiles from

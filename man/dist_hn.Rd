@@ -32,7 +32,4 @@ dist_hn
 For the demonstration of the model with distance as extra information,
 and half normal as detection function
 }
-\examples{
-o_demo = demo_fit("dist_hn")
-}
 \keyword{datasets}

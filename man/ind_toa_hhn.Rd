@@ -39,7 +39,4 @@ For the demonstration of the model with inhomogeneous density surface, time of a
 and hazard half normal as detection function. The survey is carried with 2 sessions, and each records in the
 capture history contains identity of the detected individual.
 }
-\examples{
-o_demo = demo_fit("ind_toa_hhn")
-}
 \keyword{datasets}

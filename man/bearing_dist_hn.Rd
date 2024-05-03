@@ -33,7 +33,4 @@ bearing_dist_hn
 For the demonstration of the model with bearing and distance as extra information,
 and half normal as detection function
 }
-\examples{
-o_demo = demo_fit("bearing_dist_hn")
-}
 \keyword{datasets}

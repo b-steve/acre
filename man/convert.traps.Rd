@@ -26,7 +26,3 @@ object.
 The returned object is suitable for use as the \code{traps}
 argument of the function \link{make.capthist}.
 }
-\examples{
-traps <- convert.traps(traps = example.data$traps)
-
-}

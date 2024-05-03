@@ -39,7 +39,4 @@ For the demonstration of the model with inhomogeneous density surface,
 and half normal as detection function. One of the coefficients of the detection function, "sigma",
 is modeled with additional covariates
 }
-\examples{
-o_demo = demo_fit("ihd_ext")
-}
 \keyword{datasets}

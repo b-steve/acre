@@ -35,7 +35,4 @@ ihd
 For the demonstration of the model with inhomogeneous density surface,
 and half normal as detection function
 }
-\examples{
-o_demo = demo_fit("ihd")
-}
 \keyword{datasets}

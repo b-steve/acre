@@ -33,7 +33,4 @@ mul_ses
 For the demonstration of the model with bearing and distance as extra information,
 and half normal as detection function. The survey is carried with 2 sessions.
 }
-\examples{
-o_demo = demo_fit("mul_ses")
-}
 \keyword{datasets}

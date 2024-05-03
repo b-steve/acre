@@ -32,7 +32,4 @@ bearing_hn
 For the demonstration of the model with bearing as extra information,
 and half normal as detection function
 }
-\examples{
-o_demo = demo_fit("bearing_hn")
-}
 \keyword{datasets}

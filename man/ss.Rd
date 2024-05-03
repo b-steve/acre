@@ -17,7 +17,4 @@ ss
 For the demonstration of the model with signal strength detection function, and signal strength
 as additional information.
 }
-\examples{
-o_demo = demo_fit("ss")
-}
 \keyword{datasets}

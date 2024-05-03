@@ -30,7 +30,4 @@ simple_hr
 \description{
 For the demonstration of the model with hazard rate detection function.
 }
-\examples{
-o_demo = demo_fit("simple_hr")
-}
 \keyword{datasets}

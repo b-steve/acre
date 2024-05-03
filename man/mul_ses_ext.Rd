@@ -41,7 +41,4 @@ For the demonstration of the model with bearing and distance as extra informatio
 and half normal as detection function. Two of the coefficients of the detection function, "g0" and "sigma",
 are modeled with additional covariates. The survey is carried with 2 sessions.
 }
-\examples{
-o_demo = demo_fit("mul_ses_ext")
-}
 \keyword{datasets}

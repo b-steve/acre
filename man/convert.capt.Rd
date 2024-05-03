@@ -35,7 +35,3 @@ These functions convert a capture history object between the
 structures required for the \code{acre} and \code{secr}
 packages.
 }
-\examples{
-capt <- convert.capt.to.secr(capt = example.data$capt, traps = example.data$traps, cutoff = example.data$cutoff)
-
-}

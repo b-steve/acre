@@ -19,8 +19,8 @@ fit_og(
   local = FALSE,
   par.extend = NULL,
   tracing = TRUE,
-  gr_skip = FALSE,
-  sv_link = NULL,
+  gr.skip = FALSE,
+  sv.link = NULL,
   ...
 )
 }
@@ -59,21 +59,18 @@ model: the same as argument `model`  in the function `fit.acre()`;
 data: a list, could contain elements of `session`, `trap`, `mask`. Each of
       them should be a data frame contains the corresponding information
       of sessions, traps or masks and the corresponding covariates;
-scale: the same as argument `is_scale`  in the function `fit.acre()`;
+scale: the same as argument `is.scale`  in the function `fit.acre()`;
 link: the same as argument `model.link`  in the function `fit.acre()`.}
 
 \item{tracing}{same as the argument with the same name in the function `fit.acre()`.}
 
-\item{gr_skip}{same as the argument with the same name in the function `fit.acre()`.}
+\item{gr.skip}{same as the argument with the same name in the function `fit.acre()`.}
 
-\item{sv_link}{a list; this is mostly for development purpose, not recommended to use.}
+\item{sv.link}{a list; this is mostly for development purpose, not recommended to use.}
 
-\item{...}{}
+\item{...}{animal_ID' or 'ID', so we modify them to make sure design matrices are in right order
+data.ID_mask' contains the same combination of 'animal_ID' and 'ID', but they may be in different order,}
 }
 \description{
 Original fit function from ascr
-}
-\examples{
-animal_ID' or 'ID', so we modify them to make sure design matrices are in right order
-data.ID_mask' contains the same combination of 'animal_ID' and 'ID', but they may be in different order,
 }

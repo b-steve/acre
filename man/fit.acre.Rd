@@ -15,12 +15,12 @@ fit.acre(
   control.mask = NULL,
   mask = NULL,
   convert.loc2mask = list(),
-  is_scale = TRUE,
+  is.scale = TRUE,
   model.link = NULL,
   local = FALSE,
   tracing = TRUE,
-  gr_skip = FALSE,
-  sv_link = NULL
+  gr.skip = FALSE,
+  sv.link = NULL
 )
 }
 \arguments{
@@ -60,7 +60,7 @@ will be created by them, and if there is any parameter extended under mask level
 could be used to control the process of converting location related covariates to the new mask level data.
 For any details, could refer to the help document in the function `read.acre()`}
 
-\item{is_scale}{a logical value. Indicate whether to standardize the numerical covariates for the extended parameters, it is `TRUE` by default.}
+\item{is.scale}{a logical value. Indicate whether to standardize the numerical covariates for the extended parameters, it is `TRUE` by default.}
 
 \item{model.link}{a list with named elements. Each element contains the link for the parameter indicated by the name of this element.}
 
@@ -68,11 +68,26 @@ For any details, could refer to the help document in the function `read.acre()`}
 
 \item{tracing}{a logical value. TRUE by default, an indicator of showing the tracing information. (seems not work as expected.)}
 
-\item{gr_skip}{a logical value. FALSE by default. If TRUE, TMB model will skip the process of generating automatic derivative functions,
+\item{gr.skip}{a logical value. FALSE by default. If TRUE, TMB model will skip the process of generating automatic derivative functions,
 which will use less RAM, but the optimization process will consume more time.}
 
-\item{sv_link}{a list; this is mostly for development purpose, not recommended to use}
+\item{sv.link}{a list; this is mostly for development purpose, not recommended to use}
 }
 \description{
 Fits an acoustic SCR model. Parameter estimation is done by maximum likelihood through an AD Model Builder (ADMB) executable.
+}
+\details{
+ADMB uses a quasi-Newton method to find maximum likelihood
+estimates for the model parameters. Standard errors are calculated
+by taking the inverse of the negative of the
+Hessian. Alternatively, \link{boot.acre} can be used to carry out a
+parametric bootstrap procedure.
+
+If the data are from an acoustic survey where stationary
+individuals call more than once (i.e., the argument
+\code{cue.rates} contains values that are not 1), then standard
+errors calculated from the inverse of the negative Hessian are not
+correct. The method used by the function \link{boot.ascr} is
+currently the only way to calculate these reliably (see Stevenson
+et al., 2015, for details).
 }

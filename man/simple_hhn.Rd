@@ -29,7 +29,4 @@ simple_hhn
 \description{
 For the demonstration of the model with hazard half normal detection function.
 }
-\examples{
-o_demo = demo_fit("simple_hhn")
-}
 \keyword{datasets}

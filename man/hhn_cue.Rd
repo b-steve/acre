@@ -33,7 +33,4 @@ hhn_cue
 For the demonstration of the model with hazard half normal detection function, and cue rate as additional
 information to convert the call density to individuals density.
 }
-\examples{
-o_demo = demo_fit("hhn_cue")
-}
 \keyword{datasets}

@@ -8,7 +8,7 @@
   object,
   types = NULL,
   pars = NULL,
-  new_covariates = NULL,
+  new.covariates = NULL,
   from_boot = TRUE,
   show_fixed_par = TRUE,
   ...
@@ -21,7 +21,7 @@
 
 \item{pars}{a character vector, the same as "coef.acre_tmb()".}
 
-\item{new_covariates}{a data frame, the same as "coef.acre_tmb()".}
+\item{new.covariates}{a data frame, the same as "coef.acre_tmb()".}
 
 \item{from_boot}{a logical value, the same as "vcov.acre_boot()".}
 

@@ -4,7 +4,7 @@
 \alias{coef.acre_tmb}
 \title{Extract coefficients from the output of acre_tmb model}
 \usage{
-\method{coef}{acre_tmb}(object, types = NULL, pars = NULL, new_covariates = NULL, ...)
+\method{coef}{acre_tmb}(object, types = NULL, pars = NULL, new.covariates = NULL, ...)
 }
 \arguments{
 \item{object}{a fitted model from fit.acre().}
@@ -14,7 +14,7 @@ linked - There is a link function attached to each parameter, either 'log', 'log
          estimation is the estimation before back-transformation according to the link functions. For any extended
          parameters, the estimations of the coefficients of any covariates will be always under link function of
          identity. For example, if we have D ~ x1, the estimations of D_int and D_x1 are 1 and 0.5, if the value
-         of 'x1' is not provided in the argument of 'new_covariates', then no matter what the 'types' is, these
+         of 'x1' is not provided in the argument of 'new.covariates', then no matter what the 'types' is, these
          estimations will be shown all the time. If x1 = 3, then when 'linked', the function will return 1 + 0.5 * 3
          as the estimation of log(D); when 'fitted', the function will return exp(1 + 0.5 * 3) as the estimation of D.
 fitted - The back transformed estimations from the 'linked' estimations and their link function.
@@ -22,7 +22,7 @@ derived - The estimations of 'esa' for each session.}
 
 \item{pars}{a character vector containing any parameter names.}
 
-\item{new_covariates}{a data frame containing the values of covariates of any extended parameter.}
+\item{new.covariates}{a data frame containing the values of covariates of any extended parameter.}
 
 \item{...}{}
 }

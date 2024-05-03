@@ -8,7 +8,7 @@
   object,
   types = NULL,
   pars = NULL,
-  new_covariates = NULL,
+  new.covariates = NULL,
   show_fixed_par = TRUE,
   ...
 )
@@ -20,7 +20,7 @@
 
 \item{pars}{a character vector, the same as "coef.acre_tmb()".}
 
-\item{new_covariates}{a data frame, the same as "coef.acre_tmb()".}
+\item{new.covariates}{a data frame, the same as "coef.acre_tmb()".}
 
 \item{show_fixed_par}{a logical value. To control whether to include the fixed parameters in the covariance matrix.
 It is TRUE by default.}
