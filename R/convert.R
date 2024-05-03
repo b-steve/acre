@@ -68,9 +68,9 @@ create.mask <- function(traps, buffer, ...){
 #'              Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
 #'              In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
 #'              If the detector locations stayed the same across all sessions, only one matrix/data frame is required.
-#' @param ind_model a logical value indicates whether to include individual identification which should be recorded as "animal_ID",
+#' @param ind.model a logical value indicates whether to include individual identification which should be recorded as "animal_ID",
 #'                  a column in the argument "captures". By default, it will be NULL, so the model will determine it automatically
-#'                  depend on whether this information is provided in "captures".
+#'                  depending on whether this information is provided in "captures".
 #' @param n.sessions a numeric value denotes the number of sessions. It will only be used when the argument "traps" is not provided,
 #'                   or it is a list with one element, or it is a data frame, or it is a matrix.
 #' @param n.traps a numeric vector denotes the number of traps in each session. It will only be used when the argument "traps" is not provided.
@@ -85,7 +85,7 @@ create.mask <- function(traps, buffer, ...){
 #' @export
 #'
 #' @examples
-create.capt <- function(captures, traps = NULL, ind_model = NULL, n.sessions = NULL, n.traps = NULL,
+create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = NULL, n.traps = NULL,
                         mrds.locs = NULL){
 
     # Make sure captures is DF or matrix
@@ -208,10 +208,10 @@ create.capt <- function(captures, traps = NULL, ind_model = NULL, n.sessions = N
     #any sessions, the user should leave that component to be NULL.
     is.animalID.included = "animal_ID" %in% colnames(captures)
 
-    if(is.null(ind_model)){
+    if(is.null(ind.model)){
       is.animalID = is.animalID.included
     } else {
-      is.animalID = is.animalID.included & ind_model
+      is.animalID = is.animalID.included & ind.model
     }
 
     #when animalID is included but the user assign not to fit individual embedded model,

@@ -18,7 +18,7 @@ show_Dsurf(
   scale = 1,
   plot_contours = TRUE,
   add = FALSE,
-  control_convert_loc2mask = NULL,
+  convert.loc2mask = NULL,
   arg_col = list(n = 100),
   trap_plot = NULL,
   ...

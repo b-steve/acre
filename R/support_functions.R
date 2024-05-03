@@ -794,11 +794,11 @@ list_2vector_4value = function(param){
 }
 
 
-ext_par_in_new_df = function(par_ext, new_covariates, extend_par_covariates){
+ext_par_in_new_df = function(par_ext, new.covariates, extend_par_covariates){
   output = NULL
   if(!is.null(par_ext)){
     for(i in par_ext){
-      if(all(extend_par_covariates[[i]] %in% colnames(new_covariates))){
+      if(all(extend_par_covariates[[i]] %in% colnames(new.covariates))){
         output = c(output, i)
       }
     }
@@ -810,7 +810,7 @@ ext_par_in_new_df = function(par_ext, new_covariates, extend_par_covariates){
 
 
 
-delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new_covariates = NULL,
+delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new.covariates = NULL,
                                  name_og = NULL, name_extend = NULL, par_ext_cov_provided = NULL, df_param = NULL,
                                  gam.model.full = NULL, gam.output = NULL, back_trans = TRUE){
   #delta method, G(x) is a vector of n functions, where x is a vector of m variables
@@ -821,7 +821,7 @@ delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new
   m = length(param_values)
 
   #for simple case, no new covariates involved, in which case, "link_funs" should be provided
-  #otherwise, "new_covariates", "name_og", "df_param" will be used together, and "link_funs" should be NULL
+  #otherwise, "new.covariates", "name_og", "df_param" will be used together, and "link_funs" should be NULL
   if(!is.null(link_funs)){
     #in this case, G'(x) is a n*n diagonal matrix
     n = length(link_funs)
@@ -845,14 +845,14 @@ delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new
     }
 
   } else {
-    #if(nrow(new_covariates) != 1) stop('Only 1 row in new_covariates is accepted.')
-    #if "new_covariates" is provided, then we are going to calculate the covariance matrix
+    #if(nrow(new.covariates) != 1) stop('Only 1 row in new.covariates is accepted.')
+    #if "new.covariates" is provided, then we are going to calculate the covariance matrix
     #for all original parameters used in this model, let "n" be length(unique(name_og))
     #and the G'(x) will be a n * m matrix
     unique_name_og = unique(name_og)
     n = length(unique_name_og)
     G_grad = vector('list', n)
-    n_new_df = nrow(new_covariates)
+    n_new_df = nrow(new.covariates)
     #G_grad = matrix(0, nrow = n, ncol = m)
 
 
@@ -895,14 +895,14 @@ delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new
         if(n_col_full > 1){
           gam.model = gam.output[[par_name]][["gam_non_mask"]]
           #browser()
-          w[, 1:n_col_full] = get_DX_new_gam(gam.model, new_covariates)
+          w[, 1:n_col_full] = get_DX_new_gam(gam.model, new.covariates)
         } else {
           w[, 1] = matrix(1, nrow = n_new_df, ncol = 1)
         }
 
         if(n_col_mask > 0){
           gam.model = gam.output[[par_name]][["gam_mask"]]
-          tem = get_DX_new_gam(gam.model, new_covariates)
+          tem = get_DX_new_gam(gam.model, new.covariates)
           #get rid of the first column since the intercept is not here
           w[, (n_col_full + 1):(n_col_full + n_col_mask)] = tem[, -1]
         }
@@ -1035,7 +1035,7 @@ vector_to_df = function(vec){
   return(output)
 }
 
-confint_gaussian_cal = function(object, types, pars, new_covariates, q_lower, q_upper){
+confint_gaussian_cal = function(object, types, pars, new.covariates, q_lower, q_upper){
 
   output = vector('list', length(types))
   names(output) = types
@@ -1048,8 +1048,8 @@ confint_gaussian_cal = function(object, types, pars, new_covariates, q_lower, q_
     if(i == 'fitted' | i == 'linked'){
       #browser()
       #"fitted" is just back transformed from "linked" confidence interval
-      df_est = vector_to_df(coef.acre_tmb(object, types = 'linked', pars = pars, new_covariates = new_covariates))
-      df_std = vector_to_df(stdEr.acre_tmb(object, types = 'linked', pars = pars, new_covariates = new_covariates, show_fixed_par = FALSE))
+      df_est = vector_to_df(coef.acre_tmb(object, types = 'linked', pars = pars, new.covariates = new.covariates))
+      df_std = vector_to_df(stdEr.acre_tmb(object, types = 'linked', pars = pars, new.covariates = new.covariates, show_fixed_par = FALSE))
     }
 
     if(i == 'derived'){
@@ -1956,14 +1956,14 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
       if(!is.null(new_data)){
         #in new_data, user could include any location related covariates directly, and it also contains x and y,
         #so we could directly use it instead of mask
-        new_covariates = as.data.frame(new_data)
+        new.covariates = as.data.frame(new_data)
       } else {
-        new_covariates = as.data.frame(mask)
+        new.covariates = as.data.frame(mask)
       }
 
 
 
-      #build the new_covariates based on all information we could have
+      #build the new.covariates based on all information we could have
       if(!is.null(D_cov$location)){
         if(is.null(convert.loc2mask)){
           convert.loc2mask = vector('list', 2)
@@ -1974,22 +1974,22 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
 
 
         cov_mask = do.call('location_cov_to_mask', convert.loc2mask)
-        new_covariates = cbind(new_covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
+        new.covariates = cbind(new.covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
       }
 
 
       #since we only plot one session, the number of row for D_cov$session should be only 1
       if(!is.null(D_cov$session)){
         stopifnot(nrow(D_cov$session) == 1)
-        for(i in colnames(D_cov$session)) new_covariates[[i]] = D_cov$session[1,i]
+        for(i in colnames(D_cov$session)) new.covariates[[i]] = D_cov$session[1,i]
 
       }
 
-      #update the old_covariates by the new_covariates
+      #update the old_covariates by the new.covariates
 
       for(i in colnames(old_covariates)){
-        if(all(i != 'x', i != 'y', i %in% colnames(new_covariates))){
-          old_covariates[[i]] = new_covariates[[i]]
+        if(all(i != 'x', i != 'y', i %in% colnames(new.covariates))){
+          old_covariates[[i]] = new.covariates[[i]]
         }
       }
     }
@@ -2022,7 +2022,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
           type = 'fitted'
         }
 
-        D.se = as.vector(stdEr(fit, types = type, new_covariates = old_covariates, pars = 'D',
+        D.se = as.vector(stdEr(fit, types = type, new.covariates = old_covariates, pars = 'D',
                                from_boot = control_boot$from_boot, show_fixed_par = FALSE))
 
       } else {
@@ -2137,10 +2137,10 @@ mce_from_res = function(res, coefs, M, seed_mce){
 
 
 #used for solving the issue of determination of "types" and "pars" in kinds of methods
-types_pars_sol = function(types, pars, new_covariates){
+types_pars_sol = function(types, pars, new.covariates){
 
-  #if new_covariates is provided, we need "fitted"
-  #if(!is.null(new_covariates) & (!"fitted" %in% types)) types = c(types, 'fitted')
+  #if new.covariates is provided, we need "fitted"
+  #if(!is.null(new.covariates) & (!"fitted" %in% types)) types = c(types, 'fitted')
   #if types is still nothing, set it as 'linked'
   if(is.null(types)) types = 'linked'
 
@@ -2201,7 +2201,7 @@ boot_res_to_CI = function(res, level){
 }
 
 #transform the linked boot result to fitted type
-res_transform = function(res, new_covariates, pars, object, back_trans = TRUE){
+res_transform = function(res, new.covariates, pars, object, back_trans = TRUE){
   name_extend = get_par_extend_name(object)
   df_param = get_data_param(object)
   col_name_og = ori_name(colnames(res))
@@ -2210,12 +2210,12 @@ res_transform = function(res, new_covariates, pars, object, back_trans = TRUE){
 
   extend_par_covariates = get_par_extend_covariate(object)
 
-  if(is.null(name_extend) & !is.null(new_covariates)){
-    warning('No parameter is extended, argument "new_covariates" will be ignored.')
-    new_covariates = NULL
+  if(is.null(name_extend) & !is.null(new.covariates)){
+    warning('No parameter is extended, argument "new.covariates" will be ignored.')
+    new.covariates = NULL
   }
 
-  name_extned_covariate_provided = ext_par_in_new_df(name_extend, new_covariates, extend_par_covariates)
+  name_extned_covariate_provided = ext_par_in_new_df(name_extend, new.covariates, extend_par_covariates)
 
 
   for(j in pars){
@@ -2225,17 +2225,17 @@ res_transform = function(res, new_covariates, pars, object, back_trans = TRUE){
 
     if(j %in% name_extend){
 
-      if(!is.null(new_covariates) & (j %in% name_extned_covariate_provided)){
+      if(!is.null(new.covariates) & (j %in% name_extned_covariate_provided)){
         gam = get_gam(object, j)
         values_fitted = get_extended_par_value(gam, par_info$n_col_full,
-                                               par_info$n_col_mask, values_link, new_covariates,
+                                               par_info$n_col_mask, values_link, new.covariates,
                                                matrix_par_value = TRUE)
         colnames(values_fitted) = rep(j, ncol(values_fitted))
         if(!back_trans){
           colnames(values_fitted) = paste(colnames(values_fitted), "link", sep = "_")
         }
       } else {
-          #if there is no new covariates assigned to this extended parameter (maybe no new_covariates at all,
+          #if there is no new covariates assigned to this extended parameter (maybe no new.covariates at all,
           #or at least one of the covariates for this parameter is not provided),
           #then regards all of the relevant beta as identity linked parameters
           values_fitted = values_link

@@ -31,8 +31,8 @@ demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL
   dat_model$fix = fix
   dat_model$bounds = bounds
   dat_model$ss.opts = ss_opts
-  dat_model$gr_skip = gradient_free
-  dat_model$sv_link = sv_link
+  dat_model$gr.skip = gradient_free
+  dat_model$sv.link = sv_link
 
 
 

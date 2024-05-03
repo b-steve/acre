@@ -8,12 +8,12 @@
 a list with all necessary input for the model:
  \describe{
    \item{detfn}{detechtion function: "hn" - half normal}
-   \item{par_extend_model}{a list with the name of coefficients to be modeled with additional covariates 
+   \item{model}{a list with the name of coefficients to be modeled with additional covariates
                            as the elements names, and each element contains a formula for that modeled coefficient.}
    \item{traps}{a data frame with the coordinates of the acoustic detectors}
-   \item{control_create_mask}{a list with the basic argument "buffer", which is the max detectable distance,
+   \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
                               to create the detectable area from the coordinates of the detectors}
-   \item{loc_cov}{a data frame contains location related covariates for the modeled coefficients, it must 
+   \item{loc.cov}{a data frame contains location related covariates for the modeled coefficients, it must
                   contains column 'x' and 'y' as coordinates.}
    \item{capt}{a data frame of the capture history, contains columns as follows:\cr
      \cr

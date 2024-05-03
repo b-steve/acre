@@ -2,7 +2,7 @@
 % Please edit documentation in R/surveyplots.R
 \name{show_detfn}
 \alias{show_detfn}
-\title{Title}
+\title{Plot the detection function}
 \usage{
 show_detfn(
   fit,
@@ -22,7 +22,7 @@ show_detfn(
 \item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
 the bootstrap process "boot.acre()".}
 
-\item{new_covariates}{data.frame; contains any covariates will be used for all extended parameters (if not be skipped)}
+\item{new_covariates}{data.frame; contains any covariates that will be used for all extended parameters (if not be skipped)}
 
 \item{param_extend_skip}{character; skip extended parameter, for skipped extended parameters,
 use its intercept as the value for this parameter}
@@ -44,5 +44,5 @@ use its intercept as the value for this parameter}
 \item{...}{}
 }
 \description{
-Title
+Plot the detection function
 }

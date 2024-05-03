@@ -14,7 +14,7 @@ created from the simulation
 ss_toa
 }
 \description{
-For the demonstration of the model with signal strength detection function, and signal strength 
+For the demonstration of the model with signal strength detection function, and signal strength
 and time of arriaval as additional information.
 }
 \examples{

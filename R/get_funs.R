@@ -260,18 +260,18 @@ get_DX_new_gam = function(mod, newdata){
   return(output)
 }
 
-get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked, new_covariates,
+get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked, new.covariates,
                                   DX_output = FALSE, matrix_par_value = FALSE){
   if(n_col_full > 1){
     gam.model = gam$gam_non_mask
-    DX_full_new = get_DX_new_gam(gam.model, new_covariates)
+    DX_full_new = get_DX_new_gam(gam.model, new.covariates)
   } else {
-    DX_full_new = matrix(1, ncol = 1, nrow = nrow(new_covariates))
+    DX_full_new = matrix(1, ncol = 1, nrow = nrow(new.covariates))
   }
 
   if(n_col_mask > 0){
     gam.model = gam$gam_mask
-    DX_mask_new = get_DX_new_gam(gam.model, new_covariates)
+    DX_mask_new = get_DX_new_gam(gam.model, new.covariates)
     #get rid of the first column since the intercept is not here
     DX_mask_new = DX_mask_new[, -1, drop = FALSE]
   } else {
@@ -332,7 +332,7 @@ get_sv_for_boot = function(fit){
   is.extended = !is.null(get_par_extend_name(fit))
   if(is.extended){
     covaraites_default = get_default_covariates(fit)
-    output = as.list(coef(fit, 'fitted', new_covariates = covaraites_default))
+    output = as.list(coef(fit, 'fitted', new.covariates = covaraites_default))
   } else {
     output = as.list(coef(fit, 'fitted'))
   }

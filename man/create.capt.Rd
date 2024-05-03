@@ -2,35 +2,30 @@
 % Please edit documentation in R/convert.R
 \name{create.capt}
 \alias{create.capt}
-\title{Title}
+\title{Create captures object}
 \usage{
 create.capt(
   captures,
   traps = NULL,
-  ind_model = NULL,
+  ind.model = NULL,
   n.sessions = NULL,
   n.traps = NULL,
   mrds.locs = NULL
 )
 }
 \arguments{
-\item{captures}{a list or a data frame with at least 4 columns. The column 1, 2, 4 will be fixed as "session", "ID" and "trap",
-each row will be regarded as one detection. Extra information could be provided as columns "bearing", "dist"
-,"ss", "toa", "occasion". And "animal_ID" could be provided if individuals could be distinguished from their acoustic detection.
-In addition, any individuals from different sessions will be treated as independent ones. The defualt unit for any
-distance related value should be 'meter', and for time related value should be 'seconds'.}
+\item{captures}{a data frame with capture data. Columns named "session", "ID" and "trap" are required, with
+each row being regarded as one detection. Extra information can be provided as columns "bearing", "dist"
+,"ss", "toa", "animal_ID". See 'Captures argument'.}
 
-\item{traps}{a list or a matrix or a data frame. If it is a data frame or a matrix, it should contains only two columns with the
-Cartesian coordinates of the traps. If it is a list, its length will be treated as the number of sessions, and each
-element is a data frame or a matrix contains the Cartesian coordinates of the traps in the corresponding session.
-If it is a list with only one element, or a data frame, or a matrix, the number of session will be determined
-by the argument "n.sessions" or max(captures$session) if "n.sessions" is not provided. This setting is prepared
-for the scenario that the survey is conducted with the same detectors for multiple sessions. The unit of the
-coordinates should be 'meter' by default.}
+\item{traps}{a matrix or a data frame with two columns or a list of such matrices or data frames for a multi-session model.
+Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
+In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
+If the detector locations stayed the same across all sessions, only one matrix/data frame is required.}
 
-\item{ind_model}{a logical value indicates whether to include individual identification which should be recorded as "animal_ID",
+\item{ind.model}{a logical value indicates whether to include individual identification which should be recorded as "animal_ID",
 a column in the argument "captures". By default, it will be NULL, so the model will determine it automatically
-depend on whether this information is provided in "captures".}
+depending on whether this information is provided in "captures".}
 
 \item{n.sessions}{a numeric value denotes the number of sessions. It will only be used when the argument "traps" is not provided,
 or it is a list with one element, or it is a data frame, or it is a matrix.}
@@ -48,5 +43,5 @@ with 4 columns: "animal_ID", "ID", "mrds_x" and "mrds_y".}
 an object ready for model fitting.
 }
 \description{
-Title
+Create a captures object to use with the function read.acre
 }
