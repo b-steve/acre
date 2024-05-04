@@ -27,9 +27,6 @@ Imports:
     RANN,
     ggplot2,
     gganimate,
-    forestplot,
-    grid,
-    hrbrthemes,
     foreach,
     doParallel
 Suggests:

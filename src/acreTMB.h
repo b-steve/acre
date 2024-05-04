@@ -5,12 +5,6 @@
 #define TMB_OBJECTIVE_PTR obj
 
 //DIY functions
-
-// template<class Type>
-// bool isNA(Type x){  
-//   return R_IsNA(asDouble(x));
-// }
-
 template<class Type>
 Type bessi0(Type x){
   Type ax;
@@ -78,19 +72,6 @@ int incheck_scalar(const int &a, const vector<int> &b){
   return ans;
 }
 
-// template<class Type>
-// vector<Type> isNA(const vector<Type> &x){
-//   int len = x.size();
-//   vector<Type> ans(len);
-//   for(int i = 0; i < len; i++){
-//     if(R_IsNA(asDouble(x(i)))){
-//       ans(i) = 1;
-//     } else {
-//       ans(i) = 0;
-//     }
-//   }
-//   return ans;
-// }
 
 template<class Type>
 void trans(Type *x, const int &link){
@@ -1441,22 +1422,14 @@ Type acreTMB(objective_function<Type>* obj)
       lambda_theta *= area_unit;
     }
     //std::cout << "session " << s << ", check point 2, lambda_theta: " << lambda_theta << std::endl;
-    
-    
-    
-    
-    
-    //////////////////////////end of lambda_theta calculation
-    
-    
-    
-    
+
+    // end of lambda_theta calculation
     
     //canceled out original likelihood: nll -= dpois(Type(n_i), lambda_theta, true);
     *pointer_nll += lambda_theta;
-	//if(s == 105){
-	//	std::cout << "session "<< s <<", check point2, nll: " << *pointer_nll << std::endl;
-	//}	
+  	//if(s == 105){
+  	//	std::cout << "session "<< s <<", check point2, nll: " << *pointer_nll << std::endl;
+  	//}	
 	
     //just like D, sigma_toa is not id nor trap extentable, so just take
     //the first value in this session
