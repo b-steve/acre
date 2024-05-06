@@ -16,7 +16,7 @@ show.Dsurf(
   y.pixels = 50,
   zlim = NULL,
   scale = 1,
-  plot.contours = TRUE,
+  plot.contours = FALSE,
   add = FALSE,
   convert.loc2mask = NULL,
   arg.col = list(n = 100),
