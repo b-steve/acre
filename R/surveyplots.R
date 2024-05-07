@@ -417,7 +417,7 @@ plot.acre_data <- function(x, ...){
 
       if(is.ss){
         base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-          coord_quickmap(xlim = xlim, ylim = ylim)
+          coord_sf(xlim = xlim, ylim = ylim)
         
         point_out_plot = c(max(masks$x) + 100 * (max(masks$x) - min(masks$y)),
                            max(masks$y) + 100 * (max(masks$y) - min(masks$y)))
@@ -428,7 +428,7 @@ plot.acre_data <- function(x, ...){
         
       } else {
         base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-          coord_quickmap(xlim = xlim, ylim = ylim)
+          coord_sf(xlim = xlim, ylim = ylim)
       }
       
       trap.plot = base_plot + 
@@ -560,7 +560,7 @@ plot.acre_data <- function(x, ...){
         #plot basic info
         if(is.ss){
           base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-            coord_quickmap(xlim = xlim_plot, ylim = ylim_plot)
+            coord_sf(xlim = xlim_plot, ylim = ylim_plot)
           
           point_out_plot = c(max(masks$x) + 100 * (max(masks$x) - min(masks$y)),
                              max(masks$y) + 100 * (max(masks$y) - min(masks$y)))
@@ -571,7 +571,7 @@ plot.acre_data <- function(x, ...){
           
         } else {
           base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-            coord_quickmap(xlim = xlim_plot, ylim = ylim_plot)
+            coord_sf(xlim = xlim_plot, ylim = ylim_plot)
         }
 
         
