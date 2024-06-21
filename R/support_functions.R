@@ -1411,6 +1411,19 @@ location_cov_to_mask = function(mask, loc.cov, control_nn2 = NULL, control_weigh
 
 }
 
+# 
+distance_cov_to_mask = function(mask, dist.cov) {
+  ## Directly calculates distance covariates for provided mask
+  if(!is.list(dist.cov)){
+    stop("dist.cov must be a list containing distance covariates")
+  }
+  
+  # Directly calculate the distance from each mask point to nearest covariate
+  # area.
+  calculated_dist.cov = convert_dist_cov_to_loc_cov(dist.cov, NULL, mask)
+  
+  return(calculated_dist.cov)
+}
 
 par_extend_create = function(loc.cov = NULL, mask = NULL, convert.loc2mask = list(),
                              dist.cov = NULL, session.cov = NULL, trap.cov = NULL, time.loc.cov = NULL){
@@ -1913,10 +1926,29 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
           convert.loc2mask = vector('list', 2)
           names(convert.loc2mask) = c('mask', 'loc.cov')
         }
+        # Need to create this object regardless of whether convert.loc2mask 
+        # provided or not
+        convert.dist2mask = vector('list', 2)
+        names(convert.dist2mask) = c('mask', 'dist.cov')
+        
+        convert.dist2mask$mask = list(mask)
         convert.loc2mask$mask = list(mask)
-        convert.loc2mask$loc.cov = old_loc_cov
+        
+        # We only need to interpolate location covariates, as we can directly
+        # calculate the value at each mask point for distance covariates.
+        
+        # Separating distance covariates from location covariates.
+        dist_cov_names = names(fit$arg_input$dist.cov)
+        separated_cov = separate_dist_loc_cov(old_loc_cov, dist_cov_names)
+        
+        # NOTICE: We aren't using separated_cov$distance, we want to calculate 
+        # for each mask point directly so just want distance covariate values 
+        # contained within fit object
+        convert.dist2mask$dist.cov = fit$arg_input$dist.cov
+        convert.loc2mask$loc.cov = separated_cov$location
 
         cov_mask = do.call('location_cov_to_mask', convert.loc2mask)
+        dist_mask = do.call('distance_cov_to_mask', convert.dist2mask)
       }
 
       if(any(colnames(cov_mask) %in% c('session', 'mask'))){
@@ -1924,10 +1956,11 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
       } else {
         old_covariates = cbind(old_covariates, cov_mask)
       }
-
+      
+      # Combine the distance and location covariates into 1 dataframe.
+      # The distance mask should have x, y columns matching old_covariates
+      old_covariates = cbind(old_covariates, dist_mask)
     }
-
-
 
     session_data_in_model = get_par_extend_data(fit)$session
     ##for session related covariates, it is simple, just take them from the input argument of fit
@@ -1960,8 +1993,6 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
       } else {
         new.covariates = as.data.frame(mask)
       }
-
-
 
       #build the new.covariates based on all information we could have
       if(!is.null(D_cov$location)){
@@ -2307,13 +2338,16 @@ convert_dist_cov_to_loc_cov = function(dist.cov, loc.cov, mask){
         stop('invlid input of the argument loc.cov.')
       }
     }
-
+    
+    if(!is.data.frame(mask)) {
+      mask <- do.call('rbind', mask)
+    }
 
     for(i in 1:n){
       cov_name = cov_names[i]
       stopifnot(all(c('x', 'y') %in% colnames(dist.cov[[cov_name]])))
-
-      tem = dist_nearest(from = do.call('rbind', mask),
+      
+      tem = dist_nearest(from = mask,
                          to = dist.cov[[cov_name]][, c('x', 'y')], col_name = cov_name)
 
       loc.cov[[n_loc_cov + i]] = tem[!duplicated(tem[, c('x', 'y')]),]
@@ -2375,3 +2409,55 @@ convert_time_loc_cov_to_loc_cov = function(time.loc.cov, loc.cov, session.cov){
   return(loc.cov)
 }
 
+
+separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
+  # Function which separates  distance covariates from location covariates in a loc_cov list, which
+  # contains dataframes of location and dist covariates.
+  
+  # Check if loc_cov is a list
+  if (!is.list(loc_cov)) {
+    stop("loc_cov must be a list of data frames.")
+  }
+  
+  # Check if dist_cov_col_names is a character vector
+  if (!is.character(dist_cov_col_names)) {
+    stop("dist_cov must be a character vector of distance covariate column names.")
+  }
+  
+  distance <- list()
+  location <- list()
+  
+  for (i in seq_along(loc_cov)) {
+    cov_df <- loc_cov[[i]]
+    
+    # Check items of loc_cov are dataframes
+    if (!is.data.frame(cov_df)) {
+      stop("loc_cov must be a list of data frames.")
+    }
+    
+    # Make sure each dataframe has x, y columns
+    if (!all(c("x", "y") %in% names(cov_df))) {
+      stop("Each dataframe in loc_cov must contain 'x' and 'y' columns.")
+    }
+    
+    # Split the data frame into 2 new dataframes, each both have the same x,y 
+    # columns, but one has only the distance covariates, the other only location 
+    # covariates.
+    dist_cov_indices <- which(names(cov_df) %in% dist_cov_col_names)
+    loc_cov_indices <- which(!names(cov_df) %in% c(dist_cov_col_names, "x", "y"))
+    
+    location_df <- cov_df[, c("x", "y", names(cov_df)[loc_cov_indices]), drop = FALSE]
+    distance_df <- cov_df[, c("x", "y", names(cov_df)[dist_cov_indices]), drop = FALSE]
+    
+    # Only add the dataframe if it contains more than just the x, y columns
+    if (ncol(location_df) > 2) {
+      location[[length(location) + 1]] <- location_df
+    }
+    
+    if (ncol(distance_df) > 2) {
+      distance[[length(distance) + 1]] <- distance_df
+    }
+  } 
+  
+  return(list(distance = distance, location = location))
+}
