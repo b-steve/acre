@@ -1490,6 +1490,11 @@ demo_loc_cov = function(){
 
 
 sim_args_generator = function(sim_name){
+  if (!sim_name %in% get_dataset_names()) {
+    stop('invalid input for "sim_name", which should be one of the following: "', 
+         paste(get_dataset_names(), collapse = '", "'), '"')
+  }
+  
   output = list()
   #generate some common settings
   traps = demo_traps()
@@ -1660,6 +1665,10 @@ sim_args_generator = function(sim_name){
 
 
 fit_args_generator_from_sim = function(sim_name, fit_args){
+  if (!sim_name %in% get_dataset_names()) {
+    stop('invalid input for "sim_name", which should be one of the following: "', 
+         paste(get_dataset_names(), collapse = '", "'), '"')
+  }
 
   output = fit_args
 
@@ -2326,8 +2335,6 @@ convert_dist_cov_to_loc_cov = function(dist_cov, loc_cov, mask){
 }
 
 convert_time_loc_cov_to_loc_cov = function(time_loc_cov, loc_cov, session_cov){
-
-
   if(!is.null(time_loc_cov)){
     if(is.null(session_cov)) stop('please provide session_cov with column time')
     if(!all(c("session", "time") %in% colnames(session_cov))) stop('please provide information of session and time.')
@@ -2373,5 +2380,20 @@ convert_time_loc_cov_to_loc_cov = function(time_loc_cov, loc_cov, session_cov){
   }
 
   return(loc_cov)
+}
+
+#' Get all dataset names.
+#' 
+#' Retrieves all the dataset names from the data folder, and removes the `.rda` 
+#' extension.
+#'
+#' @return A character vector containing dataset names.
+#' @export
+#'
+#' @examples dataset_names <- get_dataset_names()
+get_dataset_names = function() {
+  names_without_rda_suffix = gsub(".rda", "", list.files("data"), fixed=T)
+  
+  return(names_without_rda_suffix)
 }
 

@@ -1,3 +1,162 @@
+#' Simulate acre-formatted SCR data.
+#'
+#' @param sim_name a string denoting type of data to be simulated. Supported 
+#'                 types can be found using the \code{get_dataset_names()} 
+#'                 function.
+#' @param n.rand a numeric value denoting the number of data sets to be 
+#'               generated. If n.rand > 1, \code{output$capt} will be a list of 
+#'               length \code{n.rand}.
+#' @param seed a numeric value denoting the random seed, defaults to 810.
+#' @param suppress_messages a logical value which indicates whether to suppress 
+#'                          helper messages.
+#' @param proportion_missing a numeric value used to set a proportion of the 
+#'                           covariate data generated to NA (currently only 
+#'                           bearing, distance and toa supported)
+#'
+#' @return A data frame containing the simulated data, as well as arguments used.
+#' @export
+#'
+#' @examples simulated_data <- sim_data("bearing_hn", 5)
+sim_data = function(sim_name, n.rand, seed = 810, suppress_messages = F, 
+                    proportion_missing=0){
+  # Input validation
+  if (!sim_name %in% get_dataset_names()) {
+    stop('invalid input for "sim_name", which should be one of the following: "', 
+         paste(get_dataset_names(), collapse = '", "'), '"')
+  }
+  if (!is.numeric(proportion_missing) || proportion_missing < 0 || proportion_missing > 1) {
+    stop("proportion_missing must be a numeric value between 0 and 1.")
+  }
+  stopifnot(is.numeric(n.rand))
+  
+  set.seed(seed)
+  
+  if (!suppress_messages) 
+    message("Simulation progress:")
+  
+  # Generate the simulation arguments, and then simulate the raw capture data
+  set.seed(seed)
+  sim_args = sim_args_generator(sim_name)
+  sim_args$n.rand = n.rand
+  simulated_capt = do.call('sim.capt', sim_args)
+  
+  # Generate acre formatted data arguments
+  output = fit_args_generator_from_sim(sim_name, simulated_capt$args)
+  output$param = sim_args$param
+  
+  # Set data to NA if required
+
+  
+  if (!suppress_messages) 
+    message("Converting raw data to acre format...")
+  
+  if (n.rand == 1) {
+    n_missing <- floor(nrow(simulated_capt$capt) * proportion_missing)
+    simulated_capt$capt <- set_detection_data_NA(simulated_capt$capt, 
+                                                 sim_name, n_missing)
+    
+    output$capt = create.capt(simulated_capt$capt, output$traps)
+  } else {
+    # Note that in the case we want multiple data sets, they will be stored in 
+    # a list in output$capt
+    for (i in 1:n.rand) {
+      n_missing <- floor(nrow(simulated_capt$capt[[i]]) * proportion_missing)
+      simulated_capt$capt[[i]] <- set_detection_data_NA(simulated_capt$capt[[i]], 
+                                                   sim_name, n_missing)
+      
+      output$capt[[i]] = create.capt(simulated_capt$capt[[i]], output$traps)
+    }
+  }
+  
+  if (!suppress_messages) 
+    message(paste0("Successfully simulated ", n.rand, " capture data sets."))
+  
+  return(output)
+}
+
+#' Updated simulation study
+#'
+#' @param sim_name 
+#' @param n.rand 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+sim_study_updated = function(sim_name, n.rand, save=T, proportion_missing=0) {
+  stopifnot(is.numeric(n.rand))
+  stopifnot("simulation study must be run with at least 2 data sets. 
+            If you wish to fit a single dataset use the `fit.acre()` 
+            function" = n.rand > 1)
+  if (!is.numeric(proportion_missing) || proportion_missing < 0 || proportion_missing > 1) {
+    stop("proportion_missing must be a numeric value between 0 and 1.")
+  }
+  
+  # Simulate capture data
+  simulated_data <- sim_data(sim_name, n.rand, proportion_missing)
+
+  # generate the data frame which contains default link function for each parameter
+  dat_par = default_df_link()
+  
+  # get the linked values for all parameters
+  true_values = param_transform(simulated_data$param, dat_par)
+  
+  # Setup parallel computing stuff
+  num_cores <- floor(parallel::detectCores() * 0.5)
+  message(paste0("Running simulation study using ", num_cores, " cores"))
+  cl <- parallel::makeCluster(num_cores)
+  doParallel::registerDoParallel(cl)
+  `%dopar%` <- foreach::`%dopar%`
+  
+  est_values <- foreach::foreach(i = 1:n.rand, .packages = 'acre', 
+                                 .errorhandling = 'pass') %dopar% {
+ # for(i in 1:n.rand) {
+                                   
+    fit_args <- simulated_data
+    fit_args$capt <- fit_args$capt[[i]]
+    
+    fit_args$tracing = FALSE
+
+    sim_fit <- tryCatch({
+      fit <- do.call('fit_og', fit_args)
+      fit$error <- FALSE
+      fit
+    }, error = function(e) {
+      # message(paste("Error in simulation", i, ":", e))
+      list(error = TRUE, message = e$message)
+    })
+    
+    # sim_fit <- do.call('fit_og', fit_args)
+    
+    if (sim_fit$error) {
+      return(list(error = TRUE, message = sim_fit$message))
+    } else {
+      est_value_linked <- cbind(Est = coef(sim_fit), 
+                                Std = stdEr(sim_fit), confint(sim_fit))
+      
+      est_value_fitted <- cbind(Est = coef(sim_fit, type="fitted"), 
+                                Std = stdEr(sim_fit, type="fitted"), 
+                                confint(sim_fit, type="fitted"))
+      
+      # Adds to the current list of est_values (doParallel trickery)
+      return(list(fitted = est_value_fitted, linked = est_value_linked))
+    }
+  }
+  
+  message("Finished sim study successfully.")
+  
+  parallel::stopCluster(cl)
+  
+  est_values[["true_link_parameters"]] <- true_values
+  
+  if (save) {
+    saveRDS(est_values, paste0("test_fits/", sim_name, 
+                            "_missing_", proportion_missing, "_n_", n.rand))
+  }
+
+  return(est_values)
+}
+
 #' Simulates, fits and plots capture-recapture data
 #'
 #' @param sim_name Name of data set to be simulated
@@ -87,21 +246,21 @@ sim_study = function(sim_name, n.rand = 1, fit = FALSE, seed = 810, proportion_m
 
       #plot the est_values
 
-      for(i in names(true_values)){
-        for(j in 1:length(true_values[[i]])){
-          #extract estimations as a vector and the true value
-          est = sapply(est_values, function(x) x[[i]][j])
-          tru = true_values[[i]][j]
-
-          hist(est, xlim = range(est, tru),
-               main = paste0(i, '[', j, ']_link: Sim vs. True'),
-               xlab = 'Value')
-
-          abline(v = tru, col = 2)
-          legend('topright', 'true value', col = 2, lty = 1)
-          box()
-        }
-      }
+      # for(i in names(true_values)){
+      #   for(j in 1:length(true_values[[i]])){
+      #     #extract estimations as a vector and the true value
+      #     est = sapply(est_values, function(x) x[[i]][j])
+      #     tru = true_values[[i]][j]
+      # 
+      #     hist(est, xlim = range(est, tru),
+      #          main = paste0(i, '[', j, ']_link: Sim vs. True'),
+      #          xlab = 'Value')
+      # 
+      #     abline(v = tru, col = 2)
+      #     legend('topright', 'true value', col = 2, lty = 1)
+      #     box()
+      #   }
+      # }
       
     }
   }
@@ -152,8 +311,8 @@ save_sim_fit <- function(sim_fit, i, sim_name, proportion_missing=0) {
 #' @return 
 #'
 #' @examples
-set_detection_data_NA <- function(data, dataset_name, n_missing, is_sim = F) {
-  if (n_missing == 0) return (data)
+set_detection_data_NA <- function(capt_data, dataset_name, n_missing) {
+  if (n_missing == 0) return (capt_data)
   
   detection_data_types <- c("bearing", "dist", "toa")
   
@@ -168,16 +327,16 @@ set_detection_data_NA <- function(data, dataset_name, n_missing, is_sim = F) {
     
     # If data contains this type of additional info
     if (grepl(data_type, dataset_name)) {
-      
-      # Note for sim data, we are passing the capture info directly
-      if (is_sim) {
-        # Set the desired number of rows to NA
-        capt_data[1:n_missing, data_type] <- NA
-      } else {
-        data$capt[1:n_missing, data_type] <- NA
-      }
+      # Set the desired number of rows to NA
+      capt_data[sample(1:nrow(capt_data), n_missing), data_type] <- NA
     }
   }
   
-  return(data)
+  return(capt_data)
+}
+
+sim_study_for_missing_data <- function(dataset_name) {
+  for (p_missing in seq(0,1,length=11)) {
+    sim_study_updated(dataset_name, 20, T, proportion_missing = p_missing)
+  }
 }
