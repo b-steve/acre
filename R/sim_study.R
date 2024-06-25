@@ -335,8 +335,17 @@ set_detection_data_NA <- function(capt_data, dataset_name, n_missing) {
   return(capt_data)
 }
 
-sim_study_for_missing_data <- function(dataset_name) {
+#' Run a simulation study with missing covariate data.
+#'
+#' @param dataset_name string denoting the name of the dataset to be studied.
+#' @param n.rand numeric value indicating the number of datasets to be simulated.
+#'
+#' @return 
+#' @export
+#'
+#' @examples sim_study_for_missing_data("bearing_hn", 20)
+sim_study_for_missing_data <- function(dataset_name, n.rand) {
   for (p_missing in seq(0,1,length=11)) {
-    sim_study_updated(dataset_name, 20, T, proportion_missing = p_missing)
+    sim_study_updated(dataset_name, n.rand, T, proportion_missing = p_missing)
   }
 }
