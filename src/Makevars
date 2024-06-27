@@ -1,2 +1,0 @@
-PKG_CPPFLAGS += -Wa,-mbig-obj
-CXXFLAGS += -Wa,-mbig-obj
