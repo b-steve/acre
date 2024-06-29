@@ -93,7 +93,7 @@ sim_study_updated = function(sim_name, n.rand, save=T, proportion_missing=0) {
   }
   
   # Simulate capture data
-  simulated_data <- sim_data(sim_name, n.rand, proportion_missing)
+  simulated_data <- sim_data(sim_name, n.rand, proportion_missing=proportion_missing)
 
   # generate the data frame which contains default link function for each parameter
   dat_par = default_df_link()
