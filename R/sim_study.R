@@ -102,7 +102,7 @@ sim_study_updated = function(sim_name, n.rand, save=T, proportion_missing=0) {
   true_values = param_transform(simulated_data$param, dat_par)
   
   # Setup parallel computing stuff
-  num_cores <- floor(parallel::detectCores() * 0.5)
+  num_cores <- floor(parallel::detectCores() * 0.85)
   message(paste0("Running simulation study using ", num_cores, " cores"))
   cl <- parallel::makeCluster(num_cores)
   doParallel::registerDoParallel(cl)
