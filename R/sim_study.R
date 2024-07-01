@@ -327,8 +327,16 @@ set_detection_data_NA <- function(capt_data, dataset_name, n_missing) {
     
     # If data contains this type of additional info
     if (grepl(data_type, dataset_name)) {
-      # Set the desired number of rows to NA
-      capt_data[sample(1:nrow(capt_data), n_missing), data_type] <- NA
+      
+      # If all the data is NA, just remove the covariate column entirely
+      if (n_missing == nrow(capt_data)) {
+        capt_data[data_type] <- NULL
+      }
+      else {
+        # Set the desired number of rows to NA
+        capt_data[sample(1:nrow(capt_data), n_missing), data_type] <- NA
+      }
+      
     }
   }
   
@@ -345,6 +353,7 @@ set_detection_data_NA <- function(capt_data, dataset_name, n_missing) {
 #'
 #' @examples sim_study_for_missing_data("bearing_hn", 20)
 sim_study_for_missing_data <- function(dataset_name, n.rand) {
+  # for (p_missing in seq(0,1,length=11)) {
   for (p_missing in seq(0,1,length=11)) {
     sim_study_updated(dataset_name, n.rand, T, proportion_missing = p_missing)
   }
