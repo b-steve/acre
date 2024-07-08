@@ -44,22 +44,21 @@ sim_data = function(sim_name, n.rand, seed = 810, suppress_messages = F,
   output = fit_args_generator_from_sim(sim_name, simulated_capt$args)
   output$param = sim_args$param
   
-  # Set data to NA if required
-
-  
   if (!suppress_messages) 
     message("Converting raw data to acre format...")
   
   if (n.rand == 1) {
+    # Set data to NA if required
     n_missing <- floor(nrow(simulated_capt$capt) * proportion_missing)
     simulated_capt$capt <- set_detection_data_NA(simulated_capt$capt, 
                                                  sim_name, n_missing)
     
     output$capt = create.capt(simulated_capt$capt, output$traps)
   } else {
-    # Note that in the case we want multiple data sets, they will be stored in 
+    # Note that in the case we want multiple data sets, they will be stored as 
     # a list in output$capt
     for (i in 1:n.rand) {
+      # Set data to NA if required
       n_missing <- floor(nrow(simulated_capt$capt[[i]]) * proportion_missing)
       simulated_capt$capt[[i]] <- set_detection_data_NA(simulated_capt$capt[[i]], 
                                                    sim_name, n_missing)
@@ -74,19 +73,22 @@ sim_data = function(sim_name, n.rand, seed = 810, suppress_messages = F,
   return(output)
 }
 
-#' Updated simulation study
+#' Runs a simulation study 
 #'
-#' @param sim_name 
-#' @param n.rand 
+#' @param sim_name a string denoting type of data to be simulated. Supported 
+#'                 types can be found using the \code{get_dataset_names()} 
+#'                 function.
+#' @param n.rand a numeric value denoting the number of data sets to be 
+#'               generated and fit. Must be > 1.
 #'
 #' @return
 #' @export
 #'
-#' @examples
-sim_study_updated = function(sim_name, n.rand, save=T, proportion_missing=0) {
+#' @examples 
+sim_study = function(sim_name, n.rand, save=T, plot=T, proportion_missing=0) {
   stopifnot(is.numeric(n.rand))
   stopifnot("simulation study must be run with at least 2 data sets. 
-            If you wish to fit a single dataset use the `fit.acre()` 
+            If you wish to fit a single dataset consider using the `fit.acre()` 
             function" = n.rand > 1)
   if (!is.numeric(proportion_missing) || proportion_missing < 0 || proportion_missing > 1) {
     stop("proportion_missing must be a numeric value between 0 and 1.")
@@ -110,7 +112,9 @@ sim_study_updated = function(sim_name, n.rand, save=T, proportion_missing=0) {
   
   est_values <- foreach::foreach(i = 1:n.rand, .packages = 'acre', 
                                  .errorhandling = 'pass') %dopar% {
- # for(i in 1:n.rand) {
+  
+  # If you don't want to use parallel comment the above and un-comment here
+  # for(i in 1:n.rand) {
                                    
     fit_args <- simulated_data
     fit_args$capt <- fit_args$capt[[i]]
@@ -122,11 +126,9 @@ sim_study_updated = function(sim_name, n.rand, save=T, proportion_missing=0) {
       fit$error <- FALSE
       fit
     }, error = function(e) {
-      # message(paste("Error in simulation", i, ":", e))
       list(error = TRUE, message = e$message)
     })
     
-    # sim_fit <- do.call('fit_og', fit_args)
     
     if (sim_fit$error) {
       return(list(error = TRUE, message = sim_fit$message))
@@ -144,161 +146,42 @@ sim_study_updated = function(sim_name, n.rand, save=T, proportion_missing=0) {
   }
   
   message("Finished sim study successfully.")
-  
   parallel::stopCluster(cl)
-  
   est_values[["true_link_parameters"]] <- true_values
   
+  # Create a "sim_study" folder if it does not exist
+  dir.create("sim_study", showWarnings = FALSE)
+  
   if (save) {
-    saveRDS(est_values, paste0("test_fits/", sim_name, 
-                            "_missing_", proportion_missing, "_n_", n.rand))
+    save_name <- paste0("sim_study/", sim_name, 
+                        "_missing_", proportion_missing, "_n_", n.rand)
+    
+    saveRDS(est_values, save_name)
+    message(paste("Saved study in", save_name))
+  }
+  
+  if (plot) {
+    # plot the est_values
+    for(i in names(true_values)){
+      tru = true_values[[i]]
+      i <- paste0(i, "_link")
+      est = sapply(est_values[1:(length(est_values)-1)], function(x) x[["linked"]][[i, 1]])
+      
+
+      hist(est, xlim = range(est, tru),
+           main = paste0(i, ': Sim vs. True'),
+           xlab = 'Value')
+
+      abline(v = tru, col = 2)
+      legend('topright', 'true value', col = 2, lty = 1)
+      box()
+      
+    }
   }
 
   return(est_values)
 }
 
-#' Simulates, fits and plots capture-recapture data
-#'
-#' @param sim_name Name of data set to be simulated
-#' @param n.rand Number of data sets to simulate and fit
-#' @param fit True if we wish to fit and plot the simulation data
-#' @param seed Random seed
-#' @param proportion_missing The proportion of additional detection data to be 
-#'                            removed. Defaults to 0.
-#'
-#' @return
-#' @export
-#'
-#' @examples
-sim_study = function(sim_name, n.rand = 1, fit = FALSE, seed = 810, proportion_missing=0.0){
-  sim_args = sim_args_generator(sim_name)
-  sim_args$n.rand = n.rand
-  set.seed(seed)
-  if(n.rand != 1) message("simulation progress:")
-  simulated_capt = do.call('sim.capt', sim_args)
-  output = list()
-  output$sim_capt = simulated_capt$capt
-  output$sim_args = sim_args
-  
-  if(fit){
-    message("[SIM_STUDY] Modelling started.")
-    # sort out arguments required for model fitting first (excluding capt, as this could vary depends on n.rand)
-    fit_args = fit_args_generator_from_sim(sim_name, simulated_capt$args)
-    
-    # if we only run 1 simulation and fit model to it, we could store the output of fit
-    # if we run more simulations and fit models to all of them, we could not store that many
-    # output objects, so we only plot the result of linked coefficients in a histogram with the
-    # "true" value marked as a red vertical line
-    if(n.rand == 1){
-      fit_args$capt = create.capt(simulated_capt$capt, fit_args$traps)
-      sim_fit = do.call('fit_og', fit_args)
-      
-      output$sim_fit_args = fit_args
-      output$sim_fit = sim_fit
-    } else {
-      # generate the data frame which contains default link function for each parameter
-      dat_par = default_df_link()
-      
-      # get the linked values for all parameters
-      true_values = param_transform(sim_args$param, dat_par)
-      est_values = vector('list', n.rand)
-      fit_args$tracing = FALSE
-      
-      # Setup parallel computing stuff
-      num_cores <- parallel::detectCores() - 1
-      message(paste0("[SIM_STUDY] Running sim study using", num_cores, " cores"))
-      cl <- parallel::makeCluster(num_cores)
-      doParallel::registerDoParallel(cl)
-      `%dopar%` <- foreach::`%dopar%`
-      
-      # for(i in 1:n.rand) {
-      foreach::foreach(i = 1:n.rand, .packages = 'acre') %dopar% {
-        # Removes data if necessary (none removed by default)
-        n_missing <- floor(proportion_missing * nrow(simulated_capt$capt[[i]]))
-        simulated_capt$capt[[i]] <- set_detection_data_NA(
-          simulated_capt$capt[[i]],
-          sim_name,
-          n_missing,
-          is_sim = T
-        )
-        
-        # Fit model
-        fit_args$capt = create.capt(simulated_capt$capt[[i]], fit_args$traps)
-        sim_fit = do.call('fit_og', fit_args)
-        est_values[[i]] = get_coef(sim_fit)
-        message(paste0("[SIM_STUDY] finished: ", i, "/", n.rand))
-        #write.csv(sim_fit$args$par.extend$data$mask, paste0('df_m_fit', i, '.csv'), row.names = F)
-        
-        if (save_fits) {
-          save_sim_fit(sim_fit, i, sim_name, proportion_missing)
-        }
-      }
-      
-      parallel::stopCluster(cl)
-      
-
-      #remove the capture history and output the rest of arguments for model fitting
-      fit_args$capt = NULL
-      output$sim_fit_args = fit_args
-      #we only output the linked scale of estimated coefficients
-      output$sim_fit_coef_link = est_values
-
-
-      #plot the est_values
-
-      # for(i in names(true_values)){
-      #   for(j in 1:length(true_values[[i]])){
-      #     #extract estimations as a vector and the true value
-      #     est = sapply(est_values, function(x) x[[i]][j])
-      #     tru = true_values[[i]][j]
-      # 
-      #     hist(est, xlim = range(est, tru),
-      #          main = paste0(i, '[', j, ']_link: Sim vs. True'),
-      #          xlab = 'Value')
-      # 
-      #     abline(v = tru, col = 2)
-      #     legend('topright', 'true value', col = 2, lty = 1)
-      #     box()
-      #   }
-      # }
-      
-    }
-  }
-  
-  return(output)
-}
-
-#' Saves models fitted to simulation data
-#'
-#' @param sim_fit The fitted model
-#' @param i The iteration / simulation number
-#' @param sim_name The simulation / data set name.
-#' @param proportion_missing The proportion of additional detection data to be 
-#'                            removed.
-#'
-save_sim_fit <- function(sim_fit, i, sim_name, proportion_missing=0) {
-  # Save the data to test_fits/sim/sim_name_i
-  save_to_location <- paste0("test_fits/sim/", sim_name, "/missing_",
-                             proportion_missing, "/")
-  save_to_name <- paste0(sim_name, "_", i)
-  save_to <- paste0(save_to_location, save_to_name)
-
-  conf_int <- confint.acre_tmb(sim_fit)
-  coefs <- coef.acre_tmb(sim_fit)
-  errs <- stdEr.acre_tmb(sim_fit)
-
-  fit_data <- data.frame(conf_int = conf_int,
-                         coefs = as.vector(coefs),
-                         errs = as.vector(errs))
-
-  # Update column names
-  names(fit_data)[1] <- "conf_int_2.5"
-  names(fit_data)[2] <- "conf_int_97.5"
-
-  saveRDS(fit_data, save_to)
-  
-  message(paste0("Saved sim fit data to: ", save_to_location))
-}
 
 #' Sets the first n additional detection data information to NA
 #'

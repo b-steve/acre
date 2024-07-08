@@ -2384,16 +2384,13 @@ convert_time_loc_cov_to_loc_cov = function(time_loc_cov, loc_cov, session_cov){
 
 #' Get all dataset names.
 #' 
-#' Retrieves all the dataset names from the data folder, and removes the `.rda` 
-#' extension.
+#' Retrieves all the dataset names included in the [acre] package
 #'
 #' @return A character vector containing dataset names.
 #' @export
 #'
 #' @examples dataset_names <- get_dataset_names()
 get_dataset_names = function() {
-  names_without_rda_suffix = gsub(".rda", "", list.files("data"), fixed=T)
-  
-  return(names_without_rda_suffix)
+  return(data(package="acre")$results[, "Item"])
 }
 
