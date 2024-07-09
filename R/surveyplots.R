@@ -1,10 +1,10 @@
 
-#' Title
+#' Plot the detection function
 #'
-#' @param fit an object generated from the model fitting function "fit.acre_tmb()" or
-#'            the bootstrap process "boot.acre()".
-#' @param new_covariates data.frame; contains any covariates will be used for all extended parameters (if not be skipped)
-#' @param param_extend_skip character; skip extended parameter, for skipped extended parameters,
+#' @param fit an object generated from the model fitting function \link{fit.acre} or
+#'            the bootstrap process \link{boot.acre}.
+#' @param new.covariates data.frame; contains any covariates that will be used for all extended parameters (if not be skipped)
+#' @param skip.extend.param character; skip extended parameter, for skipped extended parameters,
 #'                          use its intercept as the value for this parameter
 #' @param xlim a numeric vector with two elements as the range of x-axis.
 #' @param ylim a numeric vector with two elements as the range of y-axis.
@@ -17,9 +17,8 @@
 #'
 #' @return
 #' @export
-#'
-#' @examples
-show_detfn <- function(fit, new_covariates = NULL, param_extend_skip = NULL, xlim = NULL, ylim = NULL,
+
+show.detfn <- function(fit, new.covariates = NULL, skip.extend.param = NULL, xlim = NULL, ylim = NULL,
                        main = NULL, xlab = NULL, ylab = NULL, col = NULL, add = FALSE, ...){
 
   det_fn = get_detfn(fit)
@@ -52,19 +51,19 @@ show_detfn <- function(fit, new_covariates = NULL, param_extend_skip = NULL, xli
   }
   dists <- seq(xlim[1], xlim[2], length.out = 1000)
   
-  #deal with skipped extended parameters and new_covariates
+  #deal with skipped extended parameters and new.covariates
   
-  if(is.null(new_covariates) & !is.null(param_extend_skip)){
-    if(!all(param_extend_skip == par_extend_name[-which(par_extend_name == 'D')])){
+  if(is.null(new.covariates) & !is.null(skip.extend.param)){
+    if(!all(skip.extend.param == par_extend_name[-which(par_extend_name == 'D')])){
       warning('No new data of covariates provided, all extended parameters will be skipped.')
     }
   }
   
-  #if no new_covariates assigned, skip all extended parameters
-  if(is.null(new_covariates) & is.null(param_extend_skip)){
+  #if no new.covariates assigned, skip all extended parameters
+  if(is.null(new.covariates) & is.null(skip.extend.param)){
     if(length(par_extend_name) > 0){
       message('No new data of covariates provided, only the intercept will be used for all extended parameters.')
-      param_extend_skip = par_extend_name
+      skip.extend.param = par_extend_name
     }
   }
   
@@ -82,9 +81,9 @@ show_detfn <- function(fit, new_covariates = NULL, param_extend_skip = NULL, xli
     
     values = param_values[[i]]
     
-    if((i %in% par_extend_name) & (!i %in% param_extend_skip)){
+    if((i %in% par_extend_name) & (!i %in% skip.extend.param)){
       gam = get_gam(fit, i)
-      det_param_input[[i]] = get_extended_par_value(gam, n_col_full, n_col_mask, values, new_covariates)
+      det_param_input[[i]] = get_extended_par_value(gam, n_col_full, n_col_mask, values, new.covariates)
     } else {
       det_param_input[[i]] = values[1]
     }
@@ -148,38 +147,54 @@ show_detfn <- function(fit, new_covariates = NULL, param_extend_skip = NULL, xli
 
 
 
-#' Title
+#' Plotting an estimated density surface
+#' 
+#' Plots density surface estimated by a model fitted with the function \link{fit.acre}
 #'
-#' @param fit 
-#' @param session 
-#' @param show.cv 
-#' @param new_data 
-#' @param D_cov 
-#' @param xlim 
-#' @param ylim 
-#' @param x_pixels 
-#' @param y_pixels 
-#' @param zlim 
-#' @param scale 
-#' @param plot_contours 
-#' @param add 
-#' @param control_convert_loc2mask
-#' @param arg_col 
-#' @param trap_plot 
+#' @param fit an object generated from the model fitting function "fit.acre()" or
+#'            the bootstrap process "boot.acre()".
+#' @param session The session with the detector array and invidual(s)
+#'     to be plotted. Ignored if the \code{newdata} argument is
+#'     provided.
+#' @param new.data A data frame including new mask points and covariate
+#'     values, from which to estimate and plot density estimates
+#'     for. This allows, for example, estimates to be provided for new
+#'     regions not included in the mask used to fit the model. Two
+#'     columns, named \code{x} and \code{y}, must be included,
+#'     providing the x- and y-coordinates of the new mask
+#'     points. Additional columns must provide the covariates used to
+#'     fit the model.
+#' @param show.cv Logical. If true, the CV of the density estimate is
+#'        plotted rather than the estimate itself. At present, this will
+#'        only work if \code{newdata} is also provided.
+#' @param D.cov 
+#' @param x.pixels 
+#' @param y.pixels 
+#' @param zlim A numeric vector of length 2, giving the range of the density contours
+#' @param scale By default, density is in animals per hectare. The 
+#'        plotted values are multiplied by this argument, allowing 
+#'        for user-specified units. For example, setting \code{scale = 100} 
+#'        results in densities plotted as animals per square kilometre.
+#' @param plot.contours Logical, if \code{TRUE}, contours are plotted. 
+#' @param add a logical value indicates whether to add the lines into the existing plot
+#' @param arg.col 
+#' @param trap.plot 
 #' @param ... 
+#' @inheritParams show.detfn
+#' @inheritParams read.acre
 #'
 #' @return
 #' @export
 #'
 #' @examples
-show_Dsurf <- function(fit, session = NULL, show.cv = FALSE, new_data = NULL, D_cov = NULL, xlim = NULL, ylim = NULL,
-                        x_pixels = 50, y_pixels = 50, zlim = NULL, scale = 1, plot_contours = TRUE,
-                        add = FALSE, control_convert_loc2mask= NULL, arg_col = list(n = 100), trap_plot = NULL, ...){
+show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.cov = NULL, xlim = NULL, ylim = NULL,
+                        x.pixels = 50, y.pixels = 50, zlim = NULL, scale = 1, plot.contours = FALSE,
+                        add = FALSE, convert.loc2mask= NULL, arg.col = list(n = 100), trap.plot = NULL, ...){
   
   pred = predict_D_for_plot(fit, session_select = ifelse(is.null(session), 1, session), 
-                            new_data = new_data, D_cov = D_cov, xlim = xlim, ylim = ylim,
-                            x_pixels = x_pixels, y_pixels = y_pixels, se_fit = show.cv,
-                            control_convert_loc2mask= control_convert_loc2mask)
+                            new_data = new.data, D_cov = D.cov, xlim = xlim, ylim = ylim,
+                            x_pixels = x.pixels, y_pixels = y.pixels, se_fit = show.cv,
+                            convert.loc2mask= convert.loc2mask)
   #browser()
   mask = as.matrix(pred[, c('x', 'y')])
   if(!show.cv){
@@ -216,24 +231,24 @@ show_Dsurf <- function(fit, session = NULL, show.cv = FALSE, new_data = NULL, D_
 
   if (!add){
     #plot(mask, type = "n", asp = 1, xlab = "", ylab = "", xlim = xlim, ylim = ylim)
-    fields::image.plot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = do.call("col_fn", arg_col), 
+    fields::image.plot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = do.call("col_fn", arg.col), 
                        asp = 1, xlim = xlim, ylim = ylim, xlab = "", ylab = "")
   } else {
-    fields::image.plot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = do.call("col_fn", arg_col), add = TRUE)
+    fields::image.plot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = do.call("col_fn", arg.col), add = TRUE)
   }
   
   
   if(!is.null(session)){
     traps = get_trap(fit)[[session]]
-    if(is.null(trap_plot$col)) trap_col = 1
-    if(is.null(trap_plot$pch)) trap_pch = 4
-    if(is.null(trap_plot$lwd)) trap_lwd = 2
+    if(is.null(trap.plot$col)) trap_col = 1
+    if(is.null(trap.plot$pch)) trap_pch = 4
+    if(is.null(trap.plot$lwd)) trap_lwd = 2
     points(traps, col = trap_col, pch = trap_pch, lwd = trap_lwd)
   }
   
   
   
-  if (plot_contours){
+  if (plot.contours){
     suppressWarnings(contour(x = unique.x, y = unique.y, z = z, levels = levels,
             drawlabels = TRUE, add = TRUE))
   }
@@ -402,7 +417,7 @@ plot.acre_data <- function(x, ...){
 
       if(is.ss){
         base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-          coord_quickmap(xlim = xlim, ylim = ylim)
+          coord_sf(xlim = xlim, ylim = ylim)
         
         point_out_plot = c(max(masks$x) + 100 * (max(masks$x) - min(masks$y)),
                            max(masks$y) + 100 * (max(masks$y) - min(masks$y)))
@@ -413,21 +428,21 @@ plot.acre_data <- function(x, ...){
         
       } else {
         base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-          coord_quickmap(xlim = xlim, ylim = ylim)
+          coord_sf(xlim = xlim, ylim = ylim)
       }
       
-      trap_plot = base_plot + 
+      trap.plot = base_plot + 
         geom_point(data = traps, mapping = aes(x = traps$trap_x, y = traps$trap_y, shape = 4), size = cex_det) + 
         scale_shape_identity()
       
       
       if(is.ss){
         #browser()
-        capt_plot = trap_plot +
+        capt_plot = trap.plot +
           geom_point(data = capt_session, mapping = aes(x = capt_session$trap_x, y = capt_session$trap_y, group = capt_session$keys, colour = capt_session$ss),
                      size = cex_capt)
       } else {
-        capt_plot = trap_plot +
+        capt_plot = trap.plot +
           geom_point(data = capt_session, mapping = aes(x = capt_session$trap_x, y = capt_session$trap_y, group = capt_session$keys),
                      size = cex_capt, colour = "red")
       }
@@ -545,7 +560,7 @@ plot.acre_data <- function(x, ...){
         #plot basic info
         if(is.ss){
           base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-            coord_quickmap(xlim = xlim_plot, ylim = ylim_plot)
+            coord_sf(xlim = xlim_plot, ylim = ylim_plot)
           
           point_out_plot = c(max(masks$x) + 100 * (max(masks$x) - min(masks$y)),
                              max(masks$y) + 100 * (max(masks$y) - min(masks$y)))
@@ -556,11 +571,11 @@ plot.acre_data <- function(x, ...){
           
         } else {
           base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-            coord_quickmap(xlim = xlim_plot, ylim = ylim_plot)
+            coord_sf(xlim = xlim_plot, ylim = ylim_plot)
         }
 
         
-        trap_plot = base_plot + 
+        trap.plot = base_plot + 
           geom_point(data = traps, mapping = aes(x = traps$x, y = traps$y, shape = 4), size = cex_det) + 
           scale_shape_identity()
         
@@ -578,7 +593,7 @@ plot.acre_data <- function(x, ...){
             sub_title = paste0("session: ",s, ", call ID: ", one_call$ID[1])
           }
           
-          plot_with_lab = trap_plot + labs(subtitle = sub_title)
+          plot_with_lab = trap.plot + labs(subtitle = sub_title)
           
           if(is.ss){
             plot_one_call = plot_with_lab + 
@@ -669,12 +684,12 @@ plot.acre_data <- function(x, ...){
     
     
     col_fn = viridis::viridis
-    if(is.null(control$arg_col)) arg_col = list(n = 100, option = "D") else arg_col = control$arg_col
+    if(is.null(control$arg.col)) arg.col = list(n = 100, option = "D") else arg.col = control$arg.col
     
-    if(is.null(control$plot_contours)){
-        plot_contours = TRUE
+    if(is.null(control$plot.contours)){
+        plot.contours = FALSE
     } else {
-        plot_contours = control$plot_contours
+        plot.contours = control$plot.contours
     }
     
     if(ask){
@@ -691,11 +706,11 @@ plot.acre_data <- function(x, ...){
         
         z <- squarify(masks_mat, D_cov_for_model[[i]])
         zlim <- range(z, na.rm = TRUE)
-        fields::image.plot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = do.call("col_fn", arg_col), 
+        fields::image.plot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = do.call("col_fn", arg.col), 
                            asp = 1, xlim = xlim, ylim = ylim, xlab = "", ylab = "",
                            main = paste0("Plot of covariate ", i, ", for session ", session))
         
-        if(plot_contours){
+        if(plot.contours){
           levels <- pretty(zlim, 10)
           contour(x = unique.x, y = unique.y, z = z, levels = levels, drawlabels = TRUE, add = TRUE)
         }
@@ -710,8 +725,8 @@ plot.acre_data <- function(x, ...){
         z <- squarify(masks_mat, v_num)
         zlim <- range(match_table$code)
         
-        col = do.call("col_fn", arg_col)
-        idx = round(scale_convert(match_table$code, seq(arg_col$n)),0)
+        col = do.call("col_fn", arg.col)
+        idx = round(scale_convert(match_table$code, seq(arg.col$n)),0)
         
         col_leng = col[idx]
         
@@ -751,12 +766,12 @@ plot.acre_tmb = function(x, ...){
   } else if(type == 'detfn'){
     args_pass = list(fit = x, ...)
     args_pass$type = NULL
-    do.call('show_detfn', args_pass)
+    do.call('show.detfn', args_pass)
     
   } else if(type == 'Dsurf'){
     args_pass = list(fit = x, ...)
     args_pass$type = NULL
-    do.call('show_Dsurf', args_pass)
+    do.call('show.Dsurf', args_pass)
     
   } else {
     stop('invalid input for "type", which should be either "survey", "capt", "covariates", "detfn", or "Dsurf".')

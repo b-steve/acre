@@ -13,17 +13,16 @@ Depends:
 Imports:
     CircStats,
     fields,
+    methods,
     mgcv,
-    parallel,
     plyr,
     secr,
     stats,
+    stringr,
     numDeriv,
     utils,
     viridis,
     TMB,
-    RcppEigen,
-    Rcpp,
     RANN,
     ggplot2,
     gganimate,
@@ -42,7 +41,7 @@ Description: This package provides functions to fit spatial
     signal strengths, times of arrival, estimated bearings, and
     estimated distances. The acre package fits a class of SCR model
     that allows use of such information.
-License: GPL
+License: GPL (>= 3)
 URL: https://github.com/b-steve/acre
 Encoding: UTF-8
 LazyData: true

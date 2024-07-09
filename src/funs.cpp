@@ -3,19 +3,7 @@
 using namespace Rcpp;
 using namespace std;
 
-//' Calculating distances between two sets of points
-//'
-//' Calculates pairwise distances between two sets of points.
-//'
-//' @param a matrix containing a set of coordinates.
-//' @param b matrix containing another set of coordinates.
-//'
-//' @return A matrix with pairwise distances between the two sets of points.
-//'
-//' @examples
-//' dists <- distances(example.data$traps, example.data$mask)
-//'
-//' @export
+// Calculating distances between two sets of points
 // [[Rcpp::export]]
 NumericMatrix distances(const NumericMatrix& a, const NumericMatrix& b){
   int n_a = a.nrow();
@@ -29,19 +17,7 @@ NumericMatrix distances(const NumericMatrix& a, const NumericMatrix& b){
   return out;
 }
 
-//' Calculating bearings between two sets of points
-//'
-//' Calculates the bearing from one set of points to another.
-//'
-//' @param a matrix containing a set of coordinates.
-//' @param b matrix containing another set of coordinates.
-//'
-//' @return A matrix with bearings of the points in matrix b from the points in matrix a.
-//'
-//' @examples
-//' bears <- bearings(example.data$traps, example.data$mask) 
-//'
-//' @export
+// Calculating bearings between two sets of points
 // [[Rcpp::export]]
 NumericMatrix bearings(const NumericMatrix& a, const NumericMatrix& b){
   int n_a = a.nrow();

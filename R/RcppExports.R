@@ -21,36 +21,10 @@ min_skip_matrix <- function(skip, allocated) {
     .Call('_acre_min_skip_matrix', PACKAGE = 'acre', skip, allocated)
 }
 
-#' Calculating distances between two sets of points
-#'
-#' Calculates pairwise distances between two sets of points.
-#'
-#' @param a matrix containing a set of coordinates.
-#' @param b matrix containing another set of coordinates.
-#'
-#' @return A matrix with pairwise distances between the two sets of points.
-#'
-#' @examples
-#' dists <- distances(example.data$traps, example.data$mask)
-#'
-#' @export
 distances <- function(a, b) {
     .Call('_acre_distances', PACKAGE = 'acre', a, b)
 }
 
-#' Calculating bearings between two sets of points
-#'
-#' Calculates the bearing from one set of points to another.
-#'
-#' @param a matrix containing a set of coordinates.
-#' @param b matrix containing another set of coordinates.
-#'
-#' @return A matrix with bearings of the points in matrix b from the points in matrix a.
-#'
-#' @examples
-#' bears <- bearings(example.data$traps, example.data$mask) 
-#'
-#' @export
 bearings <- function(a, b) {
     .Call('_acre_bearings', PACKAGE = 'acre', a, b)
 }

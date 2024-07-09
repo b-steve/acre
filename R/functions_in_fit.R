@@ -949,7 +949,7 @@ CR_SL = function(cue.rates, survey.length, bucket_info, dims){
 
 param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn, data.full, data.mask,
                            data.par, ss.opts, bucket_info, fulllist.par, A, buffer,
-                           survey.length, dims, sv_link){
+                           survey.length, dims, sv.link){
   #check bounds, sv, fix
   if(!is.null(bounds)){
     if(!is(bounds, 'list')) stop ('"bounds" must be a list.')
@@ -1225,7 +1225,7 @@ param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn
     
     ####################################################################################
     #this is mostly for development purpose, not recommended to use
-    if(!is.null(sv_link[[i]])) sv.input[[i]] = sv_link[[i]]
+    if(!is.null(sv.link[[i]])) sv.input[[i]] = sv.link[[i]]
     ####################################################################################
     
     #set the default bounds of extended betas as the starter of our bounds matrix
