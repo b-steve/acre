@@ -25,9 +25,7 @@ Imports:
     TMB,
     RANN,
     ggplot2,
-    gganimate,
-    foreach,
-    doParallel
+    gganimate
 Suggests:
     knitr,
     xtable
