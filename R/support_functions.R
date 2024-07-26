@@ -1678,11 +1678,6 @@ sim_args_generator = function(sim_name){
 
 
 fit_args_generator_from_sim = function(sim_name, fit_args){
-  if (!sim_name %in% get_dataset_names()) {
-    stop('invalid input for "sim_name", which should be one of the following: "', 
-         paste(get_dataset_names(), collapse = '", "'), '"')
-  }
-
   output = fit_args
 
   if(sim_name == 'dist_hn'){

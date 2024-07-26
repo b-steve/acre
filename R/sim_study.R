@@ -12,17 +12,21 @@
 #' @param proportion_missing a numeric value used to set a proportion of the 
 #'                           covariate data generated to NA (currently only 
 #'                           bearing, distance and toa supported)
+#' @param fit an object generated from the model fitting function "fit.acre_tmb()" or
+#'            the bootstrap process "boot.acre()". If `fit` is provided, then all
+#'            parameters will be taken from the fitted object.
 #'
 #' @return A data frame containing the simulated data, as well as arguments used.
 #' @export
 #'
 #' @examples simulated_data <- sim_data("bearing_hn", 5)
-sim_data = function(sim_name, n.rand, seed = 810, suppress_messages = F, 
-                    proportion_missing=0){
-  # Input validation
-  if (!sim_name %in% get_dataset_names()) {
-    stop('invalid input for "sim_name", which should be one of the following: "', 
-         paste(get_dataset_names(), collapse = '", "'), '"')
+sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = F, 
+                    proportion_missing=0) {
+  
+  if (!sim_name %in% get_dataset_names() && is.null(fit)) {
+    stop('invalid input for "sim_name", which should be one of the following: \n"', 
+         paste(get_dataset_names(), collapse = '", "'), '".\n\n',
+         "Alternatively provide a fitted model using the \"fit\" argument.")
   }
   if (!is.numeric(proportion_missing) || proportion_missing < 0 || proportion_missing > 1) {
     stop("proportion_missing must be a numeric value between 0 and 1.")
@@ -36,13 +40,26 @@ sim_data = function(sim_name, n.rand, seed = 810, suppress_messages = F,
   
   # Generate the simulation arguments, and then simulate the raw capture data
   set.seed(seed)
-  sim_args = sim_args_generator(sim_name)
+  
+  # If fit is provided then use the fit parameters, otherwise use the default ones
+  sim_args = if(is.null(fit)) sim_args_generator(sim_name) else list(fit = fit)
+  
   sim_args$n.rand = n.rand
   simulated_capt = do.call('sim.capt', sim_args)
   
   # Generate acre formatted data arguments
   output = fit_args_generator_from_sim(sim_name, simulated_capt$args)
-  output$param = sim_args$param
+  
+  if(is.null(fit)) {
+    output$param = sim_args$param
+  } else {
+    # Get the data frame which contains link function for each parameter
+    dat_par = get_data_param(fit)
+    # Then get the parameter's values before back transforming
+    param = get_coef(fit)
+    # The "param" in simulation requires back transformed value
+    output$param = param_transform(param, dat_par, back = TRUE)
+  }
   
   if (!suppress_messages) 
     message("Converting raw data to acre format...")
@@ -80,12 +97,27 @@ sim_data = function(sim_name, n.rand, seed = 810, suppress_messages = F,
 #'                 function.
 #' @param n.rand a numeric value denoting the number of data sets to be 
 #'               generated and fit. Must be > 1.
+#' @param n.cores a numeric value denoting the number of cores to use for 
+#'                simulation. Defaults to \code{floor(parallel::detectCores() * 0.80)}
+#' @param save a logical value, indicating whether the sim study data should be saved.
+#'             By default creates a "sim_study" folder to save RDS object to. 
+#' @param plot a logical value, indicating whether or not to plot the simulated 
+#'             estimates.
+#' @param proportion_missing a numeric value used to set a proportion of the
+#'                           covariate data to NA. Will apply to all covariates 
+#'                           present.
+#' @param fit an object generated from the model fitting function "fit.acre_tmb()" or
+#'            the bootstrap process "boot.acre()". If `fit` is provided, then all
+#'            parameters will be taken from the fitted object.
 #'
-#' @return
+#' @return A list of length `n.rand` containing fitted coefficients from the 
+#'         simulation study.
 #' @export
 #'
-#' @examples 
-sim_study = function(sim_name, n.rand, save=T, plot=T, proportion_missing=0) {
+#' @examples study <- sim_study("bearing_hn", 5, save=F)
+#' @examples study_from_fit <- sim_study("example_model", fit=example.fit, 5, save=F)
+sim_study = function(sim_name, n.rand, fit=NULL, n.cores=NULL, save=T, plot=T, 
+                     proportion_missing=0) {
   stopifnot(is.numeric(n.rand))
   stopifnot("simulation study must be run with at least 2 data sets. 
             If you wish to fit a single dataset consider using the `fit.acre()` 
@@ -95,7 +127,7 @@ sim_study = function(sim_name, n.rand, save=T, plot=T, proportion_missing=0) {
   }
   
   # Simulate capture data
-  simulated_data <- sim_data(sim_name, n.rand, proportion_missing=proportion_missing)
+  simulated_data <- sim_data(sim_name, n.rand, fit=fit, proportion_missing=proportion_missing)
 
   # generate the data frame which contains default link function for each parameter
   dat_par = default_df_link()
@@ -104,23 +136,17 @@ sim_study = function(sim_name, n.rand, save=T, plot=T, proportion_missing=0) {
   true_values = param_transform(simulated_data$param, dat_par)
   
   # Setup parallel computing stuff
-  num_cores <- floor(parallel::detectCores() * 0.85)
+  num_cores <- if(is.null(n.cores)) floor(parallel::detectCores() * 0.80) else n.cores
   message(paste0("Running simulation study using ", num_cores, " cores"))
   cl <- parallel::makeCluster(num_cores)
-  doParallel::registerDoParallel(cl)
-  `%dopar%` <- foreach::`%dopar%`
   
-  est_values <- foreach::foreach(i = 1:n.rand, .packages = 'acre', 
-                                 .errorhandling = 'pass') %dopar% {
-  
-  # If you don't want to use parallel comment the above and un-comment here
-  # for(i in 1:n.rand) {
-                                   
+  est_values <- parallel::parLapply(cl, 1:n.rand, function(i) {
+    library(acre)  # Load necessary package inside the cluster
+    
     fit_args <- simulated_data
     fit_args$capt <- fit_args$capt[[i]]
+    fit_args$tracing <- FALSE
     
-    fit_args$tracing = FALSE
-
     sim_fit <- tryCatch({
       fit <- do.call('fit_og', fit_args)
       fit$error <- FALSE
@@ -129,21 +155,19 @@ sim_study = function(sim_name, n.rand, save=T, plot=T, proportion_missing=0) {
       list(error = TRUE, message = e$message)
     })
     
-    
     if (sim_fit$error) {
       return(list(error = TRUE, message = sim_fit$message))
     } else {
       est_value_linked <- cbind(Est = coef(sim_fit), 
                                 Std = stdEr(sim_fit), confint(sim_fit))
       
-      est_value_fitted <- cbind(Est = coef(sim_fit, type="fitted"), 
-                                Std = stdEr(sim_fit, type="fitted"), 
-                                confint(sim_fit, type="fitted"))
+      est_value_fitted <- cbind(Est = coef(sim_fit, type = "fitted"), 
+                                Std = stdEr(sim_fit, type = "fitted"), 
+                                confint(sim_fit, type = "fitted"))
       
-      # Adds to the current list of est_values (doParallel trickery)
       return(list(fitted = est_value_fitted, linked = est_value_linked))
     }
-  }
+  })
   
   message("Finished sim study successfully.")
   parallel::stopCluster(cl)
