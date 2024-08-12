@@ -101,6 +101,13 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
         warning("Arguments 'n.traps' and 'n.sessions' are deprecated. Please provide the the 'traps' argument instead.
         Future versions of acre will require the 'traps' argument to be provided to the 'create.capt()' function.")
     }
+  
+    expected_col_names <- c('session', 'animal_ID', 'ID', 'trap', 'bincapt',
+                            'bearing', 'toa', 'dist', 'ss', 'mrds_x', 'mrds_y', 'occasion')
+    if (!all(names(captures) %in% expected_col_names)) {
+      unexpected_columns <- which(!(names(captures) %in% expected_col_names))
+      warning("Unexpected column '", paste(names(captures)[unexpected_columns], collapse="', '"), "' found in captures dataframe. Unexpected columns will be ignored.")
+    }
 
     if(is.matrix(captures)) captures = as.data.frame(captures, stringsAsFactors = FALSE)
 
