@@ -7,6 +7,7 @@
 sim_data(
   sim_name,
   n.rand,
+  fit = NULL,
   seed = 810,
   suppress_messages = F,
   proportion_missing = 0
@@ -20,6 +21,10 @@ function.}
 \item{n.rand}{a numeric value denoting the number of data sets to be 
 generated. If n.rand > 1, \code{output$capt} will be a list of 
 length \code{n.rand}.}
+
+\item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
+the bootstrap process "boot.acre()". If `fit` is provided, then all
+parameters will be taken from the fitted object.}
 
 \item{seed}{a numeric value denoting the random seed, defaults to 810.}
 
