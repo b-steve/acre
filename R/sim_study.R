@@ -256,7 +256,6 @@ set_detection_data_NA <- function(capt_data, dataset_name, n_missing) {
 #' @param n.rand numeric value indicating the number of datasets to be simulated.
 #'
 #' @return 
-#' @export
 #'
 #' @examples sim_study_for_missing_data("bearing_hn", 20)
 sim_study_for_missing_data <- function(dataset_name, n.rand) {
