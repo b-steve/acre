@@ -1503,6 +1503,11 @@ demo_loc_cov = function(){
 
 
 sim_args_generator = function(sim_name){
+  if (!sim_name %in% get_dataset_names()) {
+    stop('invalid input for "sim_name", which should be one of the following: "', 
+         paste(get_dataset_names(), collapse = '", "'), '"')
+  }
+  
   output = list()
   #generate some common settings
   traps = demo_traps()
@@ -1673,7 +1678,6 @@ sim_args_generator = function(sim_name){
 
 
 fit_args_generator_from_sim = function(sim_name, fit_args){
-
   output = fit_args
 
   if(sim_name == 'dist_hn'){
@@ -2359,14 +2363,14 @@ convert_dist_cov_to_loc_cov = function(dist.cov, loc.cov, mask){
 
 }
 
+
 convert_time_loc_cov_to_loc_cov = function(time.loc.cov, loc.cov, session.cov){
-
-
   if(!is.null(time.loc.cov)){
     if(is.null(session.cov)) stop('please provide session.cov with column time')
     if(!all(c("session", "time") %in% colnames(session.cov))) stop('please provide information of session and time.')
     if(is(time.loc.cov, 'data.frame')) time.loc.cov = list(time.loc.cov)
     if(!is(time.loc.cov, 'list')) stop('time.loc.cov should be a data frame or a list.')
+
 
     n = length(time.loc.cov)
 
@@ -2409,6 +2413,17 @@ convert_time_loc_cov_to_loc_cov = function(time.loc.cov, loc.cov, session.cov){
   return(loc.cov)
 }
 
+#' Get all dataset names.
+#' 
+#' Retrieves all the dataset names included in the [acre] package
+#'
+#' @return A character vector containing dataset names.
+#' @export
+#'
+#' @examples dataset_names <- get_dataset_names()
+get_dataset_names = function() {
+  return(data(package="acre")$results[, "Item"])
+}
 
 separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
   # Function which separates  distance covariates from location covariates in a loc_cov list, which

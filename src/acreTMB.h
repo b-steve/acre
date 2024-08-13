@@ -72,19 +72,6 @@ int incheck_scalar(const int &a, const vector<int> &b){
   return ans;
 }
 
-template<class Type>
-vector<Type> isNA(const vector<Type> &x){
-  int len = x.size();
-  vector<Type> ans(len);
-  for(int i = 0; i < len; i++){
-    if(R_IsNA(asDouble(x(i)))){
-      ans(i) = 1;
-    } else {
-      ans(i) = 0;
-    }
-  }
-  return ans;
-}
 
 template<class Type>
 void trans(Type *x, const int &link){
@@ -1155,7 +1142,11 @@ Type acreTMB(objective_function<Type>* obj)
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //begin of likelihood function
 
+  // For every session
+  // Starting at session #1
   for(s = 1; s <= n_sessions; s++){
+    // Get number of masks, traps, animals, area_units, survey_length, unique id's
+    // for this session
     n_m = n_masks(s - 1);
     n_t = n_traps(s - 1);
     n_a = n_animals(s - 1);
@@ -1246,6 +1237,7 @@ Type acreTMB(objective_function<Type>* obj)
     
     esa(s - 1) = Type(0.0);
     
+    // For each mask
     for(m = 1; m <= n_m; m++){
       *p_D_tem = *p_D_full + *p_D_mask;
       trans(p_D_tem, par_link(16));
@@ -1278,7 +1270,7 @@ Type acreTMB(objective_function<Type>* obj)
       
       p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
       
-      
+      // For each trap
       for(t = 1; t <= n_t; t++){
         
         if(detfn_index == 1){
@@ -1430,14 +1422,14 @@ Type acreTMB(objective_function<Type>* obj)
       lambda_theta *= area_unit;
     }
     //std::cout << "session " << s << ", check point 2, lambda_theta: " << lambda_theta << std::endl;
-    //end of lambda_theta calculation
-    
+
+    // end of lambda_theta calculation
     
     //canceled out original likelihood: nll -= dpois(Type(n_i), lambda_theta, true);
     *pointer_nll += lambda_theta;
-	//if(s == 105){
-	//	std::cout << "session "<< s <<", check point2, nll: " << *pointer_nll << std::endl;
-	//}	
+  	//if(s == 105){
+  	//	std::cout << "session "<< s <<", check point2, nll: " << *pointer_nll << std::endl;
+  	//}	
 	
     //just like D, sigma_toa is not id nor trap extentable, so just take
     //the first value in this session
@@ -1541,11 +1533,16 @@ Type acreTMB(objective_function<Type>* obj)
                 
                 //toa
                 if(is_toa == 1){
-                  //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
-                  *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
-                  trans(p_sigma_toa_tem, par_link(14));
-                  
-                  fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+                  if (std::isnan(asDouble(*p_sigma_toa_full)) || std::isnan(asDouble(*p_sigma_toa_mask))) {
+                    // Ignore likelihood contribution
+                  } else {
+                    //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
+                    *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
+                    
+                    trans(p_sigma_toa_tem, par_link(14));
+                    
+                    fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+                  }
                   
                   p_sigma_toa_mask++;
                   p_toa_ssq++;
@@ -1560,15 +1557,18 @@ Type acreTMB(objective_function<Type>* obj)
                   //bearing
                   if(is_bearing == 1){
                     p_capt_bearing = &capt_bearing[index_data_full];
-                    p_kappa_full = &kappa_vec_full[index_data_full];
-                    p_theta = &theta[index_data_dist_theta];
-                    
-                    *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
-                    trans(p_kappa_tem, par_link(12));
-                    
-                    fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
-                      log(bessi0(kappa_tem));
-                    
+                    if (std::isnan(asDouble(*p_capt_bearing))) {
+                      // std::cout << "BEARING MISSING: " << capt_bearing[index_data_full] << std::endl;
+                    } else {
+                      p_kappa_full = &kappa_vec_full[index_data_full];
+                      p_theta = &theta[index_data_dist_theta];
+                      
+                      *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
+                      trans(p_kappa_tem, par_link(12));
+                      
+                      fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
+                        log(bessi0(kappa_tem));
+                    }
                   }
                   
                   //dist
@@ -1577,11 +1577,15 @@ Type acreTMB(objective_function<Type>* obj)
                     p_alpha_full = &alpha_vec_full[index_data_full];
                     p_dx = &dx[index_data_dist_theta];
                     
-                    *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
-                    trans(p_alpha_tem, par_link(13));
+                    if (std::isnan(asDouble(*p_capt_dist))) {
+                    } else {
+                      *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
+                      trans(p_alpha_tem, par_link(13));
+                      
+                      fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
+                        log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
+                    }
                     
-                    fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
-                      log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
                     
                   }
                   
@@ -1590,12 +1594,12 @@ Type acreTMB(objective_function<Type>* obj)
                     p_capt_ss = &capt_ss[index_data_full];
                     p_essx = &essx[index_data_dist_theta];
                     p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
-                    
+
                     *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
                     trans(p_sigma_ss_tem, par_link(11));
                     
                     fy_ss_log += dnorm(*p_capt_ss, *p_essx, sigma_ss_tem, true);
-                    
+
                   }
                   
                   //end of loop of traps
@@ -1625,27 +1629,35 @@ Type acreTMB(objective_function<Type>* obj)
                   
                   //toa
                   if(is_toa == 1){
-                    //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
-                    *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
-                    trans(p_sigma_toa_tem, par_link(14));
-                    fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+                    if (std::isnan(asDouble(*p_sigma_toa_full)) || std::isnan(asDouble(*p_sigma_toa_mask))) {
+                      // Ignore likelihood contribution
+                    } else {
+                      //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
+                      *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
+                      
+                      trans(p_sigma_toa_tem, par_link(14));
+                      fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+                    }
                   }
                   
                   for(t = 0; t < n_det; t++){
                     index_data_full = lookup_data_full(0, s, 0, id, traps(t),
                                                       0, n_IDs_for_datafull, n_traps, 0);
                     index_data_dist_theta = lookup_data_dist_theta(s, traps(t), m, n_traps, n_masks);
-                    //bearing
+                    //bearing 
                     if(is_bearing == 1){
                       p_capt_bearing = &capt_bearing[index_data_full];
-                      p_kappa_full = &kappa_vec_full[index_data_full];
-                      p_theta = &theta[index_data_dist_theta];
-                      
-                      *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
-                      trans(p_kappa_tem, par_link(12));
-                      
-                      fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
-                        log(bessi0(kappa_tem));
+                      if (std::isnan(asDouble(*p_capt_bearing))) {
+                      } else{
+                        p_kappa_full = &kappa_vec_full[index_data_full];
+                        p_theta = &theta[index_data_dist_theta];
+                        
+                        *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
+                        trans(p_kappa_tem, par_link(12));
+                        
+                        fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
+                          log(bessi0(kappa_tem));
+                      }
                     }
                     
                     //dist
@@ -1654,11 +1666,15 @@ Type acreTMB(objective_function<Type>* obj)
                       p_alpha_full = &alpha_vec_full[index_data_full];
                       p_dx = &dx[index_data_dist_theta];
                       
-                      *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
-                      trans(p_alpha_tem, par_link(13));
+                      if (std::isnan(asDouble(*p_capt_dist))) {
+                      } else{
+                        *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
+                        trans(p_alpha_tem, par_link(13));
+                        
+                        fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
+                          log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
+                      }
                       
-                      fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
-                        log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
                     }
                     
                     //ss_origin
@@ -1666,7 +1682,7 @@ Type acreTMB(objective_function<Type>* obj)
                       p_capt_ss = &capt_ss[index_data_full];
                       p_essx = &essx[index_data_dist_theta];
                       p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
-                      
+
                       *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
                       trans(p_sigma_ss_tem, par_link(11));
                       
@@ -1702,6 +1718,7 @@ Type acreTMB(objective_function<Type>* obj)
       }
       //end of if(is_animalID == 0)
     } else {
+      std::cout << "Fitting animal model." << std::endl;
       //begin of animal_ID model
       if(n_a > 0){
 
@@ -1797,25 +1814,32 @@ Type acreTMB(objective_function<Type>* obj)
 				//std::cout << "check point 5" << std::endl;
 				//toa
 				if(is_toa == 1){
-				  //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
-				  *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
-				  trans(p_sigma_toa_tem, par_link(14));
-
-				  fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+				  if (std::isnan(asDouble(*p_sigma_toa_full)) || std::isnan(asDouble(*p_sigma_toa_mask))) {
+				    // Ignore likelihood contribution
+				  } else {
+				    //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
+				    *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
+				    trans(p_sigma_toa_tem, par_link(14));
+				    
+				    fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+				  }
 				  
 				  p_toa_ssq++;
+
 				}
 
 				for(t = 1; t <= n_t; t++){
 				  //bearing
 				  if(is_bearing == 1){
-					if(*p_capt_bearing != 0){
-					  *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
-					  trans(p_kappa_tem, par_link(12));
-					  
-					  fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
-						log(bessi0(kappa_tem));
-					}
+				    if (std::isnan(asDouble(*p_capt_bearing))) {
+				      //
+				    } else {
+				      *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
+				      trans(p_kappa_tem, par_link(12));
+				      
+				      fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
+				        log(bessi0(kappa_tem));
+				    }
 
 					p_capt_bearing++;
 					p_kappa_full++;
@@ -1824,13 +1848,19 @@ Type acreTMB(objective_function<Type>* obj)
 
 				  //dist
 				  if(is_dist == 1){
-					if(*p_capt_dist != 0){
-					  *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
-					  trans(p_alpha_tem, par_link(13));
-
-					  fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
-						log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
-					}
+				    if (std::isnan(asDouble(*p_capt_dist))) {
+				      //
+				    } else {
+				      if(*p_capt_dist != 0){
+				        *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
+				        trans(p_alpha_tem, par_link(13));
+				        
+				        fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
+				          log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
+				    } else {
+				      std::cout << *p_capt_dist << std::endl;
+				    }
+					} 
 
 					p_capt_dist++;
 					p_alpha_full++;
@@ -1856,7 +1886,7 @@ Type acreTMB(objective_function<Type>* obj)
 					p_capt_ss++;
 					p_sigma_ss_full++; 
 					p_essx++;
-				  }
+				}
 
 				  //end of trap 't'
 				}
@@ -1909,7 +1939,6 @@ Type acreTMB(objective_function<Type>* obj)
 					  l_w *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
 					}
 
-
 					index_data_full++;
 				  }
 				}
@@ -1940,11 +1969,15 @@ Type acreTMB(objective_function<Type>* obj)
 
 				  //toa
 				  if(is_toa == 1){
+				    if (std::isnan(asDouble(*p_sigma_toa_full)) || std::isnan(asDouble(*p_sigma_toa_mask))) {
+				      // Ignore likelihood contribution
+				    } else {
+				      *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
+				      trans(p_sigma_toa_tem, par_link(14));
+				      
+				      fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+				    }
 					//"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
-					*p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
-					trans(p_sigma_toa_tem, par_link(14));
-					
-					fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
 					
 					p_toa_ssq++;
 				  }
@@ -1952,14 +1985,16 @@ Type acreTMB(objective_function<Type>* obj)
 				  for(t = 1; t <= n_t; t++){
 					//bearing
 					if(is_bearing == 1){
-					  if(*p_capt_bearing != 0){
-						*p_kappa_tem = *p_kappa_full + *p_kappa_mask;
-						trans(p_kappa_tem, par_link(12));
-						
-						fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
-						  log(bessi0(kappa_tem));
+					  if (std::isnan(asDouble(*p_capt_bearing))) {
+					    //
+					  } else {
+					    *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
+					    trans(p_kappa_tem, par_link(12));
+					    
+					    fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
+					      log(bessi0(kappa_tem));
 					  }
-
+					
 					  p_capt_bearing++;
 					  p_kappa_full++;
 					  p_theta++;
@@ -1967,14 +2002,18 @@ Type acreTMB(objective_function<Type>* obj)
 
 					//dist
 					if(is_dist == 1){
-					  if(*p_capt_dist != 0){
-						*p_alpha_tem = *p_alpha_full + *p_alpha_mask;
-						trans(p_alpha_tem, par_link(13));
-
-						fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
-						  log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
+					  if (std::isnan(asDouble(*p_capt_dist))) {
+					    //
+					  } else {
+					    if(*p_capt_dist != 0){
+					      *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
+					      trans(p_alpha_tem, par_link(13));
+					      
+					      fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
+					        log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
+					    }
 					  }
-
+					 
 					  p_capt_dist++;
 					  p_alpha_full++;
 					  p_dx++;

@@ -1,6 +1,19 @@
 capture.fun = function(capt, animal.model){
   all.types <- c("bearing", "dist", "ss", "toa")
   
+  # Make sure if covariate data is included, the data is not all NA's
+  # If we attempt to fit a model where ALL the covariate data is missing 
+  # (set to NA) then TMB will provide NaN's for the stdErr's.
+  for (type in all.types) {
+    if (type %in% names(capt)) {
+      if (all(is.na(unlist(capt[type])) | (unlist(capt[type])) == 0)) {
+        stop(paste0("All the covariate data for \"", type, "\" is NA. Please remove 
+                  this covariate before converting the data and attempting to fit
+                  a model."))
+      }
+    }
+  }
+  
   if(!animal.model){
             if("bincapt" %in% names(capt)){
               n.sessions = 1

@@ -354,17 +354,17 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                u_id_match = as.numeric(u_id_match$ID),
                capt_bin_uid = as.numeric(data_u_bin$bincapt),
 
-               capt_bin = ifelse(is.na(data.full$bincapt), 0, data.full$bincapt),
-               capt_bearing = ifelse(is.na(data.full$bearing), 0, data.full$bearing),
-               capt_dist = ifelse(is.na(data.full$dist), 0, data.full$dist),
-               capt_ss = ifelse(is.na(data.full$ss), 0, data.full$ss),
-               capt_toa = ifelse(is.na(data.full$toa), 0, data.full$toa),
+               capt_bin = ifelse(is.na(data.full$bincapt), NA_real_, data.full$bincapt),
+               capt_bearing = ifelse(is.na(data.full$bearing), NA_real_, data.full$bearing),
+               capt_dist = ifelse(is.na(data.full$dist), NA_real_, data.full$dist),
+               capt_ss = ifelse(is.na(data.full$ss), NA_real_, data.full$ss),
+               capt_toa = ifelse(is.na(data.full$toa), NA_real_, data.full$toa),
 
 
                dx = data.dists.thetas$dx,
                theta = data.dists.thetas$theta,
 
-               index_local = data.ID_mask$local,
+               index_local = as.numeric(data.ID_mask$local),
                toa_ssq = data.ID_mask$toa_ssq
   )
 

@@ -2,19 +2,51 @@
 % Please edit documentation in R/sim_study.R
 \name{sim_study}
 \alias{sim_study}
-\title{Title}
+\title{Runs a simulation study}
 \usage{
-sim_study(sim_name, n.rand = 1, fit = FALSE, seed = 810)
+sim_study(
+  sim_name,
+  n.rand,
+  fit = NULL,
+  n.cores = NULL,
+  save = T,
+  plot = T,
+  proportion_missing = 0
+)
 }
 \arguments{
-\item{sim_name}{}
+\item{sim_name}{a string denoting type of data to be simulated. Supported 
+types can be found using the \code{get_dataset_names()} 
+function.}
 
-\item{n.rand}{}
+\item{n.rand}{a numeric value denoting the number of data sets to be 
+generated and fit. Must be > 1.}
 
-\item{fit}{}
+\item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
+the bootstrap process "boot.acre()". If `fit` is provided, then all
+parameters will be taken from the fitted object.}
 
-\item{seed}{}
+\item{n.cores}{a numeric value denoting the number of cores to use for 
+simulation. Defaults to \code{floor(parallel::detectCores() * 0.80)}}
+
+\item{save}{a logical value, indicating whether the sim study data should be saved.
+By default creates a "sim_study" folder to save RDS object to.}
+
+\item{plot}{a logical value, indicating whether or not to plot the simulated 
+estimates.}
+
+\item{proportion_missing}{a numeric value used to set a proportion of the
+covariate data to NA. Will apply to all covariates 
+present.}
+}
+\value{
+A list of length `n.rand` containing fitted coefficients from the 
+        simulation study.
 }
 \description{
-Title
+Runs a simulation study
+}
+\examples{
+study <- sim_study("bearing_hn", 5, save=F)
+study_from_fit <- sim_study("example_model", fit=example.fit, 5, save=F)
 }
