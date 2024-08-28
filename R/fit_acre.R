@@ -775,8 +775,9 @@ read.acre = function(captures, traps, mask = NULL,
   for(i in arg.names) {
     arg.input[[i]] = get(i)
   }
-
-
+  
+  # Make sure traps are formatted correctly, and fix / warn user if not
+  traps <- check_and_rename_traps(traps)
 
   output = list(...)
   control.capt$captures = captures
