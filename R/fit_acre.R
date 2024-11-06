@@ -435,8 +435,10 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     o = gr_free_o_restore(fn, opt, H, parameters, param.og.4cpp, dims$n.sessions)
   }
 
-
-
+  # Grab report in case any additional data is being transferred over from TMB
+  # Will be an empty list if no report
+  tmb_report <- obj$report()
+  
   #browser()
   tmb_output_og = list(est = o$value, vcov = o$cov)
   #if is.scale, restore the estimated parameters' estimation and variance matrix to original scale
@@ -517,7 +519,8 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                lst_mean_std = lst_mean_std,
                is.scale = is.scale,
                ss.link = ss.link,
-               cutoff = cutoff)
+               cutoff = cutoff,
+               tmb_report)
   class(out) <- "acre_tmb"
 
   return(out)

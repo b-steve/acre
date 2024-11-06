@@ -1141,6 +1141,12 @@ Type acreTMB(objective_function<Type>* obj)
   
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //begin of likelihood function
+  
+  int number_density_columns = is_ss + is_bearing + is_toa + is_dist + 2;
+  
+  std::cout << "Number of density columns: " << number_density_columns << std::endl;
+  
+  std::cout << "Tracking unit likelihoods..." << std::endl;
 
   // For every session
   // Starting at session #1
@@ -1437,7 +1443,11 @@ Type acreTMB(objective_function<Type>* obj)
     
     if(is_animalID == 0){
       if(n_uid > 0){
+        vector<Type> unit_likelihoods(n_uid + 1);
+        
         for(int uid = 1; uid <= n_uid; uid++){
+          Type uid_contribution = 0;
+          
           //ids: a vector contains all IDs under this uid
           vector<int> ids = look_up_ids_uid(s, uid, n_IDs, n_ids_each_uid, n_uid_session, u_id_match);
           
@@ -1709,23 +1719,41 @@ Type acreTMB(objective_function<Type>* obj)
                 //end of loop of masks
               }
             }
+            
+            uid_contribution += l_i;
+            
             *pointer_nll -= log(l_i * area_unit * servey_len * cue_rates);
             //end of id
           }
           //end of uid
+          unit_likelihoods[n_uid] = uid_contribution;
+          
         }
         //end of if(uid > 0)
+        REPORT(unit_likelihoods);
       }
       //end of if(is_animalID == 0)
     } else {
       std::cout << "Fitting animal model." << std::endl;
+      
       //begin of animal_ID model
-      if(n_a > 0){
-
-        //initial index for data_mask
-        index_data_mask = lookup_data_mask(s, 1, n_masks);
+      if(n_a > 0) {
         
-        for(a = 1; a <= n_a; a++){
+      // Initialize density matrix
+      array<Type> density_array(n_a+1, number_density_columns, n_m+1);
+      
+      // Initialize the array with zeros (or any other initial value)
+      density_array.setZero();
+      
+      std::cout << "Created density array." << std::endl;
+      std::cout << "num_animals: " << n_a << ", number_density_columns: " << number_density_columns << ", num mask points: " << n_m << std::endl;
+
+      //initial index for data_mask
+      index_data_mask = lookup_data_mask(s, 1, n_masks);
+      
+      vector<Type> individual_likelihoods(n_a + 1);
+        
+      for(a = 1; a <= n_a; a++){
   
 		  //likelihood of each animal
 		  l_i = Type(0.0);
@@ -1775,19 +1803,26 @@ Type acreTMB(objective_function<Type>* obj)
 			  //likelihood for capture history
 			  l_w = Type(1.0);
 			  //std::cout << "session: " << s << ", animal: " << a << ", mask: "<< m << " begins." << std::endl;
+			  
+			  // For each call of this animal detected
 			  for(i = 1; i <= ci; i++){
-				for(t = 1; t <= n_t; t++){
-				  if(is_ss == 0){
-					l_w *= pow(p_k(m - 1, t - 1), capt_bin[index_data_full]) *
-					  pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
-				  } else {
-					//pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
-					l_w *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
-				  }
-				  index_data_full++;
-				}
+			    // For each trap
+  				for(t = 1; t <= n_t; t++){
+  				  if(is_ss == 0){
+  				  // 
+  					l_w *= pow(p_k(m - 1, t - 1), capt_bin[index_data_full]) *
+  					  pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
+  				  } else {
+  					//pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
+  					l_w *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
+  				  }
+  				  index_data_full++;
+  				}
 			  }
 			  
+			  // Update density array
+			  density_array(a, 1, m) = l_w;
+			    
 			  //likelihood for extra information
 			  fy_toa_log = Type(0.0);
 			  fy_bear_log = Type(0.0);
@@ -1858,7 +1893,7 @@ Type acreTMB(objective_function<Type>* obj)
 				        fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
 				          log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
 				    } else {
-				      std::cout << *p_capt_dist << std::endl;
+				      // std::cout << *p_capt_dist << std::endl;
 				    }
 					} 
 
@@ -2066,12 +2101,23 @@ Type acreTMB(objective_function<Type>* obj)
 
 			//end of 'is_local == 1'
 		  }
+		  
+		  std::cout << "1st value of density array: " << density_array(0,1,1) << std::endl;
 
 		  *pointer_nll -= log(l_i * area_unit);
-
 		  //end of animal 'a'
-        }
-        //end of if(n_a > 0)
+		  
+		  // // Update density array
+		  // density_array(a, 1, m) = l_w;
+		  
+		    individual_likelihoods[a] = l_i;
+      }
+      //end of if(n_a > 0)
+      REPORT(individual_likelihoods);
+      // std::cout << "Individual likelihoods: " << individual_likelihoods << std::endl;
+      
+      REPORT(density_array);
+      // std::cout << "1st value of density array: " << density_array(0,1,1) << std::endl;
       }
       //end of animal_ID model
     }
@@ -2086,6 +2132,7 @@ Type acreTMB(objective_function<Type>* obj)
 	//}
     //end for session s
   }
+
   ADREPORT(esa);
   return nll;
 }

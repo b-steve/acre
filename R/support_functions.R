@@ -218,6 +218,7 @@ detfn.params = function(detfn){
   return(param.og)
 }
 
+# this gives integral over A (p(x;gamma)) dx
 p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL, 
                           ss.link = NULL, pars = NULL, A, n.quadpoints = 8){
   dists <- distances(traps, points)
@@ -227,6 +228,11 @@ p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
     cutoff <- pars$cutoff
     probs = 1 - pnorm(cutoff, mean = probs, sd = sigma.ss)
   }
+  # 1-x : probability NOT detected 
+  # prod(1-x) : probability trap 1 NOT detect AND trap 2 NOT detect...
+  # which is the same as probability NO detection at mask point corresponding to that column
+  #
+  # And so 1 - prod(1-x) : probability we detect at least 1 trap.
   out <- plyr::aaply(probs, 2, function(x) 1 - prod(1 - x))
 
   out <- A*sum(out)
