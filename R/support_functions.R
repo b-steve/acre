@@ -1951,19 +1951,20 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
         convert.dist2mask$dist.cov = fit$arg_input$dist.cov
         convert.loc2mask$loc.cov = separated_cov$location
 
-        cov_mask = do.call('location_cov_to_mask', convert.loc2mask)
-        dist_mask = do.call('distance_cov_to_mask', convert.dist2mask)
+        loc_cov_mask = do.call('location_cov_to_mask', convert.loc2mask)
+        dist_cov_mask = do.call('distance_cov_to_mask', convert.dist2mask)
+        
+        # Combine the distance and location covariates into 1 dataframe.
+        # The distance mask should (read: will) have x, y columns matching old_covariates
+        cov_mask = cbind(loc_cov_mask, dist_cov_mask)
       }
-
+      
+      # Make sure to remove any unnecessary  session or mask columns
       if(any(colnames(cov_mask) %in% c('session', 'mask'))){
         old_covariates = cbind(old_covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
       } else {
         old_covariates = cbind(old_covariates, cov_mask)
       }
-      
-      # Combine the distance and location covariates into 1 dataframe.
-      # The distance mask should have x, y columns matching old_covariates
-      old_covariates = cbind(old_covariates, dist_mask)
     }
 
     session_data_in_model = get_par_extend_data(fit)$session
