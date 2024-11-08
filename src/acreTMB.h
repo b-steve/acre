@@ -1194,11 +1194,11 @@ Type acreTMB(objective_function<Type>* obj)
 
     index_data_full_D = lookup_data_full(is_animalID, s, 1, 1, 1, n_animals, 
                                          n_IDs_for_datafull, n_traps, n_calls_each_animal);
-    //wo do not have any "ID-level" parameter extension, so this initial index
+    //we do not have any "ID-level" parameter extension, so this initial index
     //is the same with the initial index for "D", but we set another variable
     //for this index because this one will loop for the traps, and the one for "D"
     //will not. In the future if we enable the 'animal_ID' level extension, this one
-    //will be moved to the loop of animal_ID, or even furthur to the 'ID' if 'ID' level
+    //will be moved to the loop of animal_ID, or even further to the 'ID' if 'ID' level
     //extension is available
     index_data_full = lookup_data_full(is_animalID, s, 1, 1, 1, n_animals, 
                                         n_IDs_for_datafull, n_traps, n_calls_each_animal);
@@ -1442,12 +1442,18 @@ Type acreTMB(objective_function<Type>* obj)
     p_sigma_toa_full = &sigma_toa_vec_full[index_data_full_D];
     
     if(is_animalID == 0){
+      
+      array<Type> unit_density_array(n_IDs[s-1] + 1, 3, n_m+1);
+      
+      // Initialize the array with zeros (or any other initial value)
+      unit_density_array.setZero();
+      
+      std::cout << "Initiate UPDATED likelihood report..." << std::endl;
+      vector<Type> unit_likelihoods(n_IDs[s-1] + 1);
+      
       if(n_uid > 0){
-        vector<Type> unit_likelihoods(n_uid + 1);
         
         for(int uid = 1; uid <= n_uid; uid++){
-          Type uid_contribution = 0;
-          
           //ids: a vector contains all IDs under this uid
           vector<int> ids = look_up_ids_uid(s, uid, n_IDs, n_ids_each_uid, n_uid_session, u_id_match);
           
@@ -1622,6 +1628,10 @@ Type acreTMB(objective_function<Type>* obj)
                 //we sum up likelihood (not log-likelihood) of each mask 
                 l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
                 
+                unit_density_array(id, 0, m-1) = exp(fy_dist_log);
+                unit_density_array(id, 1, m-1) = fw(m - 1);
+                unit_density_array(id, 2, m-1) = (*p_D_tem);
+                
                 p_D_tem++;
                 p_kappa_mask++;
                 p_sigma_ss_mask++;
@@ -1707,6 +1717,8 @@ Type acreTMB(objective_function<Type>* obj)
                   
                   //we sum up likelihood (not log-likelihood) of each mask 
                   l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+                  
+                  unit_density_array(id, 0, m-1) = exp(fy_dist_log);
                 }
                 
                 p_sigma_toa_mask++;
@@ -1720,21 +1732,23 @@ Type acreTMB(objective_function<Type>* obj)
               }
             }
             
-            uid_contribution += l_i;
+            unit_likelihoods[id] = l_i;
             
             *pointer_nll -= log(l_i * area_unit * servey_len * cue_rates);
             //end of id
           }
           //end of uid
-          unit_likelihoods[n_uid] = uid_contribution;
           
         }
         //end of if(uid > 0)
-        REPORT(unit_likelihoods);
       }
+      std::cout << "Reporting SUPER HOT FIRE NEW unit likelihoods..." << std::endl;
+      REPORT(unit_likelihoods);
+      REPORT(unit_density_array);
+      
       //end of if(is_animalID == 0)
     } else {
-      std::cout << "Fitting animal model." << std::endl;
+      std::cout << "Fitting animal model..." << std::endl;
       
       //begin of animal_ID model
       if(n_a > 0) {

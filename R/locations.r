@@ -441,11 +441,13 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
           covariates$bearing <- capt.all$bearing[i, ]
         }
         if (fit$fit.types["dist"]) {
+          # covariates <- data.frame(dist = capt.all$dist[i ,])
           covariates$dist <- capt.all$dist[i, ]
         }
         if (fit$fit.types["toa"]) {
           covariates$toa <- capt.all$toa[i, ]
         }
+        covariates <- as.data.frame(covariates)
         
         sound.speed <- fit$args$sound.speed
       
@@ -461,8 +463,8 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
             # Probability of detection at each mask point
             det.probs <- det_prob(detfn, pars, dists, ss.link)
             
-            # Probability detected by at least 1 detector
-            p.det <- p.dot.defaultD(mask, traps, detfn, ss.link, pars, A)
+            # Probability detected by at least 1 detector over entire survey region
+            p.det <- p.dot.defaultD(mask, traps, detfn, ss.link, pars, A) / A
             
             # In-homogeneous density magic,
             #       Will come back to fix this once I understand
@@ -505,7 +507,12 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
           
           f.toa <- ifelse(fit$fit.types["toa"], toa.density(bincapt, covariates, traps, mask, pars, dists, sound.speed), 1)
           
-          f.dist <- ifelse(fit$fit.types["dist"], dist.density(bincapt, covariates, traps, mask, pars, dists), 1)
+          # Distance density
+          if (fit$fit.types["dist"]) {
+            f.dist <- dist.density(bincapt, covariates, traps, mask, pars, dists)
+          } else {
+            f.dist <- 1
+          }
           
           densities <- list(
             location = f.location,
@@ -519,7 +526,7 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
           return(densities)
         }
         
-        # densities <- calculate_densities(covariates, capt.all$bincapt[i,], traps, mask, pars, detfn, ss.link, sound.speed)
+        densities <- calculate_densities(covariates, capt.all$bincapt[i,], traps, mask, pars, detfn, ss.link, sound.speed)
         
         # JO CHECK notice that we're assuming different data format for bincapt, make sure this is a valid assumption
         capt <- capt.all$bincapt[i,]
@@ -601,7 +608,7 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
             }
         }
         ## Contour due to estimated distances.
-        if (plot.types["dist"] | plot.types["combined"] & fit$fit.types["dist"]){
+        if (plot.types["dist"] | plot.types["combined"] & fit$fit.types["dist"]) {
             covariates <- data.frame(dist = capt.all$dist[i ,])
             # f.dist <- dist.density(fit, i, session, mask, dists)
             f.dist <- dist.density(capt.all$bincapt[i,], covariates, traps, mask, pars, dists)
