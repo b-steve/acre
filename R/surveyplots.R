@@ -623,7 +623,12 @@ plot.acre_data <- function(x, ...){
           #end of plot for one call
           
           if (ask) {
-            prompt_user_for_next_plot()
+            # If running in R-studio
+            if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
+              prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
+            } else {
+              prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+            }
           }
           
         }
@@ -725,7 +730,12 @@ plot.acre_data <- function(x, ...){
     }
     
     if (ask) {
-      prompt_user_for_next_plot()
+      # If running in R-studio
+      if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
+        prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
+      } else {
+        prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+      }
     }
     
     #end of type == 'covariates'
@@ -769,15 +779,7 @@ plot.acre_tmb = function(x, ...){
   }
 }
 
+
 prompt_user_for_next_plot <- function(message = "Hit <Return> to see next plot or <Esc> to cancel:") {
-  readline(prompt = message)
+  input <- readline(prompt = message)
 }
-
-
-
-
-
-
-
-
-
