@@ -586,6 +586,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(), is.scale = TRUE,
                     model.link = NULL, local = FALSE, tracing = TRUE, gr.skip = FALSE, sv.link = NULL){
+  
   #extract the original input and pass it to the final output
   arg.input = dat$arg.input
   dat$arg.input = NULL
@@ -649,6 +650,7 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 
   output = do.call('fit_og', dat)
   output$arg_input = arg.input
+  output$call = match.call()
 
   return(output)
 }
