@@ -2479,6 +2479,9 @@ separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
 
 # Function to check and rename columns for a single dataframe/matrix
 rename_trap_columns <- function(traps) {
+  if (ncol(traps) != 2) {
+    stop("'traps' object must have exactly 2 columns, 'x' and 'y'.")
+  } 
   # Check if the trap object has names and if they match the required columns
   if (is.null(colnames(traps)) || !all(c("x", "y") %in% colnames(traps))) {
     warning("'traps' object missing required column names 'x' and 'y'. Columns will be renamed.")
@@ -2491,8 +2494,16 @@ rename_trap_columns <- function(traps) {
 # Main function to handle 'traps' being either a list or a single dataframe/matrix
 check_and_rename_traps <- function(traps) {
   if (is(traps, 'list')) {
-    # If traps is a list, apply the check_and_rename_single_trap function to each element
-    traps <- lapply(traps, rename_trap_columns)
+    
+    if (length(traps) == 1) {
+      # If length of list is 1, we will just use traps as a df / matrix from this point on.
+      traps <- rename_trap_columns(traps[[1]])
+      
+    } else {
+      # If traps is a list, apply the check_and_rename_single_trap function to each element
+      traps <- lapply(traps, rename_trap_columns)
+    }
+
   } else {
     # If traps is a single dataframe/matrix, apply the function directly
     traps <- rename_trap_columns(traps)

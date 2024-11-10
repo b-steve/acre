@@ -121,6 +121,10 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
     if(!is.null(traps)){
         #generate n.sessions based on "traps" data
         tem.n.sessions.trap = ifelse(is(traps, 'list'), length(traps), 1)
+        
+        if (tem.n.sessions.trap > tem.n.sessions.capt) {
+          stop("length of 'traps' is greater than the number of sessions in 'capt'.")
+        }
 
         #length of traps is 1 is a special case
         if(tem.n.sessions.trap == 1){
