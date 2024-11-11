@@ -499,18 +499,8 @@ plot.acre_data <- function(x, ...){
       #end of animation plotting 
       
     } else {
-      
       #start of statics plotting
-      
-      if(ask){
-        ## Setting par(ask).
-        ask.save <- par("ask")
-        par(ask = TRUE)
-        ## Making sure par is restored on function exit.
-        on.exit(par(ask = ask.save))
-      }
-      
-      
+
       #if session is 0, plot all sessions, create a vector for a sessions for plot
       if(session == 0) session = seq(n.sessions)
       
@@ -631,6 +621,16 @@ plot.acre_data <- function(x, ...){
           
           suppressWarnings(print(plot_one_call))
           #end of plot for one call
+          
+          if (ask) {
+            # If running in R-studio
+            if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
+              prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
+            } else {
+              prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+            }
+          }
+          
         }
         
         
@@ -692,15 +692,6 @@ plot.acre_data <- function(x, ...){
         plot.contours = control$plot.contours
     }
     
-    if(ask){
-      ## Setting par(ask).
-      ask.save <- par("ask")
-      par(ask = TRUE)
-      ## Making sure par is restored on function exit.
-      on.exit(par(ask = ask.save))
-    }
-    
-    
     for(i in cov_list){
       if(is(D_cov_for_model[[i]], 'numeric')){
         
@@ -737,6 +728,16 @@ plot.acre_data <- function(x, ...){
         
       }
     }
+    
+    if (ask) {
+      # If running in R-studio
+      if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
+        prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
+      } else {
+        prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+      }
+    }
+    
     #end of type == 'covariates'
   }
   
@@ -776,4 +777,9 @@ plot.acre_tmb = function(x, ...){
   } else {
     stop('invalid input for "type", which should be either "survey", "capt", "covariates", "detfn", or "Dsurf".')
   }
+}
+
+
+prompt_user_for_next_plot <- function(message = "Hit <Return> to see next plot or <Esc> to cancel:") {
+  input <- readline(prompt = message)
 }
