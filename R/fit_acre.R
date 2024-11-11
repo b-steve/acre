@@ -239,8 +239,14 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
     #this is a literately vector as well, "n.detection.uid" must be used to extract the index of traps for one uid
     index_traps_uid = agg_sort(data_u_bin, 'bincapt', c('session', 'u_id'), function(x) which(x == 1))
-    index_traps_uid = do.call('c', index_traps_uid$x)
-
+    
+    # If the trap uid's are in a list convert to vector
+    if (is.list(index_traps_uid$x)) {
+      index_traps_uid = do.call('c', index_traps_uid$x)
+    } else {
+      # If they're already a vector ust leave as is
+      index_traps_uid = index_traps_uid$x
+    }
 
     #ID and unique capture history match table
     u_id_match = tem$u_id_match
@@ -354,7 +360,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                u_id_match = as.numeric(u_id_match$ID),
                capt_bin_uid = as.numeric(data_u_bin$bincapt),
 
-               capt_bin = ifelse(is.na(data.full$bincapt), NA_real_, data.full$bincapt),
+               capt_bin = ifelse(is.na(data.full$bincapt), 0, data.full$bincapt),
                capt_bearing = ifelse(is.na(data.full$bearing), NA_real_, data.full$bearing),
                capt_dist = ifelse(is.na(data.full$dist), NA_real_, data.full$dist),
                capt_ss = ifelse(is.na(data.full$ss), NA_real_, data.full$ss),
