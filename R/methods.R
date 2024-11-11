@@ -1159,6 +1159,14 @@ print.summary_acre_tmb = function(x, ...){
     mat = mat[1:n.coefs,,drop = FALSE]
   }
   
+  # # Format mat to avoid scientific notation
+  mat_formatted <- mat
+  mat_formatted[!is.na(mat_formatted)] <- formatC(
+    as.numeric(mat_formatted[!is.na(mat_formatted)]),
+    format = "e",
+    digits = 6
+  )
+  
   
   detfn <- c(hn = "Halfnormal", hhn = "Hazard halfnormal", hr = "Hazard rate", th = "Threshold",
              lth = "Log-link threshold", ss = "Signal strength")[x$detfn]
@@ -1188,7 +1196,8 @@ print.summary_acre_tmb = function(x, ...){
   
   
   cat("\n", "\n", "Parameters:", "\n")
-  stats::printCoefmat(mat, na.print = "")
+  # stats::printCoefmat(mat_formatted, na.print = "", print.gap=4, digits=3)
+  print(mat_formatted, print.gap=4, quote = F)
   
   if(!is.null(pars_ext_links)){
     cat("\n", "\n", "Extended parameters link functions:", "\n")
