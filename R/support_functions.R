@@ -223,6 +223,7 @@ p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
                           ss.link = NULL, pars = NULL, A, n.quadpoints = 8){
   dists <- distances(traps, points)
   probs <- det_prob(detfn, pars, dists, ss.link)
+  
   if(detfn == 'ss'){
     sigma.ss <- pars$sigma.ss
     cutoff <- pars$cutoff

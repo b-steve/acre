@@ -1143,9 +1143,7 @@ Type acreTMB(objective_function<Type>* obj)
   //begin of likelihood function
   
   int number_density_columns = is_ss + is_bearing + is_toa + is_dist + 2;
-  
-  std::cout << "Number of density columns: " << number_density_columns << std::endl;
-  
+
   std::cout << "Tracking unit likelihoods..." << std::endl;
 
   // For every session
@@ -1443,13 +1441,11 @@ Type acreTMB(objective_function<Type>* obj)
     
     if(is_animalID == 0){
       
-      array<Type> unit_density_array(n_IDs[s-1] + 1, 3, n_m+1);
-      
+      // A density array to keep track of every density we calculate in the likelihood.
+      // Useful to keep track of for post-process functions (i.e. estimating unit locations).
+      array<Type> unit_density_array(n_IDs[s-1], 3, n_m);
       // Initialize the array with zeros (or any other initial value)
       unit_density_array.setZero();
-      
-      std::cout << "Initiate UPDATED likelihood report..." << std::endl;
-      vector<Type> unit_likelihoods(n_IDs[s-1] + 1);
       
       if(n_uid > 0){
         
@@ -1628,9 +1624,10 @@ Type acreTMB(objective_function<Type>* obj)
                 //we sum up likelihood (not log-likelihood) of each mask 
                 l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
                 
-                unit_density_array(id, 0, m-1) = exp(fy_dist_log);
-                unit_density_array(id, 1, m-1) = fw(m - 1);
-                unit_density_array(id, 2, m-1) = (*p_D_tem);
+                //note id's and mask start from 1 so need to subtract
+                unit_density_array(id-1, 0, m-1) = exp(fy_dist_log);
+                unit_density_array(id-1, 1, m-1) = fw(m - 1);
+                unit_density_array(id-1, 2, m-1) = (*p_D_tem);
                 
                 p_D_tem++;
                 p_kappa_mask++;
@@ -1732,8 +1729,6 @@ Type acreTMB(objective_function<Type>* obj)
               }
             }
             
-            unit_likelihoods[id] = l_i;
-            
             *pointer_nll -= log(l_i * area_unit * servey_len * cue_rates);
             //end of id
           }
@@ -1742,8 +1737,7 @@ Type acreTMB(objective_function<Type>* obj)
         }
         //end of if(uid > 0)
       }
-      std::cout << "Reporting SUPER HOT FIRE NEW unit likelihoods..." << std::endl;
-      REPORT(unit_likelihoods);
+      std::cout << "Reporting unit density array..." << std::endl;
       REPORT(unit_density_array);
       
       //end of if(is_animalID == 0)

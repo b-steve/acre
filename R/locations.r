@@ -64,7 +64,7 @@ get.traps <- function(fit, session = NULL, as.list = NULL){
 #'     location.  Elements can be a subset of \code{"capt"},
 #'     \code{"bearing"}, \code{"dist"}, \code{"ss"}, \code{"toa"},
 #'     \code{"combined"}, and \code{"all"}, where \code{"capt"} shows
-#'     estimated location only using detection locations,
+#'     estimated location only using detection locations, 
 #'     \code{"combined"} combines all information types together, and
 #'     \code{"all"} plots all possible contour types. When signal
 #'     strength information is used in the model fit, \code{"capt"}
