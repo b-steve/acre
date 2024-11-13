@@ -1145,7 +1145,6 @@ print.summary_acre_tmb = function(x, ...){
     } else {
       mat[i, 2] <- 0
     }
-    
   }
   
   mat[1:n.coefs, 3:4] = x$CI
@@ -1159,7 +1158,9 @@ print.summary_acre_tmb = function(x, ...){
     mat = mat[1:n.coefs,,drop = FALSE]
   }
   
-  # # Format mat to avoid scientific notation
+  # Format matrix to only use scientific notation
+  # Little bit hacky but need the values to be printed as strings otherwise 
+  # R will mix up scientific and standard notation. 
   mat_formatted <- mat
   mat_formatted[!is.na(mat_formatted)] <- formatC(
     as.numeric(mat_formatted[!is.na(mat_formatted)]),
@@ -1189,14 +1190,11 @@ print.summary_acre_tmb = function(x, ...){
     cat("NULL")
   }
   
-  
   cat("\n")
   cat("Confidence interval method:", CI_method, "\n")
   
   
-  
   cat("\n", "\n", "Parameters:", "\n")
-  # stats::printCoefmat(mat_formatted, na.print = "", print.gap=4, digits=3)
   print(mat_formatted, print.gap=4, quote = F)
   
   if(!is.null(pars_ext_links)){
