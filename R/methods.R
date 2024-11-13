@@ -1205,4 +1205,34 @@ print.summary_acre_tmb = function(x, ...){
 }
 
 
+#' Extract (negative) log-likelihood for a fitted acre object
+#'
+#' @param object a fitted model from "fit.acre()".
+#' @param ... 
+#'
+#' @return a numeric value, the negative log-likelihood of the model
+#' @export
+#'
+#' @examples logLik(example.fit)
+logLik.acre_tmb <- function(object, ...) {
+  return(object$loglik)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
