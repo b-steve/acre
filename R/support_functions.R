@@ -2478,7 +2478,7 @@ separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
 }
 
 conf_int_column_can_be_non_scientific <- function(x) {
-  all(abs(x) >= 1e-4 & abs(x) <= 1e4, na.rm = TRUE)
+  all(abs(x) >= 1e-6 & abs(x) <= 1e6, na.rm = TRUE)
 }
 
 format_conf_int_matrix <- function(mat) {
