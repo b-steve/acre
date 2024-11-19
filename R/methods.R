@@ -1158,16 +1158,7 @@ print.summary_acre_tmb = function(x, ...){
     mat = mat[1:n.coefs,,drop = FALSE]
   }
   
-  # Format matrix to only use scientific notation
-  # Little bit hacky but need the values to be printed as strings otherwise 
-  # R will mix up scientific and standard notation. 
-  mat_formatted <- mat
-  mat_formatted[!is.na(mat_formatted)] <- formatC(
-    as.numeric(mat_formatted[!is.na(mat_formatted)]),
-    format = "e",
-    digits = 6
-  )
-  
+  formatted_mat <- format_conf_int_matrix(mat)
   
   detfn <- c(hn = "Halfnormal", hhn = "Hazard halfnormal", hr = "Hazard rate", th = "Threshold",
              lth = "Log-link threshold", ss = "Signal strength")[x$detfn]
@@ -1195,7 +1186,7 @@ print.summary_acre_tmb = function(x, ...){
   
   
   cat("\n", "\n", "Parameters:", "\n")
-  print(mat_formatted, print.gap=4, quote = F)
+  print(formatted_mat, print.gap=4, quote = F)
   
   if(!is.null(pars_ext_links)){
     cat("\n", "\n", "Extended parameters link functions:", "\n")

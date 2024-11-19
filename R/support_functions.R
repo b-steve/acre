@@ -2476,3 +2476,38 @@ separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
   
   return(list(distance = distance, location = location))
 }
+
+conf_int_column_can_be_non_scientific <- function(x) {
+  all(abs(x) >= 1e-4 & abs(x) <= 1e4, na.rm = TRUE)
+}
+
+format_conf_int_matrix <- function(mat) {
+  # Format matrix according to desired behavior:
+  #
+  # First two columns: if ALL values in that column can be printed as 
+  # non-scientific, print as such for that column, else print in scientific
+  #
+  # Second two columns: if ALL values ACROSS BOTH columns can be printed as 
+  # non-scientific, print as such for both columns, else print in scientific
+  #
+  # Little bit hacky, there definitely is a better way
+  
+  formatted_mat <- mat
+  # Format first two columns independently
+  for (col in 1:2) {
+    if (conf_int_column_can_be_non_scientific(mat[, col])) {
+      formatted_mat[, col] <- format(mat[, col], scientific = FALSE, trim=T)
+    } else {
+      formatted_mat[, col] <- format(mat[, col], scientific = TRUE, trim=T)
+    }
+  }
+  
+  # Format last two columns together
+  if (all(sapply(mat[, 3:4], conf_int_column_can_be_non_scientific))) {
+    formatted_mat[, 3:4] <- format(mat[, 3:4], scientific = FALSE, trim=T)
+  } else {
+    formatted_mat[, 3:4] <- format(mat[, 3:4], scientific = TRUE, trim=T)
+  }
+  
+  return(formatted_mat)
+}
