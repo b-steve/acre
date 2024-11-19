@@ -808,26 +808,43 @@ confint.acre_boot = function(object, types = NULL, level = 0.95, pars = NULL, ne
 
 ######################################################################################################################
 
-
-#' Title
+#' Calculate AIC for acre_tmb Models
 #'
-#' @param object 
-#' @param k 
+#' @param ... One or more acre_tmb model objects.
+#' @param k Penalty parameter (default is 2 for AIC).
 #'
-#' @return
+#' @return A named vector of AIC values or NA if conditions are not met.
 #' @export
 #'
 #' @examples
-AIC.acre_tmb = function(object, k = 2){
-  if(object$fit.freqs){
-    message("NOTE: Use of AIC for this model relies on independence between locations of
-            calls from the same animal, which may not be appropriate.")
-    return(NA)
+#' AIC.acre_tmb(model1, model2, k = 2)
+AIC.acre_tmb <- function(..., k = 2) {
+  # Capture all model objects
+  models <- list(...)
+  
+  # Check if all objects are of class 'acre_tmb'
+  if (!all(sapply(models, inherits, what = "acre_tmb"))) {
+    stop("All inputs must be of class 'acre_tmb'.")
   }
   
-  n_fixed = length(get_fixed_par_name(object))
+  # Initialize result storage
+  aic_values <- numeric(length(models))
+  names(aic_values) <- match.call(expand.dots = FALSE)$`...`
   
-  return(k * (length(coef(object)) - n_fixed) - 2 * object$loglik)
+  # Loop over models and calculate AIC
+  for (i in seq_along(models)) {
+    model <- models[[i]]
+    
+    if (model$fit.freqs) {
+      message(sprintf("NOTE: AIC for model '%s' relies on independence between locations of calls from the same animal, which may not be appropriate.", names(aic_values)[i]))
+      aic_values[i] <- NA
+    } else {
+      n_fixed <- length(get_fixed_par_name(model))
+      aic_values[i] <- k * (length(coef(model)) - n_fixed) - 2 * model$loglik
+    }
+  }
+  
+  return(aic_values)
 }
 
 
