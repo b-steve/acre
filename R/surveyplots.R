@@ -24,7 +24,7 @@ show.detfn <- function(fit, new.covariates = NULL, skip.extend.param = NULL, xli
   det_fn = get_detfn(fit)
   
   if(is.null(xlab)) xlab = "Distance"
-  if(is.null(ylab)){
+  if(is.null(ylab)) {
     if(det_fn == 'ss') ylab = "E(ss)"
     if(det_fn != 'ss') ylab = "Detection probability"
   }
