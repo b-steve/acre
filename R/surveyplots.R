@@ -623,11 +623,15 @@ plot.acre_data <- function(x, ...){
           #end of plot for one call
           
           if (ask) {
-            # If running in R-studio
-            if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
-              prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
-            } else {
-              prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+            # Make sure to only ask if we are plotting more than one plot, 
+            # and it is not the last plot in the list
+            if (length(u_keys) > 1 && k != u_keys[[length(u_keys)]]) {
+              # If running in R-studio
+              if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
+                prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
+              } else {
+                prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+              }
             }
           }
           
@@ -727,17 +731,20 @@ plot.acre_data <- function(x, ...){
         legend(x = "topright", legend = match_table$name, fill = col_leng)
         
       }
-    }
-    
-    if (ask) {
-      # If running in R-studio
-      if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
-        prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
-      } else {
-        prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+      
+      if (ask) {
+        # Make sure to only ask if we are plotting more than one plot, 
+        # and it is not the last plot in the list
+        if (length(cov_list) > 1 && i != cov_list[[length(cov_list)]]) {
+          # If running in R-studio
+          if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
+            prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
+          } else {
+            prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+          }
+        }
       }
     }
-    
     #end of type == 'covariates'
   }
   
