@@ -1185,7 +1185,7 @@ print.summary_acre_tmb = function(x, ...){
   
   cat("\n", "\n", "Parameters:", "\n")
 
-  printCoefmat(formatted_mat, cs.ind = c(1, 3, 4), tst.ind = NULL)
+  printCoefmat(mat, cs.ind = c(1, 3, 4), tst.ind = NULL)
   
   if(!is.null(pars_ext_links)){
     cat("\n", "\n", "Extended parameters link functions:", "\n")
