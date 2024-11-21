@@ -1145,7 +1145,6 @@ print.summary_acre_tmb = function(x, ...){
     } else {
       mat[i, 2] <- 0
     }
-    
   }
   
   mat[1:n.coefs, 3:4] = x$CI
@@ -1159,6 +1158,7 @@ print.summary_acre_tmb = function(x, ...){
     mat = mat[1:n.coefs,,drop = FALSE]
   }
   
+  formatted_mat <- format_conf_int_matrix(mat)
   
   detfn <- c(hn = "Halfnormal", hhn = "Hazard halfnormal", hr = "Hazard rate", th = "Threshold",
              lth = "Log-link threshold", ss = "Signal strength")[x$detfn]
@@ -1181,14 +1181,12 @@ print.summary_acre_tmb = function(x, ...){
     cat("NULL")
   }
   
-  
   cat("\n")
   cat("Confidence interval method:", CI_method, "\n")
   
   
-  
   cat("\n", "\n", "Parameters:", "\n")
-  stats::printCoefmat(mat, na.print = "")
+  print(formatted_mat, print.gap=4, quote = F)
   
   if(!is.null(pars_ext_links)){
     cat("\n", "\n", "Extended parameters link functions:", "\n")
