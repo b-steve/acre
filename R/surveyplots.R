@@ -625,7 +625,7 @@ plot.acre_data <- function(x, ...){
           if (ask) {
             # Make sure to only ask if we are plotting more than one plot, 
             # and it is not the last plot in the list
-            if (length(u_keys) > 1 && k != u_keys[[length(u_keys)]]) {
+            if (length(u_keys) > 1 && !(k == u_keys[[length(u_keys)]] & s == session[length(session)])) {
               # If running in R-studio
               if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
                 prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
