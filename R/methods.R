@@ -829,6 +829,7 @@ AIC.acre_tmb <- function(..., k = 2) {
   
   # Initialize result storage
   aic_values <- numeric(length(models))
+  n_par <- numeric(length(models))
   names(aic_values) <- match.call(expand.dots = FALSE)$`...`
   
   # Loop over models and calculate AIC
@@ -841,10 +842,11 @@ AIC.acre_tmb <- function(..., k = 2) {
     } else {
       n_fixed <- length(get_fixed_par_name(model))
       aic_values[i] <- k * (length(coef(model)) - n_fixed) - 2 * model$loglik
+      n_par[i] <- length(coef(model))
     }
   }
   
-  return(aic_values)
+  return(data.frame(npar = n_par, AIC = aic_values))
 }
 
 
