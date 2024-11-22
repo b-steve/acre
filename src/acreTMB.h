@@ -1536,8 +1536,12 @@ Type acreTMB(objective_function<Type>* obj)
             //reset p_D_tem
             p_D_tem = &D_tem[0];
             
-            if(is_local == 0){
-              for(m = 1; m <= n_m; m++){
+            
+            // Loop over every mask point
+            for(m = 1; m <= n_m; m++){
+              // But only calculate for local points if is_local=T
+              // Otherwise calculate for every mask point
+              if(!is_local || *p_index_local == 1){
                 fy_toa_log = Type(0.0);
                 fy_bear_log = Type(0.0);
                 fy_dist_log = Type(0.0);
@@ -1552,26 +1556,19 @@ Type acreTMB(objective_function<Type>* obj)
                     *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
                     
                     trans(p_sigma_toa_tem, par_link(14));
-                    
                     fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
                   }
-                  
-                  p_sigma_toa_mask++;
-                  p_toa_ssq++;
                 }
                 
                 for(t = 0; t < n_det; t++){
                   index_data_full = lookup_data_full(0, s, 0, id, traps(t),
-                                                    0, n_IDs_for_datafull, n_traps, 0);
-                  
+                                                     0, n_IDs_for_datafull, n_traps, 0);
                   index_data_dist_theta = lookup_data_dist_theta(s, traps(t), m, n_traps, n_masks);
-                  
-                  //bearing
+                  //bearing 
                   if(is_bearing == 1){
                     p_capt_bearing = &capt_bearing[index_data_full];
                     if (std::isnan(asDouble(*p_capt_bearing))) {
-                      // std::cout << "BEARING MISSING: " << capt_bearing[index_data_full] << std::endl;
-                    } else {
+                    } else{
                       p_kappa_full = &kappa_vec_full[index_data_full];
                       p_theta = &theta[index_data_dist_theta];
                       
@@ -1590,14 +1587,13 @@ Type acreTMB(objective_function<Type>* obj)
                     p_dx = &dx[index_data_dist_theta];
                     
                     if (std::isnan(asDouble(*p_capt_dist))) {
-                    } else {
+                    } else{
                       *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
                       trans(p_alpha_tem, par_link(13));
                       
                       fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
                         log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
                     }
-                    
                     
                   }
                   
@@ -1606,14 +1602,12 @@ Type acreTMB(objective_function<Type>* obj)
                     p_capt_ss = &capt_ss[index_data_full];
                     p_essx = &essx[index_data_dist_theta];
                     p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
-
+                    
                     *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
                     trans(p_sigma_ss_tem, par_link(11));
                     
                     fy_ss_log += dnorm(*p_capt_ss, *p_essx, sigma_ss_tem, true);
-
                   }
-                  
                   //end of loop of traps
                 }
                 //for fx=f(x|n;theta)
@@ -1624,110 +1618,23 @@ Type acreTMB(objective_function<Type>* obj)
                 //we sum up likelihood (not log-likelihood) of each mask 
                 l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
                 
-                //note id's and mask start from 1 so need to subtract
-                unit_density_array(id-1, 0, m-1) = exp(fy_dist_log);
-                unit_density_array(id-1, 1, m-1) = fw(m - 1);
-                unit_density_array(id-1, 2, m-1) = (*p_D_tem);
-                
-                p_D_tem++;
-                p_kappa_mask++;
-                p_sigma_ss_mask++;
-                p_alpha_mask++;
-                
-                //end of loop of masks
+                // if (*p_index_local == 1) {
+                //   unit_density_array(id, 0, m-1) = exp(fy_dist_log);
+                // }
               }
-            } else {
-              for(m = 1; m <= n_m; m++){
-                if(*p_index_local == 1){
-                  fy_toa_log = Type(0.0);
-                  fy_bear_log = Type(0.0);
-                  fy_dist_log = Type(0.0);
-                  fy_ss_log = Type(0.0);
-                  
-                  //toa
-                  if(is_toa == 1){
-                    if (std::isnan(asDouble(*p_sigma_toa_full)) || std::isnan(asDouble(*p_sigma_toa_mask))) {
-                      // Ignore likelihood contribution
-                    } else {
-                      //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
-                      *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
-                      
-                      trans(p_sigma_toa_tem, par_link(14));
-                      fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
-                    }
-                  }
-                  
-                  for(t = 0; t < n_det; t++){
-                    index_data_full = lookup_data_full(0, s, 0, id, traps(t),
-                                                      0, n_IDs_for_datafull, n_traps, 0);
-                    index_data_dist_theta = lookup_data_dist_theta(s, traps(t), m, n_traps, n_masks);
-                    //bearing 
-                    if(is_bearing == 1){
-                      p_capt_bearing = &capt_bearing[index_data_full];
-                      if (std::isnan(asDouble(*p_capt_bearing))) {
-                      } else{
-                        p_kappa_full = &kappa_vec_full[index_data_full];
-                        p_theta = &theta[index_data_dist_theta];
-                        
-                        *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
-                        trans(p_kappa_tem, par_link(12));
-                        
-                        fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
-                          log(bessi0(kappa_tem));
-                      }
-                    }
-                    
-                    //dist
-                    if(is_dist == 1){
-                      p_capt_dist = &capt_dist[index_data_full];
-                      p_alpha_full = &alpha_vec_full[index_data_full];
-                      p_dx = &dx[index_data_dist_theta];
-                      
-                      if (std::isnan(asDouble(*p_capt_dist))) {
-                      } else{
-                        *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
-                        trans(p_alpha_tem, par_link(13));
-                        
-                        fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
-                          log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
-                      }
-                      
-                    }
-                    
-                    //ss_origin
-                    if(is_ss_origin == 1){
-                      p_capt_ss = &capt_ss[index_data_full];
-                      p_essx = &essx[index_data_dist_theta];
-                      p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
-
-                      *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
-                      trans(p_sigma_ss_tem, par_link(11));
-                      
-                      fy_ss_log += dnorm(*p_capt_ss, *p_essx, sigma_ss_tem, true);
-                    }
-                    //end of loop of traps
-                  }
-                  //for fx=f(x|n;theta)
-                  //canceled out p_dot & lambda from original likelihood: 
-                  //fx = D_tem[m-1] * p_dot(m - 1) / lambda_theta = D_tem[m-1];
-                  //so fx was directly integrated into l_i below
-                  
-                  //we sum up likelihood (not log-likelihood) of each mask 
-                  l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
-                  
-                  unit_density_array(id, 0, m-1) = exp(fy_dist_log);
-                }
-                
-                p_sigma_toa_mask++;
-                p_toa_ssq++;
-                p_D_tem++;
-                p_kappa_mask++;
-                p_sigma_ss_mask++;
-                p_alpha_mask++;
-                p_index_local++;
-                //end of loop of masks
-              }
+              
+              
+              
+              p_sigma_toa_mask++;
+              p_toa_ssq++;
+              p_D_tem++;
+              p_kappa_mask++;
+              p_sigma_ss_mask++;
+              p_alpha_mask++;
+              p_index_local++;
+              //end of loop of masks
             }
+            
             
             *pointer_nll -= log(l_i * area_unit * servey_len * cue_rates);
             //end of id

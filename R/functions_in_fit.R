@@ -227,7 +227,7 @@ mask.fun = function(mask, dims, animal.model, data.traps, data.full, bucket_info
       }
       
     }
-  } else if (local){
+  } else {
     
     for (i in 1:n.sessions){
       if(n.IDs[i] > 0){
@@ -251,23 +251,24 @@ mask.fun = function(mask, dims, animal.model, data.traps, data.full, bucket_info
         all.which.local[[i]] <- c(all.which.local[[i]], recursive = TRUE)
       }
     }
-  } else {
-    #if not 'local' these two variables are meaningless, just assign them something
-    for (i in 1:n.sessions){
-      if(n.IDs[i] > 0){
-        all.n.local[[i]] <- rep(1, n.IDs[i])
-        all.which.local[[i]] <- rep(0, n.IDs[i])
-      }
-    }
-  }
+  } 
+  # else {
+  #   #if not 'local' these two variables are meaningless, just assign them something
+  #   for (i in 1:n.sessions){
+  #     if(n.IDs[i] > 0){
+  #       all.n.local[[i]] <- rep(1, n.IDs[i])
+  #       all.which.local[[i]] <- rep(0, n.IDs[i])
+  #     }
+  #   }
+  # }
 
   #prepare a data set for ID*mask
   
   data.ID_mask = vector('list', n.sessions)
   if(local) {
     bucket_info = c(bucket_info, "local")
-    tem.df = vector('list', n.sessions)
   }
+  tem.df = vector('list', n.sessions)
   
   #to avoid confusing, u.id is animal_ID-ID if animal.model, and the "ID" column is
   #temporarily to be animal_ID-ID as well until in the later step where we restore it
@@ -282,31 +283,23 @@ mask.fun = function(mask, dims, animal.model, data.traps, data.full, bucket_info
         u.id = unique(tem[["ID"]])
       }
       
-      if(local){
-        if(animal.model){
-          tem.df[[i]] = data.frame(session = rep(i, sum(all.n.local[[i]])),
-                                   animal_ID = rep(u.a, all.n.local[[i]]),
-                                   mask = all.which.local[[i]], local = 1,
-                                   stringsAsFactors = F)
-        } else {
-          tem.df[[i]] = data.frame(session = rep(i, sum(all.n.local[[i]])),
-                                   ID = rep(u.id, all.n.local[[i]]),
-                                   mask = all.which.local[[i]], local = 1,
-                                   stringsAsFactors = F)
-        }
-        
-        #here column 'ID' is "animal_ID---ID" if animal.model, will be separated later
-        data.ID_mask[[i]] = data.frame(session = rep(i, n.IDs[i] * n.masks[i]),
-                                       ID = rep(u.id, each = n.masks[i]),
-                                       mask = rep(1:n.masks[i], n.IDs[i]),
-                                       stringsAsFactors = F)
+      if(animal.model){
+        tem.df[[i]] = data.frame(session = rep(i, sum(all.n.local[[i]])),
+                                 animal_ID = rep(u.a, all.n.local[[i]]),
+                                 mask = all.which.local[[i]], local = 1,
+                                 stringsAsFactors = F)
       } else {
-        #here column 'ID' is "animal_ID---ID" if animal.model, will be separated later
-        data.ID_mask[[i]] = data.frame(session = rep(i, n.IDs[i] * n.masks[i]),
-                                       ID = rep(u.id, each = n.masks[i]),
-                                       mask = rep(1:n.masks[i], n.IDs[i]),
-                                       local = 1, stringsAsFactors = F)
+        tem.df[[i]] = data.frame(session = rep(i, sum(all.n.local[[i]])),
+                                 ID = rep(u.id, all.n.local[[i]]),
+                                 mask = all.which.local[[i]], local = 1,
+                                 stringsAsFactors = F)
       }
+      
+      #here column 'ID' is "animal_ID---ID" if animal.model, will be separated later
+      data.ID_mask[[i]] = data.frame(session = rep(i, n.IDs[i] * n.masks[i]),
+                                     ID = rep(u.id, each = n.masks[i]),
+                                     mask = rep(1:n.masks[i], n.IDs[i]),
+                                     stringsAsFactors = F)
       
       #assign 'toa_ssq' in this ID_mask data set
       #data.full must be sorted by 'session', 'ID', 'trap'
@@ -334,17 +327,16 @@ mask.fun = function(mask, dims, animal.model, data.traps, data.full, bucket_info
   }
   
   
-  
-  if(local){
-    tem.df = do.call('rbind', tem.df)
-    if(animal.model){
-      data.ID_mask = merge(data.ID_mask, tem.df, by = c('session', 'animal_ID', 'mask'), all = T)
-    } else {
-      data.ID_mask = merge(data.ID_mask, tem.df, by = c('session', 'ID', 'mask'), all = T)
-    }
-    
-    data.ID_mask[['local']] = ifelse(is.na(data.ID_mask[['local']]), 0, data.ID_mask[['local']])
+
+  tem.df = do.call('rbind', tem.df)
+  if(animal.model){
+    data.ID_mask = merge(data.ID_mask, tem.df, by = c('session', 'animal_ID', 'mask'), all = T)
+  } else {
+    data.ID_mask = merge(data.ID_mask, tem.df, by = c('session', 'ID', 'mask'), all = T)
   }
+  
+  data.ID_mask[['local']] = ifelse(is.na(data.ID_mask[['local']]), 0, data.ID_mask[['local']])
+
   
   
   return(list(mask = mask, dists = dists, thetas = thetas, n.masks = n.masks, A = A,

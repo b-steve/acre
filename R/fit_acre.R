@@ -280,15 +280,8 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     data.ID_mask = data.ID_mask[order(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$mask, data.ID_mask$ID), ]
   }
 
-  if(!any(c('local', 'toa') %in% bucket_info)){
-    data.ID_mask = data.ID_mask[1,, drop = FALSE]
-  } else {
-    if(!'local' %in% bucket_info){
-      data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'local'), drop = FALSE]
-    }
-    if(!"toa" %in% bucket_info){
-      data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'toa_ssq'), drop = FALSE]
-    }
+  if(!"toa" %in% bucket_info){
+    data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'toa_ssq'), drop = FALSE]
   }
 
   #browser()
@@ -365,7 +358,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                theta = data.dists.thetas$theta,
 
                index_local = as.numeric(data.ID_mask$local),
-               toa_ssq = data.ID_mask$toa_ssq
+               toa_ssq = ifelse("toa" %in% bucket_info, data.ID_mask$toa_ssq, 0)
   )
 
   #to avoid "." in .cpp file
