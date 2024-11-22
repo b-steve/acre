@@ -360,12 +360,12 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                capt_ss = ifelse(is.na(data.full$ss), NA_real_, data.full$ss),
                capt_toa = ifelse(is.na(data.full$toa), NA_real_, data.full$toa),
 
-
+                
                dx = data.dists.thetas$dx,
                theta = data.dists.thetas$theta,
 
                index_local = as.numeric(data.ID_mask$local),
-               toa_ssq = data.ID_mask$toa_ssq
+               toa_ssq = ifelse("toa" %in% bucket_info, data.ID_mask$toa_ssq, 0)
   )
 
   #to avoid "." in .cpp file
