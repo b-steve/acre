@@ -285,6 +285,12 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   }
 
   #browser()
+  
+  # TODO: do this properly
+  toa_ssq = 0
+  if ("toa" %in% bucket_info) {
+    toa_ssq = data.ID_mask$toa_ssq
+  }
 
   data <- list(n_sessions = dims$n.sessions,
                n_animals = dims$n.animals,
@@ -358,7 +364,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                theta = data.dists.thetas$theta,
 
                index_local = as.numeric(data.ID_mask$local),
-               toa_ssq = ifelse("toa" %in% bucket_info, data.ID_mask$toa_ssq, 0)
+               toa_ssq = toa_ssq
   )
 
   #to avoid "." in .cpp file

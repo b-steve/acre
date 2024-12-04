@@ -1660,9 +1660,6 @@ Type acreTMB(objective_function<Type>* obj)
       // Initialize the array with zeros (or any other initial value)
       density_array.setZero();
       
-      std::cout << "Created density array." << std::endl;
-      std::cout << "num_animals: " << n_a << ", number_density_columns: " << number_density_columns << ", num mask points: " << n_m << std::endl;
-
       //initial index for data_mask
       index_data_mask = lookup_data_mask(s, 1, n_masks);
       
@@ -1705,317 +1702,156 @@ Type acreTMB(objective_function<Type>* obj)
         p_index_local = &index_local[index_data_IDmask];
       }
 		  
-		  
-		  
 		  p_sigma_toa_mask = &sigma_toa_vec_mask[index_data_mask];
 		  p_kappa_mask = &kappa_vec_mask[index_data_mask];
 		  p_alpha_mask = &alpha_vec_mask[index_data_mask];
 		  p_sigma_ss_mask = &sigma_ss_vec_mask[index_data_mask];
-
-		  if(is_local == 0){
-			for(m = 1; m <= n_m; m++){
-			  index_data_full = index_data_full_initial;
-			  //likelihood for capture history
-			  l_w = Type(1.0);
-			  //std::cout << "session: " << s << ", animal: " << a << ", mask: "<< m << " begins." << std::endl;
-			  
-			  // For each call of this animal detected
-			  for(i = 1; i <= ci; i++){
-			    // For each trap
-  				for(t = 1; t <= n_t; t++){
-  				  if(is_ss == 0){
-  				  // 
-  					l_w *= pow(p_k(m - 1, t - 1), capt_bin[index_data_full]) *
-  					  pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
-  				  } else {
-  					//pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
-  					l_w *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
-  				  }
-  				  index_data_full++;
-  				}
-			  }
-			  
-			  // Update density array
-			  density_array(a, 1, m) = l_w;
-			    
-			  //likelihood for extra information
-			  fy_toa_log = Type(0.0);
-			  fy_bear_log = Type(0.0);
-			  fy_dist_log = Type(0.0);
-			  fy_ss_log = Type(0.0);
-
-			  //reset the index_data_full to the first observation of this animal
-			  index_data_full = index_data_full_initial;
-			  p_capt_bearing = &capt_bearing[index_data_full];
-			  p_kappa_full = &kappa_vec_full[index_data_full];
-			  p_capt_dist = &capt_dist[index_data_full];
-			  p_alpha_full = &alpha_vec_full[index_data_full];
-			  p_capt_ss = &capt_ss[index_data_full];
-			  p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
-
-
-			  index_data_dist_theta = lookup_data_dist_theta(s, 1, m, n_traps, n_masks);
-			  for(i = 1; i <= ci; i++){
-				//std::cout << "session: " << s << ", animal: " << a << ", mask: "<< m << ", id: " << i << ", loop for extra info begins." << std::endl;
-				n_det = Zi_vec[i - 1];
-				p_theta = &theta[index_data_dist_theta];
-				p_dx = &dx[index_data_dist_theta];
-				p_essx = &essx[index_data_dist_theta];
-				//std::cout << "check point 5" << std::endl;
-				//toa
-				if(is_toa == 1){
-				  if (std::isnan(asDouble(*p_sigma_toa_full)) || std::isnan(asDouble(*p_sigma_toa_mask))) {
-				    // Ignore likelihood contribution
-				  } else {
-				    //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
-				    *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
-				    trans(p_sigma_toa_tem, par_link(14));
-				    
-				    fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
-				  }
-				  
-				  p_toa_ssq++;
-
-				}
-
-				for(t = 1; t <= n_t; t++){
-				  //bearing
-				  if(is_bearing == 1){
-				    if (std::isnan(asDouble(*p_capt_bearing))) {
-				      //
-				    } else {
-				      *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
-				      trans(p_kappa_tem, par_link(12));
-				      
-				      fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
-				        log(bessi0(kappa_tem));
-				    }
-
-					p_capt_bearing++;
-					p_kappa_full++;
-					p_theta++;
-				  }
-
-				  //dist
-				  if(is_dist == 1){
-				    if (std::isnan(asDouble(*p_capt_dist))) {
-				      //
-				    } else {
-				      if(*p_capt_dist != 0){
-				        *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
-				        trans(p_alpha_tem, par_link(13));
-				        
-				        fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
-				          log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
-				    } else {
-				      // std::cout << *p_capt_dist << std::endl;
-				    }
-					} 
-
-					p_capt_dist++;
-					p_alpha_full++;
-					p_dx++;
-				  }
-
-				  //ss_origin
-				  if(is_ss_origin == 1){
-					if(*p_capt_ss != 0){
-					  *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
-					  trans(p_sigma_ss_tem, par_link(11));
-					  
-					  //if(s == 105 && a == 1 && i == 1 && m < 50){
-						//  std::cout << "mask: " << m  << ", trap" << t << ", ss: " << (*p_capt_ss) << std::endl;
-						//  std::cout << "mask: " << m <<  ", trap" << t << ", essx: " << (*p_essx) << std::endl;
-						//  std::cout << "mask: " << m <<  ", trap" << t << ", sigma_ss: " << sigma_ss_tem << std::endl;
-					  //}
-					  
-
-					  fy_ss_log += dnorm(*p_capt_ss, *p_essx, sigma_ss_tem, true);
-					}
-
-					p_capt_ss++;
-					p_sigma_ss_full++; 
-					p_essx++;
-				}
-
-				  //end of trap 't'
-				}
-				//end of call 'i'
-			  }
-			  
-			  //if(s == 105 && a == 1 && m >900 & m<2000){
-				//  std::cout << "until mask: " << m - 1 << ", l_i: " << l_i << std::endl;
-				//  std::cout << "mask: " << m << ", D(m): " << (*p_D_tem) << std::endl;
-				//  std::cout << "mask: " << m << ", ci: " << ci << std::endl;
-				//  std::cout << "mask: " << m << ", mu: " << *p_mu_tem << std::endl;
-				//  std::cout << "mask: " << m << ", l_w: " << l_w << std::endl;
-				//  std::cout << "mask: " << m << ", p_dot[m - 1]: " << p_dot[m - 1] << std::endl;
-				//  std::cout << "mask: " << m << ", fy_ss_log: " << fy_ss_log << std::endl;
-			  //}
-			  
-			  
-			  l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w * 
-				exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
-
-			  p_D_tem++;
-			  p_mu_tem++;
-			  p_sigma_toa_mask++;
-			  p_kappa_mask++;
-			  p_alpha_mask++;
-			  p_sigma_ss_mask++;
-			  //end of mask 'm'
-			}
-			//end of if(is_local == 0)
-		  } else {
-			//begin of 'is_local == 1'
-
-			//the initial index in data_IDmask for this animal
-			index_data_IDmask = lookup_data_IDmask(is_animalID, s, a, 1, 1, 
-			  n_animals, n_IDs, n_calls_each_animal, n_masks);
-			p_index_local = &index_local[index_data_IDmask];
-
-			for(m = 1; m <= n_m; m++){
-			  if(*p_index_local == 1){
-				index_data_full = index_data_full_initial;
-				//likelihood for capture history
-				l_w = Type(1.0);
-				for(i = 1; i <= ci; i++){
-				  for(t = 1; t <= n_t; t++){
-					if(is_ss == 0){
-					  l_w *= pow(p_k(m - 1, t - 1), capt_bin[index_data_full]) *
-						pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
-					} else {
-					  //pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
-					  l_w *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
-					}
-
-					index_data_full++;
-				  }
-				}
-
-				//likelihood for extra information
-				fy_toa_log = Type(0.0);
-				fy_bear_log = Type(0.0);
-				fy_dist_log = Type(0.0);
-				fy_ss_log = Type(0.0);
-
-				//reset the index_data_full to the first observation of this animal
-				index_data_full = index_data_full_initial;
-				p_capt_bearing = &capt_bearing[index_data_full];
-				p_kappa_full = &kappa_vec_full[index_data_full];
-				p_capt_dist = &capt_dist[index_data_full];
-				p_alpha_full = &alpha_vec_full[index_data_full];
-				p_capt_ss = &capt_ss[index_data_full];
-				p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
-
-
-				index_data_dist_theta = lookup_data_dist_theta(s, 1, m, n_traps, n_masks);
-
-				for(i = 1; i <= ci; i++){
-				  n_det = Zi_vec[i - 1];
-				  p_theta = &theta[index_data_dist_theta];
-				  p_dx = &dx[index_data_dist_theta];
-				  p_essx = &essx[index_data_dist_theta];
-
-				  //toa
-				  if(is_toa == 1){
-				    if (std::isnan(asDouble(*p_sigma_toa_full)) || std::isnan(asDouble(*p_sigma_toa_mask))) {
-				      // Ignore likelihood contribution
-				    } else {
-				      *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
-				      trans(p_sigma_toa_tem, par_link(14));
-				      
-				      fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
-				    }
-					//"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
-					
-					p_toa_ssq++;
-				  }
-
-				  for(t = 1; t <= n_t; t++){
-					//bearing
-					if(is_bearing == 1){
-					  if (std::isnan(asDouble(*p_capt_bearing))) {
-					    //
-					  } else {
-					    *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
-					    trans(p_kappa_tem, par_link(12));
-					    
-					    fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
-					      log(bessi0(kappa_tem));
-					  }
-					
-					  p_capt_bearing++;
-					  p_kappa_full++;
-					  p_theta++;
-					}
-
-					//dist
-					if(is_dist == 1){
-					  if (std::isnan(asDouble(*p_capt_dist))) {
-					    //
-					  } else {
-					    if(*p_capt_dist != 0){
-					      *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
-					      trans(p_alpha_tem, par_link(13));
-					      
-					      fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
-					        log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
-					    }
-					  }
-					 
-					  p_capt_dist++;
-					  p_alpha_full++;
-					  p_dx++;
-					}
-
-					//ss_origin
-					if(is_ss_origin == 1){
-					  if(*p_capt_ss != 0){
-						*p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
-						trans(p_sigma_ss_tem, par_link(11));
-
-						fy_ss_log += dnorm(*p_capt_ss, *p_essx, sigma_ss_tem, true);
-					  }
-
-					  p_capt_ss++;
-					  p_sigma_ss_full++; 
-					  p_essx++;
-					}
-
-					//end of trap 't'
-				  }
-				  //end of call 'i'
-				}
-
-			  l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w * 
-				exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
-
-				//end of if(*p_local_index == 1)
-
-			  } else {
-				p_toa_ssq += ci;
-			  }
-
-			  p_D_tem++;
-			  p_mu_tem++;
-			  
-			  p_sigma_toa_mask++;
-			  p_kappa_mask++;
-			  p_alpha_mask++;
-			  p_sigma_ss_mask++;
-
-			  //because the sort order of data_IDmask for animal.model is
-			  //session - animalID - mask - callID, and the local information is
-			  //a session - animalID - mask level data, so each time, we need
-			  //to add "ci" which is the number of calls of this animal to locate
-			  //the next mask
-			  p_index_local += ci;
-			  //end of mask 'm'
-			}
-
-			//end of 'is_local == 1'
+		  
+		  // 
+		  
+		  
+		  //begin of 'is_local == 1'
+		  for(m = 1; m <= n_m; m++){
+		    if(!is_local || *p_index_local == 1){
+		      index_data_full = index_data_full_initial;
+		      //likelihood for capture history
+		      l_w = Type(1.0);
+		      for(i = 1; i <= ci; i++){
+		        for(t = 1; t <= n_t; t++){
+		          if(is_ss == 0){
+		            l_w *= pow(p_k(m - 1, t - 1), capt_bin[index_data_full]) *
+		              pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
+		          } else {
+		            //pow(p_k(), capt_bin()) term could be cancelled out with fy_ss
+		            l_w *= pow((1 - p_k(m - 1, t - 1)), (1 - capt_bin[index_data_full]));
+		          }
+		          
+		          index_data_full++;
+		        }
+		      }
+		      
+		      //likelihood for extra information
+		      fy_toa_log = Type(0.0);
+		      fy_bear_log = Type(0.0);
+		      fy_dist_log = Type(0.0);
+		      fy_ss_log = Type(0.0);
+		      
+		      //reset the index_data_full to the first observation of this animal
+		      index_data_full = index_data_full_initial;
+		      p_capt_bearing = &capt_bearing[index_data_full];
+		      p_kappa_full = &kappa_vec_full[index_data_full];
+		      p_capt_dist = &capt_dist[index_data_full];
+		      p_alpha_full = &alpha_vec_full[index_data_full];
+		      p_capt_ss = &capt_ss[index_data_full];
+		      p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
+		      
+		      
+		      index_data_dist_theta = lookup_data_dist_theta(s, 1, m, n_traps, n_masks);
+		      
+		      for(i = 1; i <= ci; i++){
+		        n_det = Zi_vec[i - 1];
+		        p_theta = &theta[index_data_dist_theta];
+		        p_dx = &dx[index_data_dist_theta];
+		        p_essx = &essx[index_data_dist_theta];
+		        
+		        //toa
+		        if(is_toa == 1){
+		          if (std::isnan(asDouble(*p_sigma_toa_full)) || std::isnan(asDouble(*p_sigma_toa_mask))) {
+		            // Ignore likelihood contribution
+		          } else {
+		            *p_sigma_toa_tem = *p_sigma_toa_full + *p_sigma_toa_mask;
+		            trans(p_sigma_toa_tem, par_link(14));
+		            
+		            fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+		          }
+		          //"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
+		          
+		          p_toa_ssq++;
+		        }
+		        
+		        for(t = 1; t <= n_t; t++){
+		          //bearing
+		          if(is_bearing == 1){
+		            if (std::isnan(asDouble(*p_capt_bearing))) {
+		              //
+		            } else {
+		              *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
+		              trans(p_kappa_tem, par_link(12));
+		              
+		              fy_bear_log += kappa_tem * cos(*p_capt_bearing - *p_theta) - 
+		                log(bessi0(kappa_tem));
+		            }
+		            
+		            p_capt_bearing++;
+		            p_kappa_full++;
+		            p_theta++;
+		          }
+		          
+		          //dist
+		          if(is_dist == 1){
+		            if (std::isnan(asDouble(*p_capt_dist))) {
+		              //
+		            } else {
+		              if(*p_capt_dist != 0){
+		                *p_alpha_tem = *p_alpha_full + *p_alpha_mask;
+		                trans(p_alpha_tem, par_link(13));
+		                
+		                fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
+		                  log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
+		              }
+		            }
+		            
+		            p_capt_dist++;
+		            p_alpha_full++;
+		            p_dx++;
+		          }
+		          
+		          //ss_origin
+		          if(is_ss_origin == 1){
+		            if(*p_capt_ss != 0){
+		              *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
+		              trans(p_sigma_ss_tem, par_link(11));
+		              
+		              fy_ss_log += dnorm(*p_capt_ss, *p_essx, sigma_ss_tem, true);
+		            }
+		            
+		            p_capt_ss++;
+		            p_sigma_ss_full++; 
+		            p_essx++;
+		          }
+		          
+		          //end of trap 't'
+		        }
+		        //end of call 'i'
+		      }
+		      
+		      l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w * 
+		        exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+		      
+		      //end of if(*p_local_index == 1)
+		      
+		    } else {
+		      p_toa_ssq += ci;
+		    }
+		    
+		    p_D_tem++;
+		    p_mu_tem++;
+		    
+		    p_sigma_toa_mask++;
+		    p_kappa_mask++;
+		    p_alpha_mask++;
+		    p_sigma_ss_mask++;
+		    
+		    //because the sort order of data_IDmask for animal.model is
+		    //session - animalID - mask - callID, and the local information is
+		    //a session - animalID - mask level data, so each time, we need
+		    //to add "ci" which is the number of calls of this animal to locate
+		    //the next mask
+		    p_index_local += ci;
+		    //end of mask 'm'
 		  }
+
+		  
 		  
 		  std::cout << "1st value of density array: " << density_array(0,1,1) << std::endl;
 
