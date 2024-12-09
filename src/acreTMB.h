@@ -1273,7 +1273,7 @@ Type acreTMB(objective_function<Type>* obj)
       p_b2_ss_full = &b2_ss_vec_full[index_data_full];
       
       p_sigma_ss_full = &sigma_ss_vec_full[index_data_full];
-      
+
       // For each trap
       for(t = 1; t <= n_t; t++){
         
@@ -1383,7 +1383,6 @@ Type acreTMB(objective_function<Type>* obj)
         p_dot(m - 1) *= 1 - p_k(m - 1, t - 1);
         //end for trap t
       }
-      
       p_dot(m - 1) = 1 - p_dot(m - 1);
 
       if(is_animalID == 0){
@@ -1438,14 +1437,25 @@ Type acreTMB(objective_function<Type>* obj)
     //just like D, sigma_toa is not id nor trap extentable, so just take
     //the first value in this session
     p_sigma_toa_full = &sigma_toa_vec_full[index_data_full_D];
-    
+
     if(is_animalID == 0){
       
       // A density array to keep track of every density we calculate in the likelihood.
       // Useful to keep track of for post-process functions (i.e. estimating unit locations).
-      array<Type> unit_density_array(n_IDs[s-1], 3, n_m);
+      // 5 columns corresponding to (in order): capt_density, dist_density, bearing_density, ss_density, toa_density
+      std::cout << "Constructing density array..." << std::endl;
+      array<Type> density_array(n_IDs[s-1], 5, n_m);
+      std::cout << "Construction successful." << std::endl;
       // Initialize the array with zeros (or any other initial value)
-      unit_density_array.setZero();
+      std::cout << "Setting zeros [ADJUSTED]..." << std::endl;
+      for (int i = 0; i < n_IDs[s-1]; i++) {
+        for (int j = 0; j < 5; j++) {
+          for (int k = 0; k < n_m; k++) {
+            density_array(i, j, k) = Type(0.0);
+          }
+        }
+      }
+      std::cout << "Zeros successful." << std::endl;
       
       if(n_uid > 0){
         
@@ -1523,10 +1533,10 @@ Type acreTMB(objective_function<Type>* obj)
               p_toa_ssq = &toa_ssq[index_data_IDmask];  
             }
             
-            if(is_local == 1){
-              p_index_local = &index_local[index_data_IDmask];  
-            }
-            
+            // if(is_local == 1){
+            //   p_index_local = &index_local[index_data_IDmask];  
+            // }
+            p_index_local = &index_local[index_data_IDmask];
             
             p_sigma_toa_mask = &sigma_toa_vec_mask[index_data_mask];
             p_kappa_mask = &kappa_vec_mask[index_data_mask];
@@ -1618,12 +1628,15 @@ Type acreTMB(objective_function<Type>* obj)
                 //we sum up likelihood (not log-likelihood) of each mask 
                 l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
                 
-                // if (*p_index_local == 1) {
-                //   unit_density_array(id, 0, m-1) = exp(fy_dist_log);
-                // }
+                
+                if (*p_index_local == 1) {
+                  density_array(id, 0, m-1) = fw(m - 1);
+                  density_array(id, 1, m-1) = exp(fy_dist_log);
+                  density_array(id, 2, m-1) = exp(fy_bear_log);
+                  density_array(id, 3, m-1) = exp(fy_ss_log);
+                  density_array(id, 4, m-1) = exp(fy_toa_log);
+                }
               }
-              
-              
               
               p_sigma_toa_mask++;
               p_toa_ssq++;
@@ -1644,8 +1657,8 @@ Type acreTMB(objective_function<Type>* obj)
         }
         //end of if(uid > 0)
       }
-      std::cout << "Reporting unit density array..." << std::endl;
-      REPORT(unit_density_array);
+      std::cout << "Reporting the density array..." << std::endl;
+      REPORT(density_array);
       
       //end of if(is_animalID == 0)
     } else {

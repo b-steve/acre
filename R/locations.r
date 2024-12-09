@@ -603,7 +603,7 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
             }
             if (plot.types["combined"]){
                 if ((!combine) | (combine & plot.types["bearing"])){
-                    f.combined <- f.combined* (f.bearing / sum(f.bearing))
+                    f.combined <- f.combined * (f.bearing / sum(f.bearing))
                 }
             }
         }
