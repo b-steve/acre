@@ -71,6 +71,59 @@ get_trap_from_data = function(dat){
   return(output)
 }
 
+get_capt = function(fit, session=1) {
+  if (!(session %in% unique(fit$arg_input$captures$session))) {
+    stop("Session ", session, " not found in fit")
+  }
+  if (length(unique(fit$arg_input$captures$session)) > 1) {
+    # return (fit$args$capt[[session]])
+    return (fit$args$capt)
+  }
+  else { 
+    return (fit$args$capt)
+  }
+}
+
+get_bincapt_by_id = function(fit, id, session=1) {
+  if (!(session %in% unique(fit$arg_input$captures$session))) {
+    stop("Session ", session, " not found in fit")
+  }
+
+  animal.model <- is_animal_model(fit)
+  capt <- get_capt(fit, session)
+  
+  if (animal.model) {
+    if (!(id %in% capt$animal_ID)) {
+      stop(paste("Could not find capture history with unit id", id))
+    }
+    
+    id_capt <- subset(capt, capt$animal_ID == id)
+    
+    bincapt <- reshape(id_capt[, c("ID", "trap", "bincapt")], timevar = "trap", 
+                       idvar = "ID", direction = "wide")
+    bincapt <- as.matrix(bincapt[, -1])
+    colnames(bincapt) <- NULL
+    rownames(bincapt) <- NULL
+    
+    return(bincapt)
+  } else {
+    if (id > nrow(capt$bincapt)) {
+      stop(paste("Could not find capture history with unit id", id))
+    }
+    return(matrix(capt$bincapt[id, ], nrow=1))
+  }
+}
+
+get_n_calls = function(fit, id, session=1) {
+  animal.model <- is_animal_model(fit)
+  if (!animal.model) {
+    return(1)
+  } else {
+    capt <- get_capt(fit, session)
+    return(length(unique(subset(capt, capt$animal_ID == id)$ID)))
+  }
+}
+
 get_par_extend = function(fit){
   output = fit$args$par.extend
   return(output)

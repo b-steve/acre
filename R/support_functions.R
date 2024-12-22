@@ -2503,3 +2503,7 @@ format_conf_int_matrix <- function(mat) {
   
   return(formatted_mat)
 }
+
+is_animal_model <- function(fit) {
+  return(ifelse(is.null(get_capt(fit)$animal_ID), FALSE, TRUE))
+}
