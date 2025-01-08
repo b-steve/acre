@@ -2505,5 +2505,5 @@ format_conf_int_matrix <- function(mat) {
 }
 
 is_animal_model <- function(fit) {
-  return(ifelse(is.null(get_capt(fit)$animal_ID), FALSE, TRUE))
+  return(ifelse(is.null(fit$arg_input$captures$animal_ID), FALSE, TRUE))
 }

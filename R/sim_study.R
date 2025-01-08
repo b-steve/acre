@@ -67,8 +67,10 @@ sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = 
   if (n.rand == 1) {
     # Set data to NA if required
     n_missing <- floor(nrow(simulated_capt$capt) * proportion_missing)
-    simulated_capt$capt <- set_detection_data_NA(simulated_capt$capt, 
-                                                 sim_name, n_missing)
+    if (n_missing > 0) {
+      simulated_capt$capt <- set_detection_data_NA(simulated_capt$capt, 
+                                                   sim_name, n_missing)
+    }
     
     output$capt = create.capt(simulated_capt$capt, output$traps)
   } else {

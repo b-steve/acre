@@ -72,15 +72,20 @@ get_trap_from_data = function(dat){
 }
 
 get_capt = function(fit, session=1) {
-  if (!(session %in% unique(fit$arg_input$captures$session))) {
+  if (!(session %in% fit$arg_input$captures$session)) {
     stop("Session ", session, " not found in fit")
   }
+  animal.model <- is_animal_model(fit)
+  
   if (length(unique(fit$arg_input$captures$session)) > 1) {
-    # return (fit$args$capt[[session]])
-    return (fit$args$capt)
+    if (animal.model) {
+      return(fit$args$capt)
+    } else {
+      fit$args$capt[[session]]
+    }
   }
   else { 
-    return (fit$args$capt)
+    return(fit$args$capt)
   }
 }
 
@@ -94,7 +99,7 @@ get_bincapt_by_id = function(fit, id, session=1) {
   
   if (animal.model) {
     if (!(id %in% capt$animal_ID)) {
-      stop(paste("Could not find capture history with unit id", id))
+      stop(paste("Could not find capture history with unit id:", id))
     }
     
     id_capt <- subset(capt, capt$animal_ID == id)
@@ -108,7 +113,7 @@ get_bincapt_by_id = function(fit, id, session=1) {
     return(bincapt)
   } else {
     if (id > nrow(capt$bincapt)) {
-      stop(paste("Could not find capture history with unit id", id))
+      stop("id exceeds number of rows in bincapt")
     }
     return(matrix(capt$bincapt[id, ], nrow=1))
   }

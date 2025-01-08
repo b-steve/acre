@@ -25,6 +25,8 @@
 sim.capt = function(fit, detfn, param, model = NULL, traps, control.mask = list(), session.cov = NULL, trap.cov = NULL, loc.cov = NULL,
                     dist.cov = NULL, time.loc.cov = NULL, convert.loc2mask = list(), survey.length = NULL, ss.opts = NULL,
                     cue.rates = NULL, n.sessions = NULL, n.rand = 1, random.location = FALSE, sound.speed = 331){
+  # sim.data <- sim.capt(detfn = get_detfn(bearing_hn.fit), param=get_coef(bearing_hn.fit), traps=get_trap(bearing_hn.fit), control.mask = bearing_hn$control.mask, survey.length = 10)
+  
   if(!missing(fit)) {
     #if 'fit' is provided, get all information from the fitted object
 
@@ -97,22 +99,26 @@ sim.capt = function(fit, detfn, param, model = NULL, traps, control.mask = list(
 
     capt = tem$o_capt
     o_cue_rates = tem$o_cue_rates
+    animal_locs = tem$animal_locs
 
   } else {
     capt = vector('list', n.rand)
+    animal_locs = vector('list', n.rand)
     o_cue_rates = vector('list', n.rand)
     pb = utils::txtProgressBar(1, n.rand, style = 3)
     for(i in 1:n.rand){
       tem = sim.from.param(detfn, dat_pars, dat.density, random.location,
                                    dims, info.bucket, ss.opts, cue.rates, sound.speed)
       capt[[i]] = tem$o_capt
+      animal_locs[[i]] = tem$animal_locs
+      
       if(!is.null(tem$o_cue_rates)) o_cue_rates[[i]] = tem$o_cue_rates
       utils::setTxtProgressBar(pb, i)
     }
     close(pb)
   }
 
-  return(list(capt = capt, sim_cue_rates = o_cue_rates,
+  return(list(capt = capt, sim_cue_rates = o_cue_rates, animal_locs = animal_locs,
               args = list(detfn = detfn, traps = traps, mask = mask, par.extend = par.extend, ss.opts = ss.opts,
                           cue.rates = cue.rates, sound.speed = sound.speed, survey.length = survey.length)))
 
@@ -314,11 +320,10 @@ sim.data.prepare = function(detfn, param, par.extend, traps, mask, survey.length
 
 
 sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, info.bucket,
-                          ss.opts, cue.rates, sound.speed){
+                          ss.opts, cue.rates, sound.speed, keep.animal_locs=TRUE){
   #firstly generate the number of animals for each mask
   dat.density$n_animals = rpois(nrow(dat.density), dat.density$D)
   dat.density = subset(dat.density, dat.density$n_animals != 0)
-
 
   if(nrow(dat.density) == 0){
     #if no simulated animal, return an empty data frame
@@ -370,6 +375,10 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
   #split n_calls and assign ID
   dat.density = split_item(dat.density, 'n_calls')
   dat.density$ID = 1:nrow(dat.density)
+  
+  if (keep.animal_locs) {
+    animal_locs <- dat.density[, c("x", "y")]
+  }
 
   #drop useless columns
   dat.density = dat.density[,-which(colnames(dat.density) %in% c('n_animals', 'n_calls', 'survey.length'))]
@@ -384,6 +393,7 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
 
     dat_capt$theta = bearings_by_vec(dat_capt$trap_x, dat_capt$trap_y,
                                      dat_capt$x, dat_capt$y)
+    
     #drop useless columns
     dat_capt = dat_capt[,-which(colnames(dat_capt) %in% c('x', 'y', 'trap_x', 'trap_y'))]
   }
@@ -409,7 +419,25 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
   }
 
   dat_capt$bincapt = stats::rbinom(nrow(dat_capt), 1, dat_capt[['det_prob']])
+  
+  if (keep.animal_locs) {
+    animal_locs$bincapt = 0 
+    for (i in 1:nrow(animal_locs)) {
+      if (sum(subset(dat_capt, ID == i)$bincapt) > 0) {
+        animal_locs$bincapt[i] = 1
+      } 
+    }
+    
+    # For loop bad:
+    # sum_capt <- tapply(dat_capt$bincapt, dat_capt$ID, sum)
+    # captured_ids <- as.integer(sum_capt > 0)
+    # animal_locs$bincapt <- captured_ids[as.character(animal_locs$ID)]
+    # animal_locs$bincapt[is.na(animal_locs$bincapt)] <- 0
+  }
+  
   dat_capt = subset(dat_capt, dat_capt$bincapt == 1)
+  
+  
 
   if(nrow(dat_capt) == 0){
     #if no simulated detection, return an empty data frame
@@ -454,8 +482,13 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
     output = output[order(output$session, output$ID, output$trap), ]
   }
 
-  return(list(o_capt = output, o_cue_rates = cue.rates))
-
+  obj <- list(o_capt = output, o_cue_rates = cue.rates)
+  
+  if (keep.animal_locs) {
+    obj$animal_locs <- animal_locs
+  }
+  
+  return(obj)
 }
 
 

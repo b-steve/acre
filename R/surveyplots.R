@@ -626,12 +626,7 @@ plot.acre_data <- function(x, ...){
             # Make sure to only ask if we are plotting more than one plot, 
             # and it is not the last plot in the list
             if (length(u_keys) > 1 && !(k == u_keys[[length(u_keys)]] & s == session[length(session)])) {
-              # If running in R-studio
-              if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
-                prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
-              } else {
-                prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
-              }
+              prompt_user_for_next_plot()
             }
           }
           
@@ -736,12 +731,7 @@ plot.acre_data <- function(x, ...){
         # Make sure to only ask if we are plotting more than one plot, 
         # and it is not the last plot in the list
         if (length(cov_list) > 1 && i != cov_list[[length(cov_list)]]) {
-          # If running in R-studio
-          if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
-            prompt_user_for_next_plot("Hit <Return> to see next plot or <Esc> to cancel:")
-          } else {
-            prompt_user_for_next_plot("Hit <Return> to see next plot or <Ctrl-c> to cancel:")
-          }
+          prompt_user_for_next_plot()
         }
       }
     }
@@ -787,6 +777,10 @@ plot.acre_tmb = function(x, ...){
 }
 
 
-prompt_user_for_next_plot <- function(message = "Hit <Return> to see next plot or <Esc> to cancel:") {
-  input <- readline(prompt = message)
+prompt_user_for_next_plot <- function() {
+  if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
+    input <- readline(prompt = "Hit <Return> to see next plot or <Esc> to cancel:")
+  } else {
+    input <- readline(prompt = "Hit <Return> to see next plot or <Ctrl-c> to cancel:")
+  }
 }
