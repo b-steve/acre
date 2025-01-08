@@ -32,7 +32,8 @@ locations(
   show.legend = FALSE,
   show.axes = TRUE,
   add = FALSE,
-  ask = TRUE
+  ask = TRUE,
+  keep.densities = FALSE
 )
 }
 \arguments{
