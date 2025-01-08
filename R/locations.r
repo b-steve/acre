@@ -573,54 +573,54 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
 #' Title
 #'
 #' @export
-show.contour <- function(mask, dens, nlevels, levels, prob, col = "black", lty = 1, show.labels, plot.contours,
-                         return.contours = FALSE){
-    if (plot.contours){
-        ## Divide densities by normalising constant before plotting.
-        a <- attr(mask, "a")*10000
-        ## Note conversion of area to square metres.
-        dens <- dens/(a*sum(dens))
-        unique.x <- sort(unique(mask[, 1]))
-        unique.y <- sort(unique(mask[, 2]))
-        z <- matrix(NA, nrow = length(unique.x), ncol = length(unique.y))
-        n.mask <- nrow(mask)
-        for (i in 1:n.mask){
-            x <- mask[i, 1]
-            y <- mask[i, 2]
-            index.x <- which(x == unique.x)
-            index.y <- which(y == unique.y)
-            z[index.x, index.y] <- dens[i]
+show.contour <- function(mask, dens, nlevels, levels, prob, col = "black", 
+                         lty = 1, show.labels, plot.contours){
+    ## Divide densities by normalising constant before plotting.
+    a <- attr(mask, "a")*10000
+    ## Note conversion of area to square metres.
+    dens <- dens/(a*sum(dens))
+    unique.x <- sort(unique(mask[, 1]))
+    unique.y <- sort(unique(mask[, 2]))
+    z <- matrix(NA, nrow = length(unique.x), ncol = length(unique.y))
+    n.mask <- nrow(mask)
+    for (i in 1:n.mask){
+      x <- mask[i, 1]
+      y <- mask[i, 2]
+      index.x <- which(x == unique.x)
+      index.y <- which(y == unique.y)
+      z[index.x, index.y] <- dens[i]
+    }
+    ## Sorting out levels.
+    if (is.null(levels)){
+      levels <- pretty(range(z, finite = TRUE), nlevels)
+    } else {
+      if (prob){
+        z.sort <- sort(z, decreasing = TRUE)
+        probs.sort <- cumsum(z.sort)/sum(z.sort)
+        prob.levels <- levels
+        levels <- numeric(nlevels)
+        for (i in 1:nlevels){
+          levels[i] <- z.sort[which(abs(probs.sort - prob.levels[i]) ==
+                                      min(abs(probs.sort - prob.levels[i])))[1]]
         }
-        ## Sorting out levels.
-        if (is.null(levels)){
-            levels <- pretty(range(z, finite = TRUE), nlevels)
-        } else {
-            if (prob){
-                z.sort <- sort(z, decreasing = TRUE)
-                probs.sort <- cumsum(z.sort)/sum(z.sort)
-                prob.levels <- levels
-                levels <- numeric(nlevels)
-                for (i in 1:nlevels){
-                    levels[i] <- z.sort[which(abs(probs.sort - prob.levels[i]) ==
-                                              min(abs(probs.sort - prob.levels[i])))[1]]
-                }
-            }
-        }
-        if (prob){
-            labels <- character(nlevels)
-            for (i in 1:nlevels){
-                labels[i] <- format(round(sum(z[z > levels[i]], na.rm = TRUE)/
-                                          sum(z, na.rm = TRUE), 2), nsmall = 2)
-            }
-        } else {
-            labels <- NULL
-        }
-        contour(x = unique.x, y = unique.y, z = z, levels = levels, labels = labels,
-                col = col, lty = lty, drawlabels = show.labels, add = F)
-        
-        if (return.contours) {
-          return(list(x = unique.x, y = unique.y, z = z))
-        }
+      }
+    }
+    if (prob){
+      labels <- character(nlevels)
+      for (i in 1:nlevels){
+        labels[i] <- format(round(sum(z[z > levels[i]], na.rm = TRUE)/
+                                    sum(z, na.rm = TRUE), 2), nsmall = 2)
+      }
+    } else {
+      labels <- NULL
+    }
+    
+    if (plot.contours) {
+      contour(x = unique.x, y = unique.y, z = z, levels = levels, labels = labels,
+              col = col, lty = lty, drawlabels = show.labels, add = F)
+    } else {
+      return(list(x = unique.x, y = unique.y, z = z, levels = levels, 
+                  labels = labels))
     }
 }
 
