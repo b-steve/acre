@@ -617,6 +617,10 @@ show.contour <- function(mask, dens, nlevels, levels, prob, col = "black", lty =
         }
         contour(x = unique.x, y = unique.y, z = z, levels = levels, labels = labels,
                 col = col, lty = lty, drawlabels = show.labels, add = F)
+        
+        if (return.contours) {
+          return(list(x = unique.x, y = unique.y, z = z))
+        }
     }
 }
 
