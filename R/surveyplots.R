@@ -548,27 +548,8 @@ plot.acre_data <- function(x, ...){
         }
         
         #plot basic info
-        if(is.ss){
-          base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-            coord_sf(xlim = xlim_plot, ylim = ylim_plot)
-          
-          point_out_plot = c(max(masks$x) + 100 * (max(masks$x) - min(masks$y)),
-                             max(masks$y) + 100 * (max(masks$y) - min(masks$y)))
-          
-          base_plot = base_plot + 
-            geom_point(data = capt_session, mapping = aes(x = point_out_plot[1], y = point_out_plot[2], colour = capt_session$ss)) +
-            guides(colour = guide_colourbar(order = 1))
-          
-        } else {
-          base_plot = ggplot(data = masks, mapping = aes(x = masks$x, y = masks$y)) + 
-            coord_sf(xlim = xlim_plot, ylim = ylim_plot)
-        }
-
-        
-        trap.plot = base_plot + 
-          geom_point(data = traps, mapping = aes(x = traps$x, y = traps$y, shape = 4), size = cex_det) + 
-          scale_shape_identity()
-        
+        trap.plot = base_plot_with_traps(capt_session, masks, traps, 
+                                         xlim_plot, ylim_plot, cex_det)
         
         #plot calls one by one
         for(k in u_keys){
@@ -585,7 +566,7 @@ plot.acre_data <- function(x, ...){
           
           plot_with_lab = trap.plot + labs(subtitle = sub_title)
           
-          if(is.ss){
+          if(is.ss) {
             plot_one_call = plot_with_lab + 
               geom_point(data = actived_traps, mapping = aes(x = actived_traps$x, y = actived_traps$y, colour = one_call$ss), size = cex_capt)
           } else {
@@ -784,3 +765,50 @@ prompt_user_for_next_plot <- function() {
     input <- readline(prompt = "Hit <Return> to see next plot or <Ctrl-c> to cancel:")
   }
 }
+
+base_plot_with_traps <- function(capt, mask, traps, xlim, ylim, trap_cex, trap_col = "black") {
+  # Setup universal base plot
+  base_plot = ggplot(data = mask, mapping = aes(x = mask$x, y = mask$y)) + 
+    coord_sf(xlim = xlim, ylim = ylim) + 
+    ggplot2::xlab("x") +
+    ggplot2::ylab("y")
+  
+  if(!is.null(capt$ss)){
+    # Otherwise we need to include a legend for the signal strength information
+    point_out_plot = c(max(mask$x) + 100 * (max(mask$x) - min(mask$y)),
+                       max(mask$y) + 100 * (max(mask$y) - min(mask$y)))
+    
+    base_plot = base_plot + 
+      geom_point(data = capt, mapping = aes(x = point_out_plot[1], y = point_out_plot[2], colour = ss)) +
+      guides(colour = guide_colourbar(order = 1, title = "Signal Strength"))
+  }
+  
+  # Add traps
+  trap.plot = base_plot + 
+    geom_point(data = traps, mapping = aes(x = traps$x, y = traps$y, shape = 4), size = trap_cex, col=trap_col, stroke=1) + 
+    scale_shape_identity()
+  
+  return(trap.plot)
+}
+
+base_plot <- function(capt, mask, xlim, ylim) {
+  base_plot = ggplot(data = mask, mapping = aes(x = mask$x, y = mask$y)) + 
+    coord_sf(xlim = xlim, ylim = ylim) + 
+    ggplot2::xlab("x") +
+    ggplot2::ylab("y")
+  
+  if(!is.null(capt$ss)){
+    # Otherwise we need to include a legend for the signal strength information
+    point_out_plot = c(max(mask$x) + 100 * (max(mask$x) - min(mask$y)),
+                       max(mask$y) + 100 * (max(mask$y) - min(mask$y)))
+    
+    base_plot = base_plot + 
+      geom_point(data = capt, mapping = aes(x = point_out_plot[1], y = point_out_plot[2], colour = ss)) +
+      guides(colour = guide_colourbar(order = 1, title = "Signal Strength"))
+  }
+  
+  return(base_plot)
+}
+
+
+

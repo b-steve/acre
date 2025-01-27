@@ -1858,7 +1858,7 @@ Type acreTMB(objective_function<Type>* obj)
 				        fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
 				          log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
 				    } else {
-				      std::cout << *p_capt_dist << std::endl;
+				      // std::cout << *p_capt_dist << std::endl;
 				    }
 					} 
 

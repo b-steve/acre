@@ -71,39 +71,48 @@ get_trap_from_data = function(dat){
   return(output)
 }
 
-get_capt = function(fit, session=1) {
-  if (!(session %in% fit$arg_input$captures$session)) {
-    stop("Session ", session, " not found in fit")
-  }
+## Retrieve the capture data frame for a given ID
+# Note if the fit is animal model, we assume given ID is the animal_ID
+# otherwise we just use the usual row-order ID
+# 
+# Also note, this function is built on top of `get_capt_for_plot`, and as such
+# returns a capture data frame of similar construction
+get_capt_by_id = function(fit, id, session=1) {
   animal.model <- is_animal_model(fit)
+  capt <- get_capt_for_plot(fit$args)
   
-  if (length(unique(fit$arg_input$captures$session)) > 1) {
-    if (animal.model) {
-      return(fit$args$capt)
-    } else {
-      fit$args$capt[[session]]
-    }
+  if (animal.model) {
+    capt <- capt[capt$animal_ID == id & capt$session == session, ]
+  } else {
+    capt <- capt[capt$ID == id & capt$session == session, ]
   }
-  else { 
-    return(fit$args$capt)
-  }
+  
+  return(capt)
 }
 
+## Retrieve the binary capture data for a given ID
+# Note if the fit is animal model, we assume given ID is the animal_ID
+# otherwise we just use the usual row-order ID
+# 
+# As animal model capture histories contain multiple calls for a given ID, we 
+# return a matrix of bincapt histories, each row corresponding to a call. If 
+# the fit is not an animal ID model, the matrix contains only 1 row (1 call).
 get_bincapt_by_id = function(fit, id, session=1) {
   if (!(session %in% unique(fit$arg_input$captures$session))) {
     stop("Session ", session, " not found in fit")
   }
 
   animal.model <- is_animal_model(fit)
-  capt <- get_capt(fit, session)
+  capt <- fit$args$capt
   
   if (animal.model) {
+    capt <- subset(capt, capt$session == session)
+    
     if (!(id %in% capt$animal_ID)) {
-      stop(paste("Could not find capture history with unit id:", id))
+      stop(paste("Could not find capture history with animal id:", id))
     }
     
     id_capt <- subset(capt, capt$animal_ID == id)
-    
     bincapt <- reshape(id_capt[, c("ID", "trap", "bincapt")], timevar = "trap", 
                        idvar = "ID", direction = "wide")
     bincapt <- as.matrix(bincapt[, -1])
@@ -112,9 +121,16 @@ get_bincapt_by_id = function(fit, id, session=1) {
     
     return(bincapt)
   } else {
+    # If capt is a list, then it means there are multiple sessions
+    if (fit$n.sessions > 1) {
+      capt <- capt[[session]]
+    }
+    
     if (id > nrow(capt$bincapt)) {
       stop("id exceeds number of rows in bincapt")
     }
+    
+    # We can just return the appropriate bin capt row
     return(matrix(capt$bincapt[id, ], nrow=1))
   }
 }

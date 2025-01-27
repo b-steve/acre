@@ -118,7 +118,7 @@
 #' }
 #'
 #' @export
-locations <- function(fit, id = "all", session = 1, infotypes = NULL,
+locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotypes = NULL,
                       combine = FALSE, xlim = NULL, ylim = NULL,
                       mask = get_mask(fit)[[session]], newdata = NULL,
                       levels = NULL, nlevels = 10, density = FALSE,
@@ -129,11 +129,27 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
                       show.labels = TRUE, plot.contours = TRUE,
                       plot.estlocs = FALSE, keep.estlocs = FALSE,
                       plot.arrows = "bearing" %in% fit$infotypes,
+                      plot.ss = "ss" %in% fit$infotypes,
                       plot.circles = "dist" %in% fit$infotypes &
                           !("bearing" %in% fit$infotypes),
                       arrow.length = NULL, show.legend = FALSE,
                       show.axes = TRUE, add = FALSE, ask = TRUE,
-                      keep.densities = FALSE){
+                      keep.densities = FALSE) {
+  
+    ## Type checking
+    stopifnot(
+      # Check that 'session' is numeric and has length 1
+      is.numeric(session), 
+      length(session) == 1,
+      
+      # Check that 'animal_id' is either NULL or a single numeric value
+      is.null(animal_id) || (is.numeric(animal_id) && length(animal_id) == 1),
+      
+      # Check that 'call_id' is either "all", a single numeric value, or a numeric vector
+      (is.character(call_id) && call_id == "all") || 
+        (is.numeric(call_id) && all(!is.na(call_id)))
+    )
+  
     ## Error if session argument is too large.
     if (session > fit$n.sessions){
         if (fit$n.sessions == 1){
@@ -160,7 +176,7 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
         }
     }
     ## Error if combine specified without infotypes.
-    if (missing(infotypes) & combine){
+    if (missing(infotypes) && combine){
         stop("Argument `combine' is only useful if `infotypes' is provided.")
     }
     ## Error if new mask covariates are not provided when they need to be.
@@ -170,25 +186,51 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
     }
     
     ## Extracting the session's capture history.
-    capt.all <- get_capt(fit, session)
+    # capt.all <- get_capt(fit, session)
+    # TODO: Multi session
+    capt.all <- get_capt_for_plot(fit$args)
+    capt.all <- capt.all[capt.all$session == session, ]
+    
     animal.model <- is_animal_model(fit)
     
+    traps <- get_trap(fit)[[session]]
+    
+    if(animal.model && call_id != "all" && is.null(animal_id)) {
+      stop("'animal_id' must be provided when specifying the 'call_id' argument for animal ID models")
+    }
+    
+    if(!is.null(animal_id) && !animal.model) {
+      stop("'animal_id' argument should only be provided for animal models. Use 'call_id' argument instead.")
+    }
+    
+    if (!is.null(animal_id)) {
+      capt.all <- subset(capt.all, capt.all$animal_ID == animal_id)
+    }
+    
     ## Setting id properly if "all" selected.
-    if (id == "all"){
+    if (any(call_id == "all")){
       if (animal.model) {
-        id <- unique(capt.all$animal_ID)
+        if(!is.null(animal_id)) {
+          call_id <- unique(capt.all$ID)
+        } else {
+          call_id <- unique(capt.all$animal_ID)
+        }
       } else {
-        id <- 1:nrow(capt.all$bincapt)
+        call_id <- unique(capt.all$ID)
       }
     }
 
     ## Saving estimated locations.
     if (keep.estlocs){
-        estlocs <- matrix(0, nrow = length(id), ncol = 2)
+        estlocs <- matrix(0, nrow = length(call_id), ncol = 2)
         j <- 1
     }
     
     ## Sorting out limits.
+    
+    stopifnot(all(is.numeric(xlim) || is.null(xlim), 
+                  is.numeric(ylim) || is.null(ylim)))
+    
     if (is.null(xlim)){
         xlim <- range(mask[,1])
     }
@@ -196,16 +238,10 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
         ylim <- range(mask[,2])
     }
     
-    ## Setting up plotting area.
-    if (!add){
-        plot.new()
-        plot.window(xlim = xlim, ylim = ylim, asp = 1)
-        box()
-        if (show.axes){
-            axis(1)
-            axis(2)
-        }
-    }
+    
+    # Setup plotting canvas
+    base.plot <- base_plot(capt.all, as.data.frame(mask), xlim, ylim)
+    
     
     ## Ignoring 'nlevels' if 'levels' is provided.
     if (!is.null(levels)){
@@ -315,7 +351,6 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
     if (fit$fit.types["ss"]){
       det.pars$cutoff <- get_ss.opts(fit)$cutoff
     }
-    traps <- get_trap(fit)[[session]]
     detfn <- get_detfn(fit)
     ss.link <- get_ss_link(fit)
     dists <- distances(traps, mask)
@@ -337,7 +372,22 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
     }
     
     densities.list <- list()
-    for (i in id){
+    for (i in call_id){
+        
+        # Sort out plot title
+        if (animal.model) {
+          if (is.null(animal_id)) {
+            sub_title = paste0("session: ", session, ", animal ID: ", i)
+          } else {
+            sub_title = paste0("session: ", session, ", animal ID: ", animal_id,
+                               ", call ID: ", i)
+          }
+        } else {
+          sub_title = paste0("session: ", session, ", call ID: ", i)
+        }
+        
+        base.plot <- base.plot + labs(subtitle = sub_title)
+      
         densities <- data.frame(x = mask[, 1], y = mask[, 2])
         
         if (plot.types["combined"]){
@@ -348,7 +398,14 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
             }
         }
         
-        bincapt <- get_bincapt_by_id(fit, i)
+        # If it's an animal model, but we want to loop over calls separately
+        if (!is.null(animal_id)) {
+          bincapt <- get_bincapt_by_id(fit, animal_id, session)
+          bincapt <- matrix(bincapt[i, ], nrow=1)
+        } else {
+          # Otherwise just grab it normally
+          bincapt <- get_bincapt_by_id(fit, i, session)
+        }
         
         # vector of length n.traps
         # 1 if trap was triggered for this id, 0 if not
@@ -357,6 +414,10 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
         ## Contour due to capture history.
         if (plot.types["capt"] | plot.types["combined"] | plot.types["ss"]){
             det.probs <- det_prob(detfn, det.pars, dists, ss.link)
+            
+            if(detfn == 'ss'){
+              det.probs = 1 - pnorm(det.pars$cutoff, mean = det.probs, sd = det.pars$sigma.ss)
+            }
             
             f.capt <- 1
             
@@ -375,14 +436,32 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
       
             if (plot.types["capt"]){
                 if (!combine){
-                    show.contour(mask = mask, dens = f.x*f.capt, levels = levels,
-                                 nlevels = nlevels, prob = !density, col = cols$capt,
-                                 lty = ltys$capt, show.labels = show.labels,
-                                 plot.contours = plot.contours)
+                  contours <- calculate.contour(mask = mask, dens = f.x*f.capt, levels = levels,
+                                 nlevels = nlevels, prob = !density)
+                  
+                  capt_normalised_density <- f.x*f.capt / (attr(mask, "a")*10000*sum(f.x*f.capt)) 
+                  
+                  capt_contour <- ggplot2::geom_contour(
+                    data = data.frame(x=mask[,1], y=mask[,2], z=capt_normalised_density),
+                    aes(x = x, y = y, z = z),
+                    breaks=contours$levels,
+                    color = cols$capt,
+                    linetype= ltys$capt
+                    )
+                  
+                  base.plot <- base.plot + capt_contour
                 }
             }
             if (fit$fit.types["ss"]){
-                f.ss.capt <- ss.density(fit, i, session, mask, dists)
+                # Cool tech here, ifelse() can't return NULL, switch() saves the day
+                # is.null(animal_id) + 1 evaluates to 1 if null, 2 if not.
+                f.ss.capt <- ss.density(fit = fit, 
+                                        id = switch(is.null(animal_id) + 1, animal_id, i), 
+                                        session = session, 
+                                        mask = mask, 
+                                        dists = dists, 
+                                        call_id = switch(is.null(animal_id) + 1, i, NULL))
+                
                 f.ss <- f.ss.capt/f.capt
                 densities$ss <- t(f.ss)
                 ## Such a hack, but this keeps f.combined correct,
@@ -392,10 +471,20 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
                 f.ss[f.ss == Inf] <- 0
                 if (plot.types["ss"]){
                     if (!combine){
-                        show.contour(mask = mask, dens = f.x*f.ss, levels = levels,
-                                     nlevels = nlevels, prob = !density, col = cols$ss,
-                                     lty = ltys$ss, show.labels = show.labels,
-                                     plot.contours = plot.contours)
+                      contours <- calculate.contour(mask = mask, dens = f.x*f.ss, levels = levels,
+                                     nlevels = nlevels, prob = !density)
+                      
+                      ss_normalised_density <- t(f.x*f.ss / (attr(mask, "a")*10000*sum(f.x*f.ss)))
+                      
+                      ss_contour <- ggplot2::geom_contour(
+                        data = data.frame(x=mask[,1], y=mask[,2], z=ss_normalised_density),
+                        aes(x = x, y = y, z = z),
+                        breaks=contours$levels,               
+                        color = cols$ss,
+                        linetype= ltys$ss
+                      )
+                      
+                      base.plot <- base.plot + ss_contour
                     }
                 }
             } else {
@@ -419,14 +508,28 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
         }
         ## Contour due to estimated bearings.
         if (plot.types["bearing"] | plot.types["combined"] & fit$fit.types["bearing"]){
-            f.bearing <- bearing.density(fit, i, session, mask)
+            f.bearing <- bearing.density(fit = fit, 
+                                         id = switch(is.null(animal_id) + 1, animal_id, i), 
+                                         session = session, 
+                                         mask = mask, 
+                                         call_id = switch(is.null(animal_id) + 1, i, NULL))
             densities$bearing <- t(f.bearing)
             if (plot.types["bearing"]){
                 if (!combine){
-                    show.contour(mask = mask, dens = f.x*f.bearing, levels = levels,
-                                 nlevels = nlevels, prob = !density, col = cols$bearing,
-                                 lty = ltys$bearing, show.labels = show.labels,
-                                 plot.contours = plot.contours)
+                  contours <- calculate.contour(mask = mask, dens = f.x*f.bearing, levels = levels,
+                                 nlevels = nlevels, prob = !density)
+                  
+                  bearing_normalised_density <- t(f.x*f.bearing / (attr(mask, "a")*10000*sum(f.x*f.bearing)))
+                  
+                  bearing_contour <- ggplot2::geom_contour(
+                    data = data.frame(x=mask[,1], y=mask[,2], z=bearing_normalised_density),
+                    aes(x = x, y = y, z = z),
+                    breaks=contours$levels,                 
+                    color = cols$bearing,
+                    linetype= ltys$bearing
+                  )
+
+                  base.plot <- base.plot + bearing_contour
                 }
             }
             if (plot.types["combined"]){
@@ -437,14 +540,30 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
         }
         ## Contour due to estimated distances.
         if (plot.types["dist"] | plot.types["combined"] & fit$fit.types["dist"]){
-            f.dist <- dist.density(fit, i, session, mask, dists)
+            f.dist <- dist.density(fit = fit, 
+                                   id = switch(is.null(animal_id) + 1, animal_id, i), 
+                                   session = session, 
+                                   mask = mask, 
+                                   dists = dists, 
+                                   call_id = switch(is.null(animal_id) + 1, i, NULL))
+            
             densities$dist <- t(f.dist)
             if (plot.types["dist"]){
                 if (!combine){
-                    show.contour(mask = mask, dens = f.x*f.dist, levels = levels,
-                                 nlevels = nlevels, prob = !density, col = cols$dist,
-                                 lty = ltys$dist, show.labels = show.labels,
-                                 plot.contours = plot.contours)
+                  contours <- calculate.contour(mask = mask, dens = f.x*f.dist, levels = levels,
+                                 nlevels = nlevels, prob = !density)
+                  
+                  dist_normalised_density <- t(f.x*f.dist / (attr(mask, "a")*10000*sum(f.x*f.dist)))
+                  
+                  dist_contour <- ggplot2::geom_contour(
+                    data = data.frame(x=mask[,1], y=mask[,2], z=dist_normalised_density),
+                    aes(x = x, y = y, z = z),
+                    breaks=contours$levels,  
+                    color = cols$dist,
+                    linetype= ltys$dist
+                  )
+                  
+                  base.plot <- base.plot + dist_contour
                 }
             }
             if (plot.types["combined"]){
@@ -455,16 +574,26 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
         }
         ## Contour due to measured times of arrival.
         # Note toa data not useful if only 1 trap is triggered
-        if (plot.types["toa"] | plot.types["combined"] &
+        if ((plot.types["toa"] | plot.types["combined"]) &
             fit$fit.types["toa"] & sum(traps_triggered) > 1){
             f.toa <- toa.density(fit, i, session, mask, dists)
             densities$toa <- f.toa
             if (plot.types["toa"]){
                 if (!combine){
-                    show.contour(mask = mask, dens = f.x*f.toa, levels = levels,
-                                 nlevels = nlevels, prob = !density, col = cols$toa,
-                                 lty = ltys$toa, show.labels = show.labels,
-                                 plot.contours = plot.contours)
+                  contours <- calculate.contour(mask = mask, dens = f.x*f.toa, levels = levels,
+                                 nlevels = nlevels, prob = !density)
+                  
+                  toa_normalised_density <- f.x*f.toa / (attr(mask, "a")*10000*sum(f.x*f.toa))
+                  
+                  toa_contour <- ggplot2::geom_contour(
+                    data = data.frame(x=mask[,1], y=mask[,2], z=toa_normalised_density),
+                    aes(x = x, y = y, z = z),
+                    breaks=contours$levels, 
+                    color = cols$toa,
+                    linetype= ltys$toa
+                  )
+                  
+                  base.plot <- base.plot + toa_contour
                 }
             }
             if (plot.types["combined"]){
@@ -476,13 +605,24 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
         ## Combined contour.
         if (plot.types["combined"]){
             densities$combined <- t(f.combined)
-            show.contour(mask = mask, dens = f.combined, levels = levels,
-                         nlevels = nlevels, prob = !density, col = cols$combined,
-                         lty = ltys$combined, show.labels = show.labels,
-                         plot.contours = plot.contours)
+            
+            contours <- calculate.contour(mask = mask, dens = f.combined, levels = levels,
+                         nlevels = nlevels, prob = !density)
+            
+            combined_normalised_density <- t(f.combined / (attr(mask, "a")*10000*sum(f.combined))) 
+            
+            combined_contour <- ggplot2::geom_contour(
+              data = data.frame(x=mask[,1], y=mask[,2], z=combined_normalised_density),
+              aes(x = x, y = y, z = z),
+              breaks=contours$levels, 
+              color = cols$combined,
+              linetype= ltys$combined
+            )
+            
+            base.plot <- base.plot + combined_contour
         }
         if (plot.types["mrds"]){
-            loc <- capt.all$mrds[id, , drop = FALSE]
+            loc <- capt.all$mrds[call_id, , drop = FALSE]
             points(loc, pch = 16, col = "black")
         }
         if (plot.estlocs | keep.estlocs){
@@ -505,43 +645,89 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
         
         ## Plotting traps, and circles around them.
         if (!add){
-          points(traps, col = trap.col, pch = 4, lwd = 2)
-          if (circle.traps){
-            # TODO: Figure out why this condition was needed
-            # if (length(id) == 1){
-            # points(traps[traps_triggered == 1, , drop = FALSE], col = trap.col, cex = 2, lwd = 2)
-            # }
-            points(traps[traps_triggered == 1, , drop = FALSE], col = trap.col, cex = 2, lwd = 2)
+          if (plot.ss) {
+            plot_traps <- data.frame(traps[which(bincapt == 0), , drop = FALSE])
+          } else {
+            plot_traps <- data.frame(traps)
           }
-        }
-        ## Plotting arrows for estimated bearings.
-        if (fit$fit.types["bearing"]){
-          if (plot.arrows){
-            if (fit$fit.types["dist"]){
-              if (animal.model) {
-                arrow.length <- as.matrix(
-                  reshape(
-                  subset(capt.all, animal_ID == i)[, c("ID", "trap", "dist")], timevar = "trap", 
-                                                  idvar = "ID", direction = "wide")[, -1])
-                
-                } else {
-                arrow.length <- matrix(capt.all$dist[i, ], nrow=1)
-              }
+          # Plot traps
+          base.plot = base.plot + 
+            geom_point(data = plot_traps, mapping = aes(x = x, y = y, shape = 4), 
+                       size = 3, col="red", stroke=1) + 
+            scale_shape_identity()
+          
+          if (circle.traps & !plot.ss){
+            base.plot = base.plot + geom_point(
+              data = subset(traps, traps_triggered == 1),
+              aes(x = x, y = y),
+              shape = 21,
+              color = "red",
+              size = 4.5,
+              stroke = 1
+            )
+          }
+          
+          # Plotting arrows for estimated bearings.
+          if (fit$fit.types["bearing"]) {
+            if (plot.arrows) {
+              base.plot = base.plot + estimated_bearing_arrow_plot(fit = fit, 
+                                                                   id = switch(is.null(animal_id) + 1, animal_id, i),
+                                                                   session = session,
+                                                                   call_id = switch(is.null(animal_id) + 1, i, NULL))
             }
-            show.arrows(fit, i, session, arrow.length, trap.col)
+          }
+          
+          
+          # Plotting arrows for estimated bearings.
+          if (fit$fit.types["dist"]) {
+            if (plot.circles & !plot.arrows){
+              base.plot = base.plot + estimated_distance_plot(fit = fit, 
+                                                              id = switch(is.null(animal_id) + 1, animal_id, i),
+                                                              session = session,
+                                                              call_id = switch(is.null(animal_id) + 1, i, NULL))
+            }
+          }
+          
+          # Plotting arrows for estimated bearings.
+          if (fit$fit.types["ss"]) {
+            if (plot.ss){
+              # activated_traps <- traps[which(bincapt == 1), , drop = FALSE]
+              # base.plot = base.plot + estimated_ss_plot(fit = fit,
+              #                                           id = switch(is.null(animal_id) + 1, animal_id, i),
+              #                                           session = session,
+              #                                           call_id = switch(is.null(animal_id) + 1, i, NULL))
+              ss_circles <- estimated_ss_plot(fit = fit,
+                                              id = switch(is.null(animal_id) + 1, animal_id, i),
+                                              session = session,
+                                              call_id = switch(is.null(animal_id) + 1, i, NULL))
+
+              for (circle in ss_circles) {
+                base.plot = base.plot + circle
+              }
+
+              base.plot = base.plot +
+                ggplot2::scale_fill_identity() +                       # Use the fill_color as is
+                ggplot2::scale_alpha(range = c(0.1, 0.6)) + # Control alpha range and remove legend
+                ggplot2::theme(
+                  legend.position = "none"                   # Remove legend if not needed
+                )
+            }
           }
         }
-        # Plotting circles for estimated distances.
-        if (fit$fit.types["dist"]){
-          if (plot.circles & !plot.arrows){
-            show.circles(fit, i, session, trap.col)
-          }
+        
+        
+        
+        plot(base.plot)
+        
+        if(!add) {
+          # Reset the plot
+          base.plot = base_plot(capt.all, as.data.frame(mask), xlim, ylim)
         }
         
         if (ask) {
           # Make sure to only ask if we are plotting more than one plot, 
           # and it is not the last plot in the list
-          if (length(id) > 1 && i != id[[length(id)]]) {
+          if (length(call_id) > 1 && i != call_id[[length(call_id)]]) {
             prompt_user_for_next_plot()
           }
         }
@@ -569,12 +755,10 @@ locations <- function(fit, id = "all", session = 1, infotypes = NULL,
     invisible(out)
 }
 
-## Helper to get stuff in the right form for contour().
-#' Title
+## Function calculates contour levels based by probability rather than density
 #'
 #' @export
-show.contour <- function(mask, dens, nlevels, levels, prob, col = "black", 
-                         lty = 1, show.labels, plot.contours){
+calculate.contour <- function(mask, dens, nlevels, levels, prob){
     ## Divide densities by normalising constant before plotting.
     a <- attr(mask, "a")*10000
     ## Note conversion of area to square metres.
@@ -615,46 +799,49 @@ show.contour <- function(mask, dens, nlevels, levels, prob, col = "black",
       labels <- NULL
     }
     
-    if (plot.contours) {
-      contour(x = unique.x, y = unique.y, z = z, levels = levels, labels = labels,
-              col = col, lty = lty, drawlabels = show.labels, add = F)
-    } else {
-      return(list(x = unique.x, y = unique.y, z = z, levels = levels, 
-                  labels = labels))
-    }
+    return(list(x = unique.x, y = unique.y, z = z, levels = levels, 
+                labels = labels))
 }
 
 ## Calculating density due to estimated bearings.
-bearing.density <- function(fit, id, session, mask){
-    animal.model <- is_animal_model(fit)
+bearing.density <- function(fit, id, session, mask, call_id=NULL){
+    capt <- get_capt_by_id(fit, id, session)
+    bincapt <- get_bincapt_by_id(fit, id, session)
     
-    capt <- get_capt(fit, session)
-    n.calls <- get_n_calls(fit, id, session)
-    
-    if (animal.model) {
-      capt <- subset(capt, capt$animal_ID == id)
+    if (!is.null(call_id)) {
+      if (is_animal_model(fit)) {
+        capt <- subset(capt, capt$ID == call_id)
+        bincapt <- matrix(bincapt[call_id, ], nrow=1)
+      }
+      else {
+        stop("'call_id' argument should only be provided for animal models. Use the 'id' argument instead.")
+      }
     }
     
+    # Initialize final density matrix
     dens <- matrix(1, nrow = 1, ncol = nrow(mask))
     
-    for (call in 1:n.calls) {
-      if (animal.model) {
-        id <- unique(capt$ID)[[call]]
-        bincapt <- subset(capt, capt$ID == id)$bincapt
-        bearing.capt <- subset(capt, capt$ID == id)$bearing[bincapt == 1]
-      } else {
-        bincapt <- capt$bincapt[id, ]
-        bearing.capt <- capt$bearing[id, bincapt == 1]
-      }
+    # For non-animal_ID models, there is only 1 call
+    for (i in 1:length(unique(capt$ID))) {
+      call_ID <- unique(capt$ID)[i]
       
-      mask.dens <- matrix(0, nrow = sum(bincapt), ncol = nrow(mask))
+      bearing.capt <- subset(capt, capt$ID == call_ID)$bearing
       
+      # Initialize density matrix for this call
+      mask.dens <- matrix(0, nrow = sum(bincapt[i, ]), ncol = nrow(mask))
+      
+      # Grab our estimated kappa parameter
       kappa <- coef(fit, type="fitted")[["kappa"]]
-      mask.bearings <- bearings(get_trap(fit)[[session]][bincapt == 1, , drop = FALSE], mask)
-      for (i in 1:sum(bincapt)) {
-        mask.dens[i, ] <- CircStats::dvm(bearing.capt[i], mu = mask.bearings[i, ], kappa = kappa)
+      
+      # Calculate bearings for each triggered trap
+      mask.bearings <- bearings(get_trap(fit)[[session]][bincapt[i, ] == 1, , drop = FALSE], as.matrix(mask))
+      
+      # Calculate the density for each of our detections
+      for (j in 1:sum(bincapt[i, ])) {
+        mask.dens[j, ] <- CircStats::dvm(bearing.capt[j], mu = mask.bearings[j, ], kappa = kappa)
       }
       
+      # Update the final density matrix
       dens <- dens * apply(mask.dens, 2, prod)
     }
     
@@ -662,118 +849,111 @@ bearing.density <- function(fit, id, session, mask){
 }
 
 ## Calculating density due to estimated distances.
-dist.density <- function(fit, id, session, mask, dists){
-    animal.model <- is_animal_model(fit)
-
-    capt <- get_capt(fit, session)
-    n.calls <- get_n_calls(fit, id, session)
-
-    if (animal.model) {
-      capt <- subset(capt, capt$animal_ID == id)
+dist.density <- function(fit, id, session, mask, dists, call_id=NULL){
+    capt <- get_capt_by_id(fit, id, session)
+    bincapt <- get_bincapt_by_id(fit, id, session)
+    
+    if (!is.null(call_id)) {
+      if (is_animal_model(fit)) {
+        capt <- subset(capt, capt$ID == call_id)
+        bincapt <- matrix(bincapt[call_id, ], nrow=1)
+      }
+      else {
+        stop("'call_id' argument should only be provided for animal models. Use the 'id' argument instead.")
+      }
     }
 
+    # Initialize final density matrix
     dens <- matrix(1, nrow = 1, ncol = nrow(mask))
 
-    for (call in 1:n.calls) {
-      if (animal.model) {
-        id <- unique(capt$ID)[[call]]
-        bincapt <- subset(capt, capt$ID == id)$bincapt
-        dist.capt <- subset(capt, capt$ID == id)$dist[bincapt == 1]
-      } else {
-        bincapt <- capt$bincapt[id, ]
-        dist.capt <- capt$dist[id, bincapt == 1]
-      }
+    # For non-animal_ID models, there is only 1 call
+    for (i in 1:length(unique(capt$ID))) {
+      call_ID <- unique(capt$ID)[i]
+      dist.capt <- subset(capt, capt$ID == call_ID)$dist
 
-      mask.dens <- matrix(0, nrow = sum(bincapt), ncol = nrow(mask))
-
+      mask.dens <- matrix(0, nrow = sum(bincapt[i, ]), ncol = nrow(mask))
+      
+      # Grab our estimated alpha parameter
       alpha <- coef(fit, type="fitted")[["alpha"]]
       betas <- alpha/dists
-      for (i in 1:sum(bincapt)) {
-        mask.dens[i, ] <- dgamma(dist.capt[i], shape = alpha, rate = betas[i, ])
+      
+      # Calculate bearings for each triggered trap
+      for (j in 1:sum(bincapt[i, ])) {
+        mask.dens[j, ] <- dgamma(dist.capt[j], shape = alpha, rate = betas[j, ])
       }
 
+      # Update the final density matrix
       dens <- dens * apply(mask.dens, 2, prod)
     }
 
     return(dens)
 }
 
-ss.density <- function(fit, id, session, mask, dists){
-    animal.model <- is_animal_model(fit)
-
-    capt <- get_capt(fit, session)
-    n.calls <- get_n_calls(fit, id, session)
-
-    if (animal.model) {
-      capt <- subset(capt, capt$animal_ID == id)
+## Calculating density due to signal strength
+ss.density <- function(fit, id, session, mask, dists, call_id=NULL){
+    capt <- get_capt_by_id(fit, id, session)
+    bincapt <- get_bincapt_by_id(fit, id, session)
+    
+    if (!is.null(call_id)) {
+      if (is_animal_model(fit)) {
+        capt <- subset(capt, capt$ID == call_id)
+        # TODO: Error here when call_id specified is no good 
+        bincapt <- matrix(bincapt[call_id, ], nrow=1)
+      }
+      else {
+        stop("'call_id' argument should only be provided for animal models. Use the 'id' argument instead.")
+      }
     }
 
+    # Initialize final density matrix
     dens <- matrix(1, nrow = 1, ncol = nrow(mask))
 
+    # Grab our estimated parameters, along with other model fitting parameters
     det.pars <- as.list(coef(fit, type="fitted"))
     det.pars$cutoff <- get_ss.opts(fit)$cutoff
     detfn <- get_detfn(fit)
     ss.link <- get_ss_link(fit)
     n.traps <- nrow(get_trap(fit)[[session]])
 
-    for (call in 1:n.calls) {
-      if (animal.model) {
-        id <- unique(capt$ID)[[call]]
-        bincapt <- subset(capt, capt$ID == id)$bincapt
-        ss.capt <- subset(capt, capt$ID == id)$ss
-      } else {
-        bincapt <- capt$bincapt[id, ]
-        ss.capt <- capt$ss[id, ]
-      }
+    for (call_ID in unique(capt$ID)) {
+      ss.capt <- subset(capt, capt$ID == call_ID)$ss
+      triggered_traps <- subset(capt, capt$ID == call_ID)$trap
+      untriggered_traps <- setdiff(seq(n.traps), triggered_traps)
 
       mask.dens <- matrix(0, nrow = n.traps, ncol = nrow(mask))
-      for (i in 1:n.traps) {
-        if (bincapt[i] == 0) {
-          # mask.dens[i, ] <- 1 - calc.detfn(dists[i, ], detfn, det.pars, ss.link)
-          mask.dens[i, ] <- 1 - det_prob(detfn, det.pars, dists[i, ], ss.link)
-        } else if (bincapt[i] == 1) {
-          mu.ss <- det.pars[["b0.ss"]] - det.pars[["b1.ss"]]*dists[i, ]
-          mask.dens[i, ] <- dnorm(ss.capt[i], mu.ss, det.pars[["sigma.ss"]])
-        } else {
-          stop("The binary capture history must only contain 0s and 1s.")
-        }
+      
+      # Similar to how we calculate contribution from detection history alone
+      for (i in seq_along(triggered_traps)) {
+        mu.ss <- det.pars[["b0.ss"]] - det.pars[["b1.ss"]]*dists[triggered_traps[i], ]
+        mask.dens[triggered_traps[i], ] <- dnorm(ss.capt[i], mu.ss, det.pars[["sigma.ss"]])
+      }
+      for (i in seq_along(untriggered_traps)) {
+        mu.ss <- det.pars[["b0.ss"]] - det.pars[["b1.ss"]]*dists[untriggered_traps[i], ]
+        mask.dens[untriggered_traps[i], ] <- pnorm(det.pars$cutoff, mu.ss, det.pars[["sigma.ss"]])
+        # mask.dens[untriggered_traps[i], ] <- 1 - det_prob(detfn, det.pars, dists[untriggered_traps[i], ], ss.link)
       }
 
+      # Update the final density matrix
       dens <- dens * apply(mask.dens, 2, prod)
     }
 
     return(dens)
 }
 
+## Calculating density due to toa
 toa.density <- function(fit, id, session, mask, dists){
-    animal.model <- is_animal_model(fit)
-
-    capt <- get_capt(fit, session)
-    n.calls <- get_n_calls(fit, id, session)
-
-    if (animal.model) {
-      capt <- subset(capt, capt$animal_ID == id)
-    }
+    capt <- get_capt_by_id(fit, id, session)
+    bincapt <- get_bincapt_by_id(fit, id, session)
 
     sigma.toa <- coef(fit, type="fitted")[["sigma.toa"]]
 
     out <- 1
-    for (call in 1:n.calls) {
-      if (animal.model) {
-        id <- unique(capt$ID)[[call]]
-        bincapt <- subset(capt, capt$ID == id)$bincapt
-        toa.capt <- subset(capt, capt$ID == id)$toa[bincapt == 1]
-        
-        # If only 1 detection, toa doesn't give us any info, so skip
-        if (sum(bincapt) <= 1) {
-          next 
-        }
-      } else {
-        bincapt <- capt$bincapt[id, ]
-        toa.capt <- capt$toa[id, bincapt == 1]
-      }
-    
-      dists.mask <- dists[bincapt == 1, ]
+    for (i in 1:length(unique(capt$ID))) {
+      call_ID <- unique(capt$ID)[i]
+      toa.capt <- subset(capt, capt$ID == call_ID)$toa
+      mask.dens <- matrix(0, nrow = sum(bincapt[i, ]), ncol = nrow(mask))
+
+      dists.mask <- dists[bincapt[i, ] == 1, ]
 
       prod.times <- toa.capt - dists.mask/fit$args$sound.speed
       toa.ssq <- apply(prod.times, 2, function(x) sum((x - mean(x))^2))
@@ -785,101 +965,157 @@ toa.density <- function(fit, id, session, mask, dists){
 }
 
 ## Plots arrows on traps where a detection was made, showing estimated bearing.
-show.arrows <- function(fit = NULL, id, session, arrow.length = NULL, trap.col, capt = NULL, traps = NULL){
-    xlim <- par("usr")[c(1, 2)]
-    ylim <- par("usr")[c(3, 4)]
+estimated_bearing_arrow_plot <- function(fit, id, session, call_id=NULL){
+    capt <- get_capt_by_id(fit, id, session)
+    bincapt <- get_bincapt_by_id(fit, id, session)
+    
+    if (!is.null(call_id)) {
+      if (is_animal_model(fit)) {
+        capt <- subset(capt, capt$ID == call_id)
+        # TODO: Error here when call_id specified is no good 
+        bincapt <- matrix(bincapt[call_id, ], nrow=1)
+      }
+      else {
+        stop("'call_id' argument should only be provided for animal models. Use the 'id' argument instead.")
+      }
+    }
+    
+    is.dist <- !is.null(capt$dist)
 
-    if (!is.null(fit)){
-        animal.model <- is_animal_model(fit)
-        capt.all <- get_capt(fit, session)
-        bincapt <- get_bincapt_by_id(fit, id, session)
-    } else {
-        capt.all <- capt
-        bincapt <- matrix(capt.all$bincapt[id, ], nrow = 1)
-        animal.model <- "animal_ID" %in% colnames(capt.all)
-    }
+    trappos <- get_trap(fit)[[session]]
     
-    if (animal.model) {
-      capt.all <- subset(capt.all, animal_ID == id)
-    }
-    
-    if (animal.model) {
-      # Reshape the capt data frame, so each row is a unique CALL, and each 
-      # column represents the bearing of the corresponding trap
-      # Note that id no bearing was detected, the value will be 0
-      # Also we drop the ID column as it is no longer needed
-      bearing.capt <- as.matrix(reshape(capt.all[, c("ID", "trap", "bearing")], timevar = "trap", 
-              idvar = "ID", direction = "wide")[, -1])
-    } else {
-      bearing.capt <- matrix(capt.all$bearing[id, ], nrow=1)
-    }
-    
-    for (i in 1:nrow(bearing.capt)) {
-      bearing <- bearing.capt[i, bincapt[i, ] == 1]
+    arrows.df <- data.frame()
+    for (i in 1:length(unique(capt$ID))) {
+      call_ID <- unique(capt$ID)[i]
+      bearing <- subset(capt, capt$ID == call_ID)$bearing
+      dist <- subset(capt, capt$ID == call_ID)$dist
       
-      # TODO: This is definitley not finished
-      if (is.null(arrow.length)){
-        lengths <- 0.05*min(c(diff(range(xlim)), diff(range(ylim))))
+      if (is.dist) {
+        arrow_len = dist
       } else {
-        lengths <- arrow.length[i, bincapt[i, ] == 1]
+        arrow_len = 0.382 * get_buffer(fit)
       }
+
+      activated_traps <- trappos[which(bincapt[i, ] == 1), , drop = FALSE]
+      sinb <- sin(bearing)*arrow_len
+      cosb <- cos(bearing)*arrow_len
       
-      
-      if (!is.null(fit)){
-        trappos <- get_trap(fit)[[session]]
-      } else {
-        trappos <- traps
-      }
-      trappos <- trappos[which(bincapt[i, ] == 1), , drop = FALSE]
-      sinb <- sin(bearing)*lengths
-      cosb <- cos(bearing)*lengths
-      arrows(trappos[, 1], trappos[, 2], trappos[, 1] + sinb, trappos[, 2] + cosb,
-             length = 0.1, col = trap.col, lwd = 2)
+      arrows.df <- rbind(arrows.df,
+                         data.frame(
+                           x = activated_traps[, 1],
+                           y = activated_traps[, 2],
+                           xend = activated_traps[, 1] + sinb,
+                           yend = activated_traps[, 2] + cosb
+                         ))
     }
+    
+    return(geom_segment(data = arrows.df, mapping = aes(x = x, y = y, xend = xend, yend = yend),
+                        col="red",
+                        arrow = arrow(
+                          length = unit(0.2, "cm") # Arrow head
+                        )))
 }
 
 ## Plots circles around traps where a detection was made, showing estimated distance.
-show.circles <- function(fit = NULL, id, session, trap.col, capt = NULL, traps = NULL){
-    if (!is.null(fit)){
-      animal.model <- is_animal_model(fit)
-      capt.all <- get_capt(fit, session)
-      bincapt <- get_bincapt_by_id(fit, id, session)
-    } else {
-      capt.all <- capt
-      bincapt <- matrix(capt.all$bincapt[id, ], nrow = 1)
-      animal.model <- "animal_ID" %in% colnames(capt.all)
-    }
-    
-    if (animal.model) {
-      capt.all <- subset(capt.all, animal_ID == id)
-    }
-    
-    if (animal.model) {
-      # Reshape the capt data frame, so each row is a unique CALL, and each 
-      # column represents the bearing of the corresponding trap
-      # Note that id no bearing was detected, the value will be 0
-      # Also we drop the ID column as it is no longer needed
-      dist.capt <- as.matrix(reshape(capt.all[, c("ID", "trap", "dist")], timevar = "trap", 
-                                        idvar = "ID", direction = "wide")[, -1])
-    } else {
-      dist.capt <- matrix(capt.all$dist[id, ], nrow=1)
-    }
+estimated_distance_plot <- function(fit, id, session, call_id=NULL){
+  capt <- get_capt_by_id(fit, id, session)
+  bincapt <- get_bincapt_by_id(fit, id, session)
   
-    if (!is.null(fit)){
-        trappos <- get_trap(fit)[[session]]
-    } else {
-        trappos <- traps
+  if (!is.null(call_id)) {
+    if (is_animal_model(fit)) {
+      capt <- subset(capt, capt$ID == call_id)
+      # TODO: Error here when call_id specified is no good 
+      bincapt <- matrix(bincapt[call_id, ], nrow=1)
     }
-
-    for (i in 1:nrow(bincapt)) {
-      positions <- trappos[which(bincapt[i, ] == 1), , drop = FALSE]
-
-      radius <- dist.capt[i, which(bincapt[i, ] == 1)]
-      
-      for (j in 1:nrow(positions)) {
-        circles(positions[j, ], radius[j], col = trap.col, lwd = 2)
-      }
+    else {
+      stop("'call_id' argument should only be provided for animal models. Use the 'id' argument instead.")
     }
+  }
+  
+  circles.df <- data.frame()
+  for (i in 1:length(unique(capt$ID))) {
+    call_ID <- unique(capt$ID)[i]
+    dist <- subset(capt, capt$ID == call_ID)$dist
+
+    trappos <- get_trap(fit)[[session]]
+    
+    activated_traps <- trappos[which(bincapt[i, ] == 1), , drop = FALSE]
+    
+    circles.df <- rbind(circles.df,
+                        data.frame(
+                          x = activated_traps[, 1], y = activated_traps[, 2], size=dist
+                        ))
+  }
+  
+  return(geom_point(
+    data = circles.df,
+    aes(x = x, y = y),
+    shape = 21,
+    color = "red",
+    size = circles.df$size,  
+    stroke = 1 
+  ))
+}
+
+estimated_ss_plot <- function(fit, id, session, call_id=NULL) {
+  capt <- get_capt_by_id(fit, id, session)
+  bincapt <- get_bincapt_by_id(fit, id, session)
+  
+  if (!is.null(call_id)) {
+    if (is_animal_model(fit)) {
+      capt <- subset(capt, capt$ID == call_id)
+      # TODO: Error here when call_id specified is no good 
+      bincapt <- matrix(bincapt[call_id, ], nrow=1)
+    }
+    else {
+      stop("'call_id' argument should only be provided for animal models. Use the 'id' argument instead.")
+    }
+  }
+  
+  circles.list <- list()
+  for (i in 1:length(unique(capt$ID))) {
+    call_ID <- unique(capt$ID)[i]
+    ss <- subset(capt, capt$ID == call_ID)$ss
+    
+    trappos <- get_trap(fit)[[session]]
+    
+    activated_traps <- trappos[which(bincapt[i, ] == 1), , drop = FALSE]
+    
+    
+    # return(geom_point(data = activated_traps, mapping = aes(x = activated_traps[,1], 
+    #                                                  y = activated_traps[,2], 
+    #                                                  colour = capt$ss), 
+    #            size = 5))
+    # rbind(circles.df,
+    #       data.frame(
+    #         x = activated_traps[, 1], y = activated_traps[, 2], size=dist
+    #       ))
+    for (j in 1:nrow(activated_traps)) {
+      trap_x <- activated_traps[j, 1]
+      trap_y <- activated_traps[j, 2]
+
+      circle_data <- generate_concentric_circles(
+        num_circles = 4,          # More circles for a smoother gradient
+        max_radius = 1.5,            # Adjust as needed
+        min_radius = 0.5,
+        center_x = trap_x,              # Center of the circles
+        center_y = trap_y,
+        points_per_circle = 50,   # Higher for smoother circles
+        fill_color = "red",
+        alpha_start = 0.05,
+        alpha_end = 0.5
+      )
+
+      circles.list[[j]] <- ggplot2::geom_polygon(
+        data = circle_data,
+        aes(x = x, y = y, group = group, fill = fill_color, alpha = alpha),
+        color = NA
+      )
+    }
+  }
+  
+  return(circles.list)
+  
 }
 
 circles <- function(centres, radius, ...){
@@ -887,4 +1123,48 @@ circles <- function(centres, radius, ...){
     xs <- centres[1] + sin(bearings)*radius
     ys <- centres[2] + cos(bearings)*radius
     lines(xs, ys, ...)
+}
+
+# Function to generate concentric circles data
+generate_concentric_circles <- function(
+    num_circles = 4,          # Number of concentric circles
+    max_radius = 1,            # Radius of the largest circle
+    min_radius = 0.1,         # Radius of the smallest circle
+    center_x = 0,              # X-coordinate of the center
+    center_y = 0,              # Y-coordinate of the center
+    points_per_circle = 50,   # Number of points to define each circle
+    fill_color = "red",    # Fill color for the circles
+    alpha_start = 0.1,         # Alpha for the largest circle
+    alpha_end = 1               # Alpha for the smallest circle
+) {
+  
+  # Function to generate a single circle's coordinates
+  generate_circle <- function(cx, cy, radius, points) {
+    angles <- seq(0, 2 * pi, length.out = points)
+    data.frame(
+      x = cx + radius * cos(angles),
+      y = cy + radius * sin(angles)
+    )
+  }
+  
+  # Sequence of radii from max_radius to min_radius
+  radii <- seq(max_radius, min_radius, length.out = num_circles)
+  
+  # Corresponding alpha values from alpha_start to alpha_end
+  alphas <- seq(alpha_start, alpha_end, length.out = num_circles)
+  
+  # Initialize an empty data frame to store all circles
+  all_circles <- data.frame()
+  
+  # Generate data for each circle
+  for (i in seq_along(radii)) {
+    circle <- generate_circle(center_x, center_y, radii[i], points_per_circle)
+    circle$group <- i               # Group identifier for each circle
+    circle$alpha <- alphas[i]       # Alpha value for each circle
+    circle$fill_color <- fill_color # Fill color
+    all_circles <- rbind(all_circles, circle)
+  }
+  
+  # Return the complete data frame
+  return(all_circles)
 }
