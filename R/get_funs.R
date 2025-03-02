@@ -71,79 +71,76 @@ get_trap_from_data = function(dat){
   return(output)
 }
 
-## Retrieve the capture data frame for a given ID
-# Note if the fit is animal model, we assume given ID is the animal_ID
-# otherwise we just use the usual row-order ID
-# 
-# Also note, this function is built on top of `get_capt_for_plot`, and as such
-# returns a capture data frame of similar construction
-get_capt_by_id = function(fit, id, session=1) {
-  animal.model <- is_animal_model(fit)
-  capt <- get_capt_for_plot(fit$args)
-  
-  if (animal.model) {
-    capt <- capt[capt$animal_ID == id & capt$session == session, ]
-  } else {
-    capt <- capt[capt$ID == id & capt$session == session, ]
-  }
-  
-  return(capt)
-}
-
-## Retrieve the binary capture data for a given ID
-# Note if the fit is animal model, we assume given ID is the animal_ID
-# otherwise we just use the usual row-order ID
-# 
-# As animal model capture histories contain multiple calls for a given ID, we 
-# return a matrix of bincapt histories, each row corresponding to a call. If 
-# the fit is not an animal ID model, the matrix contains only 1 row (1 call).
-get_bincapt_by_id = function(fit, id, session=1) {
+## Retrieve the binary capture data for given animal_id / call_id
+get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_bincapt=F) {
   if (!(session %in% unique(fit$arg_input$captures$session))) {
     stop("Session ", session, " not found in fit")
   }
-
+  
   animal.model <- is_animal_model(fit)
-  capt <- fit$args$capt
+  capt <- fit$arg_input$captures
+  
+  if (is.null(animal_id) & animal.model) {
+    stop("'animal_id' argument must be provided for animal id models")
+  }
+  if (!animal.model & !is.null(animal_id)) {
+    stop("'animal_id' argument should only be provided for animal id models")
+  }
   
   if (animal.model) {
     capt <- subset(capt, capt$session == session)
     
-    if (!(id %in% capt$animal_ID)) {
-      stop(paste("Could not find capture history with animal id:", id))
+    if (!(animal_id %in% capt$animal_ID)) {
+      stop(paste("Could not find capture history with animal id:", animal_id))
     }
     
-    id_capt <- subset(capt, capt$animal_ID == id)
-    bincapt <- reshape(id_capt[, c("ID", "trap", "bincapt")], timevar = "trap", 
-                       idvar = "ID", direction = "wide")
-    bincapt <- as.matrix(bincapt[, -1])
-    colnames(bincapt) <- NULL
-    rownames(bincapt) <- NULL
+    # Make sure to only grab the appropriate animal's capture history
+    id_capt <- subset(capt, capt$animal_ID == animal_id)
     
-    return(bincapt)
+    if (!(call_id %in% id_capt$ID)) {
+      stop(paste("Could not find call with 'call_id':", call_id, ", for animal with 'animal_id':", animal_id))
+    }
+    
+    id_capt <- subset(id_capt, id_capt$ID == call_id)
+    
+    n.traps <- nrow(fit$arg_input$traps)
+    bincapt <- numeric(n.traps)
+    bincapt[id_capt$trap] <- 1
   } else {
+    bincapt <- fit$args$capt$bincapt
     # If capt is a list, then it means there are multiple sessions
     if (fit$n.sessions > 1) {
       capt <- capt[[session]]
     }
     
-    if (id > nrow(capt$bincapt)) {
-      stop("id exceeds number of rows in bincapt")
+    if (call_id > nrow(bincapt)) {
+      stop("'call_id' exceeds number of rows in bincapt")
     }
     
-    # We can just return the appropriate bin capt row
-    return(matrix(capt$bincapt[id, ], nrow=1))
+    if (!(call_id %in% capt$ID)) {
+      stop(paste("Could not find call with 'call_id':", call_id))
+    }
+    
+    id_capt <- subset(capt, capt$ID == call_id)
+    bincapt <- bincapt[which(call_id == unique(capt$ID)), ]
+  }
+  
+  if (return_bincapt) {
+    return(bincapt) 
+  } else {
+    return(id_capt)
   }
 }
 
-get_n_calls = function(fit, id, session=1) {
-  animal.model <- is_animal_model(fit)
-  if (!animal.model) {
-    return(1)
-  } else {
-    capt <- get_capt(fit, session)
-    return(length(unique(subset(capt, capt$animal_ID == id)$ID)))
-  }
-}
+# get_n_calls = function(fit, id, session=1) {
+#   animal.model <- is_animal_model(fit)
+#   if (!animal.model) {
+#     return(1)
+#   } else {
+#     capt <- get_capt(fit, session)
+#     return(length(unique(subset(capt, capt$animal_ID == id)$ID)))
+#   }
+# }
 
 get_par_extend = function(fit){
   output = fit$args$par.extend

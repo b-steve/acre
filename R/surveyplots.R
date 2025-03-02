@@ -342,6 +342,7 @@ plot.acre_data <- function(x, ...){
     if("bearing" %in% c_names) is.bearing = TRUE else is.bearing = FALSE
     if("dist" %in% c_names) is.dist = TRUE else is.dist = FALSE
     if("ss" %in% c_names) is.ss = TRUE else is.ss = FALSE
+    if("toa" %in% c_names) is.toa = TRUE else is.toa = FALSE
     if("animal_ID" %in% c_names) animal.model = TRUE else animal.model = FALSE
     
     
@@ -596,7 +597,14 @@ plot.acre_data <- function(x, ...){
             
             plot_one_call = plot_one_call + 
               geom_path(data = data_cir, mapping = aes(x = data_cir$x, y = data_cir$y, group = data_cir$cir_index), colour = "blue")
+          } 
+          
+          if (is.toa) {
+            toa_order <- rank(one_call$toa, ties.method = "min")
             
+            plot_one_call = plot_one_call + 
+              ggplot2::geom_text(data = actived_traps, aes(x = x, y = y, label = toa_order),
+                        size = 4, vjust = 1.5, hjust=-2, colour = "black")
           }
           
           

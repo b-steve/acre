@@ -709,6 +709,7 @@ Type acreTMB(objective_function<Type>* obj)
   } else {
     sigma_vec_mask = sigma_DX_mask * sigma_mask;
   }
+  
   if(incheck_scalar(2, param_og) == 1) ADREPORT(sigma);
   
   //lambda0
@@ -1141,7 +1142,7 @@ Type acreTMB(objective_function<Type>* obj)
   
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //begin of likelihood function
-
+  
   // For every session
   // Starting at session #1
   for(s = 1; s <= n_sessions; s++){
@@ -1718,7 +1719,6 @@ Type acreTMB(objective_function<Type>* obj)
       }
       //end of if(is_animalID == 0)
     } else {
-      std::cout << "Fitting animal model." << std::endl;
       //begin of animal_ID model
       if(n_a > 0){
 
@@ -1976,6 +1976,8 @@ Type acreTMB(objective_function<Type>* obj)
 				      trans(p_sigma_toa_tem, par_link(14));
 				      
 				      fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+				      // std::cout << "p_toa_ssq: " << *p_toa_ssq << std::endl;
+				      // std::cout << "fy_toa_log: " << fy_toa_log << "\n" << std::endl;
 				    }
 					//"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
 					
@@ -2067,8 +2069,7 @@ Type acreTMB(objective_function<Type>* obj)
 			//end of 'is_local == 1'
 		  }
 
-		  *pointer_nll -= log(l_i * area_unit);
-
+		  *pointer_nll -= log((l_i * area_unit) + std::numeric_limits<double>::min());
 		  //end of animal 'a'
         }
         //end of if(n_a > 0)

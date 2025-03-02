@@ -416,13 +416,16 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
 
   #browser()
-  if(!gr.skip){
-    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acre")
+  if(!gr.skip) {
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = (!tracing), DLL="acre")
     obj$hessian <- TRUE
-    opt = stats::nlminb(obj$par, obj$fn, obj$gr)
+    if (data$is_toa) {
+      obj$par[["sigma_toa"]] <- sd(data.ID_mask$toa_ssq)
+    }
+    opt = stats::nlminb(obj$par, obj$fn, obj$gr, control=list(trace=tracing))
     o = TMB::sdreport(obj)
   } else {
-    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, slient = (!tracing), DLL="acre", type = 'Fun')
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = (!tracing), DLL="acre", type = 'Fun')
 
     par_name_fitted = param.og.4cpp[which(!param.og.4cpp %in% name.fixed.par.4cpp)]
     #the name of this ini_par_val is not right, do it later
