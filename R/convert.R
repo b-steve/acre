@@ -93,7 +93,7 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
     # Make sure traps is either list, matrix, data frame or NULL
     # Make sure at least one of traps, or (n.traps & n.sessions) provided
     stopifnot(is.data.frame(captures) | is.matrix(captures),
-              ncol(captures) >= 4,
+              ncol(captures) >= 3,
               any(is.null(traps), is.list(traps), is.matrix(traps), is.data.frame(traps)),
               any(!is.null(traps), !is.null(n.traps) & !is.null(n.sessions)))
 
