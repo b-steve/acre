@@ -79,6 +79,7 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
   
   animal.model <- is_animal_model(fit)
   capt <- fit$arg_input$captures
+  capt <- subset(capt, capt$session == session)
   
   if (is.null(animal_id) & animal.model) {
     stop("'animal_id' argument must be provided for animal id models")
@@ -88,47 +89,32 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
   }
   
   if (animal.model) {
-    capt <- subset(capt, capt$session == session)
-    
     if (!(animal_id %in% capt$animal_ID)) {
       stop(paste("Could not find capture history with animal id:", animal_id))
     }
     
     # Make sure to only grab the appropriate animal's capture history
-    id_capt <- subset(capt, capt$animal_ID == animal_id)
-    
-    if (!(call_id %in% id_capt$ID)) {
+    capt <- subset(capt, capt$animal_ID == animal_id)
+  } else if (!(call_id %in% capt$ID)) {
+    if (animal.model) {
       stop(paste("Could not find call with 'call_id':", call_id, ", for animal with 'animal_id':", animal_id))
-    }
-    
-    id_capt <- subset(id_capt, id_capt$ID == call_id)
-    
-    n.traps <- nrow(fit$arg_input$traps)
-    bincapt <- numeric(n.traps)
-    bincapt[id_capt$trap] <- 1
-  } else {
-    bincapt <- fit$args$capt$bincapt
-    # If capt is a list, then it means there are multiple sessions
-    if (fit$n.sessions > 1) {
-      capt <- capt[[session]]
-    }
-    
-    if (call_id > nrow(bincapt)) {
-      stop("'call_id' exceeds number of rows in bincapt")
-    }
-    
-    if (!(call_id %in% capt$ID)) {
+    } else {
       stop(paste("Could not find call with 'call_id':", call_id))
     }
-    
-    id_capt <- subset(capt, capt$ID == call_id)
-    bincapt <- bincapt[which(call_id == unique(capt$ID)), ]
   }
   
+  capt <- subset(capt, capt$ID == call_id)
+  
+  n.traps <- nrow(get_trap(fit)[[session]])
+  bincapt <- numeric(n.traps)
+  bincapt[capt$trap] <- 1
+  # capt <- subset(capt, capt$ID == call_id)
+  # bincapt <- bincapt[which(call_id == unique(capt$ID)), ]
+  
   if (return_bincapt) {
-    return(bincapt) 
+    return(bincapt)
   } else {
-    return(id_capt)
+    return(capt)
   }
 }
 

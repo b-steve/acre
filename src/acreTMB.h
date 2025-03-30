@@ -625,7 +625,6 @@ Type acreTMB(objective_function<Type>* obj)
   DATA_MATRIX(mu_bound);
   
 
-
   //define a pointer variable which point to a detect function
   //based on our input "detfn_index"
   //and also point out the number of parameters for that detfn
@@ -1873,14 +1872,14 @@ Type acreTMB(objective_function<Type>* obj)
 					  *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
 					  trans(p_sigma_ss_tem, par_link(11));
 					  
-					  //if(s == 105 && a == 1 && i == 1 && m < 50){
-						//  std::cout << "mask: " << m  << ", trap" << t << ", ss: " << (*p_capt_ss) << std::endl;
-						//  std::cout << "mask: " << m <<  ", trap" << t << ", essx: " << (*p_essx) << std::endl;
-						//  std::cout << "mask: " << m <<  ", trap" << t << ", sigma_ss: " << sigma_ss_tem << std::endl;
-					  //}
+					// if(s == 105 && a == 1 && i == 1 && m < 50){
+					//  std::cout << "mask: " << m  << ", trap" << t << ", ss: " << (*p_capt_ss) << std::endl;
+					//  std::cout << "mask: " << m <<  ", trap" << t << ", essx: " << (*p_essx) << std::endl;
+					//  std::cout << "mask: " << m <<  ", trap" << t << ", sigma_ss: " << sigma_ss_tem << std::endl;
+					// }
 					  
-
 					  fy_ss_log += dnorm(*p_capt_ss, *p_essx, sigma_ss_tem, true);
+					  
 					}
 
 					p_capt_ss++;
@@ -1893,10 +1892,10 @@ Type acreTMB(objective_function<Type>* obj)
 				//end of call 'i'
 			  }
 			  
-			  //if(s == 105 && a == 1 && m >900 & m<2000){
+			  //if(s == 105 && a == 1 && m >900 & m<2000) {
 				//  std::cout << "until mask: " << m - 1 << ", l_i: " << l_i << std::endl;
 				//  std::cout << "mask: " << m << ", D(m): " << (*p_D_tem) << std::endl;
-				//  std::cout << "mask: " << m << ", ci: " << ci << std::endl;
+				 // std::cout << "mask: " << m << ", ci: " << ci << std::endl;
 				//  std::cout << "mask: " << m << ", mu: " << *p_mu_tem << std::endl;
 				//  std::cout << "mask: " << m << ", l_w: " << l_w << std::endl;
 				//  std::cout << "mask: " << m << ", p_dot[m - 1]: " << p_dot[m - 1] << std::endl;
@@ -2068,7 +2067,7 @@ Type acreTMB(objective_function<Type>* obj)
 
 			//end of 'is_local == 1'
 		  }
-
+		  
 		  *pointer_nll -= log((l_i * area_unit) + std::numeric_limits<double>::min());
 		  //end of animal 'a'
         }
@@ -2087,6 +2086,8 @@ Type acreTMB(objective_function<Type>* obj)
 	//}
     //end for session s
   }
+  
+  
   ADREPORT(esa);
   return nll;
 }

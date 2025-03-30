@@ -446,7 +446,8 @@ default.sv = function(param, info){
     if(ss.link == 'log'){
       return(log(max(data.full[['ss']], na.rm = TRUE)))
     } else {
-      return(max(data.full[['ss']], na.rm = TRUE))
+      return(quantile(data.full[['ss']], 0.90, na.rm = TRUE))
+      # return(max(data.full[['ss']], na.rm = TRUE))
     }
   } else if(param == "sigma.b0.ss"){
     if(ss.link == 'log'){
@@ -455,9 +456,13 @@ default.sv = function(param, info){
       return(0.01 * max(data.full[['ss']], na.rm = TRUE))
     }
   } else if(param == "b1.ss"){
-    max.ss = max(data.full[["ss"]], na.rm = TRUE)
-    out = (max.ss - cutoff)/(mean(buffer)/2)
+    quantile.ss = quantile(data.full[['ss']], 0.90, na.rm = TRUE)
+    out = (quantile.ss - cutoff)/(mean(buffer))
+    # max.ss = max(data.full[["ss"]], na.rm = TRUE)
+    # out = (max.ss - cutoff)/(mean(buffer)/2)
     if(ss.link == "log"){
+      max.ss = max(data.full[["ss"]], na.rm = TRUE)
+      out = (max.ss - cutoff)/(mean(buffer)/2)
       out = out/max.ss
     }
     return(out)
@@ -2414,7 +2419,8 @@ convert_time_loc_cov_to_loc_cov = function(time.loc.cov, loc.cov, session.cov){
 #'
 #' @examples dataset_names <- get_dataset_names()
 get_dataset_names = function() {
-  return(data(package="acre")$results[, "Item"])
+  # return(data(package="acre")$results[, "Item"])
+  return()
 }
 
 separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
