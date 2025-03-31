@@ -6,7 +6,8 @@
 \usage{
 locations(
   fit,
-  id = "all",
+  call_id = "all",
+  animal_id = NULL,
   session = 1,
   infotypes = NULL,
   combine = FALSE,
@@ -27,23 +28,19 @@ locations(
   plot.estlocs = FALSE,
   keep.estlocs = FALSE,
   plot.arrows = "bearing" \%in\% fit$infotypes,
+  plot.ss = "ss" \%in\% fit$infotypes,
   plot.circles = "dist" \%in\% fit$infotypes & !("bearing" \%in\% fit$infotypes),
   arrow.length = NULL,
   show.legend = FALSE,
   show.axes = TRUE,
   add = FALSE,
   ask = TRUE,
-  keep.densities = FALSE
+  joint.density = FALSE,
+  display.plot = TRUE
 )
 }
 \arguments{
 \item{fit}{A fitted model from \link{fit.ascr}.}
-
-\item{id}{A numeric vector with row numbers from
-\code{fit$args$capt}, indicating which individuals' locations
-are to be plotted. Alternatively, the character string
-\code{"all"}, indicating all animals within the selected
-session.}
 
 \item{session}{The session with the detector array and invidual(s)
 to be plotted (for multi-session models only).}
@@ -161,6 +158,12 @@ plot.}
 existing plot.}
 
 \item{ask}{Logical. If TRUE (and the R session is interactive) the user is asked for input, before a new figure is drawn.}
+
+\item{id}{A numeric vector with row numbers from
+\code{fit$args$capt}, indicating which individuals' locations
+are to be plotted. Alternatively, the character string
+\code{"all"}, indicating all animals within the selected
+session.}
 }
 \value{
 If \code{keep.estlocs} is \code{TRUE}, then a list

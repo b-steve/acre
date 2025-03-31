@@ -134,7 +134,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
                           !("bearing" %in% fit$infotypes),
                       arrow.length = NULL, show.legend = FALSE,
                       show.axes = TRUE, add = FALSE, ask = TRUE, 
-                      joint.density = FALSE) {
+                      joint.density = FALSE, display.plot = TRUE) {
   
     ## Type checking
     stopifnot(
@@ -384,6 +384,8 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
       f.toa = rep(1, n_mask_points),
       f.combined = rep(1, n_mask_points)
     )
+    
+    out <- list()
     
     for (i in call_id){
         # Sort out plot title
@@ -694,8 +696,10 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
           }
         }
         
+        # Save the most recent plot for returning
+        out$plot <- base.plot
         
-        if (!joint.density) {
+        if (!joint.density & display.plot) {
           plot(base.plot)
         }
         
@@ -773,7 +777,9 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
       
       close(progress_bar)
       
-      plot(base.plot)
+      if (display.plot) {
+        plot(base.plot)
+      }
     }
     
     ## Making legend.
@@ -783,13 +789,13 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
       legend.ltys <- c(ltys[infotypes], recursive = TRUE)
       legend("topright", legend = infotypes, lty = legend.ltys, col = legend.cols, bg = "white")
     }
-    out <- list()
+    
     if (keep.estlocs){
       out$estlocs <- estlocs
     }
     
     else {
-      out <- TRUE
+      out$densities <- densities.list
     }
     
     invisible(out)
