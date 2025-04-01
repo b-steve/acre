@@ -780,15 +780,17 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
       if (display.plot) {
         plot(base.plot)
       }
+      
+      out$plot <- base.plot
     }
     
     ## Making legend.
-    if (show.legend){
-      legend.labels <- infotypes
-      legend.cols <- c(cols[infotypes], recursive = TRUE)
-      legend.ltys <- c(ltys[infotypes], recursive = TRUE)
-      legend("topright", legend = infotypes, lty = legend.ltys, col = legend.cols, bg = "white")
-    }
+    # if (show.legend){
+    #   legend.labels <- infotypes
+    #   legend.cols <- c(cols[infotypes], recursive = TRUE)
+    #   legend.ltys <- c(ltys[infotypes], recursive = TRUE)
+    #   legend("topright", legend = infotypes, lty = legend.ltys, col = legend.cols, bg = "white")
+    # }
     
     if (keep.estlocs){
       out$estlocs <- estlocs
