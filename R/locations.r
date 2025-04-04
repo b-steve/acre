@@ -219,7 +219,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
       call_id <- unique(capt.all$ID)
     }
     
-    if (joint.density) {
+    if (joint.density & display.plot) {
       message("Calculating animal densities: ")
       progress_bar = txtProgressBar(min = 0, max = length(call_id), initial = 0, style=3) 
     }
@@ -385,13 +385,15 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
       f.combined = rep(1, n_mask_points)
     )
     
-    out <- list()
+    out <- list(
+      plots = list()
+    )
     
     for (i in call_id){
         # Sort out plot title
         if (animal.model) {
           if (joint.density) {
-            sub_title = paste0("session: ", session, ", animal ID: ", i)
+            sub_title = paste0("session: ", session, ", animal ID: ", animal_id)
           } else {
             sub_title = paste0("session: ", session, ", animal ID: ", animal_id,
                                ", call ID: ", i)
@@ -598,9 +600,6 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
               }
         }
         
-        # Update joint density
-        # densities.list$f.combined <- densities.list$f.combined * f.combined
-        
         ## Combined contour.
         if (plot.types["combined"] & !joint.density){
             contours <- calculate.contour(mask = mask, dens = f.combined, levels = levels,
@@ -614,7 +613,8 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
               density = combined_normalised_density,
               levels = contours$levels,
               ltys = ltys$combined,
-              color = NA
+              color = NA,
+              probabilities = contours$labels
             )
         }
         if (plot.types["mrds"]){
@@ -686,18 +686,20 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
           # Plotting ss indicator circles
           if (fit$fit.types["ss"]) {
             if (plot.ss & !joint.density){
-              activated_traps <- traps[which(bincapt == 1), , drop = FALSE]
+              # Need to convert to data frame otherwise issues with ggplot aes
+              activated_traps <- as.data.frame(traps[which(bincapt == 1), , drop = FALSE])
+              activated_traps$ss <- capt$ss
               base.plot = base.plot + geom_point(data = activated_traps, 
-                                                 mapping = aes(x = activated_traps[, 1],
-                                                               y = activated_traps[, 2],
-                                                               colour = capt$ss),
+                                                 mapping = aes(x = x,
+                                                               y = y,
+                                                               colour = ss),
                                                  size = 5)
             }
           }
         }
         
         # Save the most recent plot for returning
-        out$plot <- base.plot
+        out$plots[[length(out$plots) + 1]] <- base.plot 
         
         if (!joint.density & display.plot) {
           plot(base.plot)
@@ -709,7 +711,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             scale_shape_identity()
         }
         
-        if (ask & !joint.density) {
+        if (ask & !joint.density & display.plot) {
           # Make sure to only ask if we are plotting more than one plot, 
           # and it is not the last plot in the list
           if (length(call_id) > 1 && i != call_id[[length(call_id)]]) {
@@ -717,7 +719,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
           }
         }
         
-        if (joint.density) {
+        if (joint.density & display.plot) {
           setTxtProgressBar(progress_bar, which(call_id == i))
         }
     }
@@ -727,117 +729,66 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
                                     nlevels = nlevels, prob = !density)
       
       combined_normalised_density <- densities.list$f.combined / (attr(mask, "a")*10000*sum(densities.list$f.combined)) 
-      # geom_contour()
-      combined_contour <- ggplot2::geom_contour_filled(
-        data = data.frame(x=mask[,1], y=mask[,2], z=combined_normalised_density),
-        aes(x = x, y = y, z = z),
-        breaks=contours$levels,
-        # color = cols$combined,
+      
+      base.plot <- plot.contour(
+        base_plot = base.plot,
+        x = mask[,1], y = mask[,2], 
+        density = combined_normalised_density,
+        levels = contours$levels,
+        ltys = ltys$combined,
         color = NA,
-        linetype= ltys$combined
-      )
-      
-      
-      ### TESTING CUSTOM FILL LEVELS ###
-      # Now define a manual fill scale, making the first bin transparent
-      # You need one color for each bin. If you have length(contours$levels) - 1 bins,
-      # you must supply that many values in scale_fill_manual().
-      num_bins <- length(contours$levels) - 1
-      
+        probabilities = contours$labels
+      ) + 
+        guides(colour = "none") # Remove ss guide for joint density plots
 
-      # Create an interpolating function from the max number of colors 
-      # that PuRd supports (which is 9).
-      palette_fun <- colorRampPalette(RColorBrewer::brewer.pal(9, "Reds"))
-      
-      # base_colors <- palette_fun(num_bins)
-      base_colors <- viridisLite::viridis(num_bins)
-      alpha_values <- seq(0, 1, length.out = num_bins)
-      faded_colors <- unlist(
-        Map(function(col, a) scales::alpha(col, a), base_colors, alpha_values)
-      )
-      
-      # Now generate as many colors as needed:
-      my_colors <- palette_fun(num_bins)
-      
-      # Prepend 'transparent' (or NA) for the lowest bin
-      fill_values <- c("transparent", my_colors)
-      
-      ######
-      
-      base.plot <- base.plot + combined_contour + ggplot2::scale_fill_manual(values = unname(faded_colors))
-      # base.plot <- base.plot + combined_contour +
-      #   ggplot2::scale_fill_manual(values = c("transparent", base_colors)) + 
-      # ggplot2::theme(
-      #     panel.background = ggplot2::element_rect(fill = viridisLite::viridis(1), color = NA),
-      #     panel.grid.major = ggplot2::element_blank(),
-      #     panel.grid.minor = ggplot2::element_blank()
-      #     )
-          
-      # base.plot <- base.plot + combined_contour
-      
-      close(progress_bar)
-      
       if (display.plot) {
+        close(progress_bar)
         plot(base.plot)
       }
       
-      out$plot <- base.plot
+      out$plots[[length(out$plots) + 1]] <- base.plot
     }
     
-    ## Making legend.
-    # if (show.legend){
-    #   legend.labels <- infotypes
-    #   legend.cols <- c(cols[infotypes], recursive = TRUE)
-    #   legend.ltys <- c(ltys[infotypes], recursive = TRUE)
-    #   legend("topright", legend = infotypes, lty = legend.ltys, col = legend.cols, bg = "white")
-    # }
-    
-    if (keep.estlocs){
-      out$estlocs <- estlocs
-    }
-    
-    else {
-      out$densities <- densities.list
-    }
-    
+    # out$estlocs <- estlocs
+    out$densities <- densities.list
     invisible(out)
 }
 
-plot.contour <- function(base_plot, x, y, density, levels, ltys, color=NA) {
+plot.contour <- function(base_plot, x, y, density, levels, ltys, probabilities=NULL, color=NA) {
   combined_contour <- ggplot2::geom_contour_filled(
     data = data.frame(x=x, y=y, z=density),
     aes(x = x, y = y, z = z),
     breaks=levels,
-    # color = cols$combined,
-    color = NA,
+    color = color,
     linetype= ltys
   )
   
+  # Create contour fill gradient (virdis, fading into background)
   num_bins <- length(levels) - 1
-  
-  
-  # Create an interpolating function from the max number of colors 
-  # that PuRd supports (which is 9).
-  # palette_fun <- colorRampPalette(RColorBrewer::brewer.pal(9, "Reds"))
-  
-  # base_colors <- palette_fun(num_bins)
   base_colors <- viridisLite::viridis(num_bins)
   alpha_values <- seq(0, 1, length.out = num_bins)
   faded_colors <- unlist(
     Map(function(col, a) scales::alpha(col, a), base_colors, alpha_values)
   )
   
-  # Now generate as many colors as needed:
-  # my_colors <- palette_fun(num_bins)
+  # Create an argument list for scale_fill_manual
+  # It's easier to construct the list and pass it, as it keeps the 
+  # default labelling if no probabilities are passed
+  scale_args <- list(
+    values = unname(faded_colors),
+    name <- "Contour Density"
+    )
   
-  # Prepend 'transparent' (or NA) for the lowest bin
-  # fill_values <- c("transparent", my_colors)
-  
-  ######
-  
+  if (!is.null(probabilities)) {
+    scale_args$labels <- probabilities
+    scale_args$name <- "Contour Probability"
+  }
+
+    
   return(base_plot + 
            combined_contour + 
-           ggplot2::scale_fill_manual(values = unname(faded_colors)))
+           do.call(ggplot2::scale_fill_manual, scale_args)
+         )
 }
 
 ## Function calculates contour levels based by probability rather than density
@@ -875,8 +826,8 @@ calculate.contour <- function(mask, dens, nlevels, levels, prob){
       }
     }
     if (prob){
-      labels <- character(nlevels)
-      for (i in 1:nlevels){
+      labels <- character(length(levels))
+      for (i in 1:length(levels)){
         labels[i] <- format(round(sum(z[z > levels[i]], na.rm = TRUE)/
                                     sum(z, na.rm = TRUE), 2), nsmall = 2)
       }
