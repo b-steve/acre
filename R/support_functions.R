@@ -218,8 +218,13 @@ detfn.params = function(detfn){
   return(param.og)
 }
 
+# See section 1.4.2 in Ben's thesis: 
+# https://research-repository.st-andrews.ac.uk/bitstream/handle/10023/18233/BenStevensonPhDThesis.pdf
+# When `returnNumerator` == F, we are returning Eq. 1.4
+# When `returnNumerator` == T, we are returning Eq. 1.3
 p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL, 
-                          ss.link = NULL, pars = NULL, A, n.quadpoints = 8){
+                          ss.link = NULL, pars = NULL, A, n.quadpoints = 8, 
+                          returnNumerator=F){
   dists <- distances(traps, points)
   probs <- det_prob(detfn, pars, dists, ss.link)
   if(detfn == 'ss'){
@@ -227,11 +232,16 @@ p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
     cutoff <- pars$cutoff
     probs = 1 - pnorm(cutoff, mean = probs, sd = sigma.ss)
   }
+  # prod(1 - x) : P(didn't detect on trap 1 & didn't detect on trap 2 & ...)
+  # 1 - prod(1 - x) : P(detect on at least 1 trap)
   out <- plyr::aaply(probs, 2, function(x) 1 - prod(1 - x))
-
-  out <- A*sum(out)
-
-  return(out)
+  
+  if (returnNumerator) {
+    return(out)
+  } else {
+    out <- A*sum(out)
+    return(out)
+  }
 }
 
 

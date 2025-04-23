@@ -74,7 +74,7 @@ get_trap_from_data = function(dat){
 ## Retrieve the binary capture data for given animal_id / call_id
 get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_bincapt=F) {
   if (!(session %in% unique(fit$arg_input$captures$session))) {
-    stop("Session ", session, " not found in fit")
+    stop("Session ", session, " not found in fit.")
   }
   
   animal.model <- is_animal_model(fit)
@@ -87,31 +87,60 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
   if (!animal.model & !is.null(animal_id)) {
     stop("'animal_id' argument should only be provided for animal id models")
   }
+  if (!is.null(animal_id) & (length(animal_id) > 1 | !is.numeric(animal_id))) {
+    stop("'animal_id' argument should be a numeric vector of length 1")
+  }
+  
+  # Make sure call_id is either numeric or exactly "all"
+  if (is.null(call_id) || 
+      !(is.numeric(call_id) || 
+        (is.character(call_id) && length(call_id) == 1 && call_id == "all"))) {
+    stop("'call_id' must be a numeric vector or the string 'all'")
+  }
+  if (any(duplicated(call_id))) {
+    warning("'call_id' argument contains duplicate values, which will be ignored")
+    call_id <- unique(call_id)
+  }
   
   if (animal.model) {
     if (!(animal_id %in% capt$animal_ID)) {
       stop(paste("Could not find capture history with animal id:", animal_id))
     }
-    
     # Make sure to only grab the appropriate animal's capture history
     capt <- subset(capt, capt$animal_ID == animal_id)
-  } else if (!(call_id %in% capt$ID)) {
+  }
+  
+  if (!all(call_id %in% capt$ID) & call_id != "all") {
+    missing_calls <- call_id[which(!(call_id %in% capt$ID))]
+    missing_calls_msg <- paste(missing_calls, collapse = ", ")
     if (animal.model) {
-      stop(paste("Could not find call with 'call_id':", call_id, ", for animal with 'animal_id':", animal_id))
+      stop(paste("Could not find call with 'call_id':", missing_calls_msg, ", for animal with 'animal_id':", animal_id))
     } else {
-      stop(paste("Could not find call with 'call_id':", call_id))
+      stop(paste("Could not find call with 'call_id':", missing_calls_msg))
     }
   }
   
-  capt <- subset(capt, capt$ID == call_id)
-  
-  n.traps <- nrow(get_trap(fit)[[session]])
-  bincapt <- numeric(n.traps)
-  bincapt[capt$trap] <- 1
-  # capt <- subset(capt, capt$ID == call_id)
-  # bincapt <- bincapt[which(call_id == unique(capt$ID)), ]
+  if (call_id != "all") {
+    capt <- subset(capt, capt$ID %in% call_id)
+  }
   
   if (return_bincapt) {
+    # Return a data frame with ID column, and 1 column for each trap
+    n.traps <- nrow(get_trap(fit)[[session]])
+    
+    bincapt <- lapply(unique(capt$ID), function(id) {
+      # Grab all rows for this ID
+      sub_capt <- subset(capt, ID == id) 
+      bincapt  <- numeric(n.traps)
+      bincapt[sub_capt$trap] <- 1
+      c(id, bincapt)
+    })
+    bincapt <- do.call(rbind, bincapt)
+    
+    # Convert bincapt from matrix to data frame
+    bincapt <- as.data.frame(bincapt, stringsAsFactors = FALSE)
+    colnames(bincapt) <- c("ID", paste0("trap", seq_len(n.traps)))
+    
     return(bincapt)
   } else {
     return(capt)

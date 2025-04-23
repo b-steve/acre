@@ -68,24 +68,11 @@
 #'     syntax as \code{cols}; see \link{par}.
 #' @param trap.col The colour of the points representing detector
 #'     locations.
-#' @param circle.traps Logical, if \code{TRUE} circles are plotted
-#'     around traps that made a detection of the individual in
-#'     question.
 #' @param show.labels Logical, if \code{TRUE}, contours are labelled
 #'     with the appropriate probability density (if \code{density} is
 #'     \code{TRUE}), or the corresponding probability of the
 #'     individual being within the associated contour, under the
 #'     estimated density (if \code{density} is \code{FALSE}).
-#' @param plot.contours Logical, if \code{TRUE}, contours are
-#'     plotted. Note that, if \code{FALSE}, nothing corresponding to
-#'     the density of the individuals' locations is plotted unless
-#'     \code{plot.estlocs} is \code{TRUE}.
-#' @param plot.estlocs Logical, if \code{TRUE}, dots are plotted at
-#'     the mode of the combined densities. If a density has more than
-#'     a single mode (and the modes have the same density value) then
-#'     a dot will only be plotted at one of them.
-#' @param keep.estlocs Logical, if \code{TRUE}, the locations of the
-#'     estimated locations are invisibly returned.
 #' @param plot.arrows Logical, if \code{TRUE}, arrows indicating the
 #'     estimated bearing to the individual are plotted from detectors
 #'     at which detections were made.
@@ -109,32 +96,30 @@
 #' @examples
 #' locations(example.data$fits$simple.hn, 1)
 #' locations(example.data$fits$simple.hn, 1, levels = c(0.50, 0.90, 0.95))
-#' ## Saving estimated locations.
-#' estlocs <- locations(example.data$fits$simple.hn, keep.estlocs = TRUE)
-#' estlocs
 #' \dontrun{
 #' fine.mask <- create.mask(example.data$traps, 20, spacing = 0.2)
 #' locations(example.data$fits$bearing.hn, 1, infotypes = "all", mask = fine.mask)
 #' }
 #'
 #' @export
-locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotypes = NULL,
-                      combine = FALSE, xlim = NULL, ylim = NULL,
-                      mask = get_mask(fit)[[session]], newdata = NULL,
+locations <- function(fit, mask = get_mask(fit)[[session]], 
+                      call_id = "all", animal_id=NULL, session = 1, 
+                      infotypes = NULL, combine = FALSE, 
+                      xlim = NULL, ylim = NULL, newdata = NULL,
                       levels = NULL, nlevels = 10, density = FALSE,
-                      cols = list(combined = 1, capt = 2, ss = 3, bearing = 4, dist = 5, toa = 6),
-                      ltys = list(combined = "solid", capt = "solid",
-                                  ss = "solid", bearing = "solid", dist = "solid", toa = "solid"),
-                      trap.col = "red", circle.traps = TRUE,
-                      show.labels = TRUE, plot.contours = TRUE,
-                      plot.estlocs = FALSE, keep.estlocs = FALSE,
+                      show.labels = TRUE,
                       plot.arrows = "bearing" %in% fit$infotypes,
                       plot.ss = "ss" %in% fit$infotypes,
                       plot.circles = "dist" %in% fit$infotypes &
                           !("bearing" %in% fit$infotypes),
                       arrow.length = NULL, show.legend = FALSE,
-                      show.axes = TRUE, add = FALSE, ask = TRUE, 
-                      joint.density = FALSE, display.plot = TRUE) {
+                      add = FALSE, ask = TRUE, 
+                      joint.density = FALSE, display.plot = TRUE,
+                      cols = list(combined = 1, capt = 2, ss = 3, bearing = 4, dist = 5, toa = 6),
+                      ltys = list(combined = "solid", capt = "solid",
+                                  ss = "solid", bearing = "solid", dist = "solid", toa = "solid"),
+                      trap.col = "red"
+                      ) {
   
     ## Type checking
     stopifnot(
@@ -159,43 +144,21 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
         }
     }
   
-    ## Error for locations() with a directional model.
-    if (!is.null(fit$args$ss.opts$directional)){
-        if (fit$args$ss.opts$directional){
-            stop("The locations() function has not yet been implemented for directional model fits.")
-        }
-    }
-    if (!is.null(fit$args$ss.opts$het.source)){
-        if (fit$args$ss.opts$het.source){
-            stop("The locations() function has not yet been implemented for heterogeneous source strength model fits.")
-        }
-    }
-    if (!is.null(fit$first.calls)){
-        if (fit$first.calls){
-            stop("The locations() function has not yet been implemented for first-call models.")
-        }
-    }
     ## Error if combine specified without infotypes.
     if (missing(infotypes) && combine){
         stop("Argument `combine' is only useful if `infotypes' is provided.")
     }
+  
     ## Error if new mask covariates are not provided when they need to be.
     is.new.mask <- !missing(mask)
     if (fit$fit.ihd & is.new.mask & is.null(newdata)){
         stop("Covariate values for the mask object must be provided via the `newdata' argument.")
     }
     
-    ## Extracting the session's capture history.
-    # capt.all <- get_capt(fit, session)
-    # TODO: Multi session
-    # capt.all <- get_capt_for_plot(fit$args)
-    # capt.all <- capt.all[capt.all$session == session, ]
-    
+    # Collect and verify all required objects
     capt.all <- fit$arg_input$captures
     capt.all <- capt.all[capt.all$session == session, ]
-    
     animal.model <- is_animal_model(fit)
-    
     traps <- get_trap(fit)[[session]]
     
     if(animal.model && is.null(animal_id)) {
@@ -224,12 +187,6 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
       progress_bar = txtProgressBar(min = 0, max = length(call_id), initial = 0, style=3) 
     }
 
-    ## Saving estimated locations.
-    if (keep.estlocs){
-        estlocs <- matrix(0, nrow = length(call_id), ncol = 2)
-        j <- 1
-    }
-    
     ## Sorting out limits.
     
     stopifnot(all(is.numeric(xlim) || is.null(xlim), 
@@ -267,20 +224,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             }
         }
     }
-    
-    warn.estlocs <- FALSE
-    if (any.infotypes){
-        if (!("combined" %in% infotypes) & (plot.estlocs | keep.estlocs)){
-            warn.estlocs <- TRUE
-        }
-    } else {
-        if (!("capt" %in% infotypes) & (plot.estlocs | keep.estlocs)){
-            warn.estlocs <- TRUE
-        }
-    }
-    if (warn.estlocs){
-        warning("Estimated locations only available for 'combined' information type. Ignoring 'plot.estlocs' and 'keep.estlocs'.")
-    }
+
     ## Removing "all" or "combined" from infotypes if "mrds" is specified.
     if ("mrds" %in% infotypes){
         infotypes <- infotypes[infotypes != "all"]
@@ -301,42 +245,6 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
     
     infotypes <- unique(infotypes)
     
-    ## Setting colour to "black" if there is only one contour to be plotted.
-    if (missing(cols)) {
-        if (length(infotypes) == 1){
-            cols <- "black"
-        }
-    }
-    if (missing(ltys)){
-        if (length(infotypes) == 1){
-            ltys <- "solid"
-        }
-    }
-    if (is.list(cols)){
-        if (!all(infotypes %in% names(cols))){
-            stop("Provide a colour for each contour to be plotted.")
-        }
-    }
-    if (is.list(ltys)){
-        if (!all(infotypes %in% names(ltys))){
-            stop("Provide a line type for each contour to be plotted.")
-        }
-    }
-    if (length(cols) == 1){
-        cols.save <- cols
-        cols <- vector(mode = "list", length = length(infotypes))
-        names(cols) <- infotypes
-        cols[infotypes] <- cols.save
-    }
-    if (length(ltys) == 1){
-        ltys.save <- ltys
-        ltys <- vector(mode = "list", length = length(infotypes))
-        names(ltys) <- infotypes
-        ltys[infotypes] <- ltys.save
-        if (combine){
-            ltys["combined"] <- ltys.save
-        }
-    }
     plot.types <- c("combined", "capt", "ss", "bearing", "dist", "toa",  "mrds") %in% infotypes
     names(plot.types) <- c("combined", "capt", "ss", "bearing", "dist", "toa", "mrds")
     if (combine){
@@ -344,10 +252,10 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
     }
     ## Setting all to TRUE if combined is used.
     ## Some error catching.
-    for (i in c("bearing", "dist", "toa")){
+    for (i in c("bearing", "dist", "toa", "ss")){
         if (plot.types[i] & !fit$fit.types[i]){
             msg <- paste("Contours for information type '", i, "' cannot be plotted as this information was not used in the model 'fit'", sep = "")
-            warning(msg)
+            stop(msg)
             plot.types[i] <- FALSE
         }
     }
@@ -375,8 +283,9 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
         f.x <- p.det/(a*sum(p.det))
     }
     
+    # Prepare return objects
     n_mask_points <- nrow(mask)
-    densities.list <- list(
+    densities.df <- data.frame(
       f.capt = rep(1, n_mask_points),
       f.ss = rep(1, n_mask_points),
       f.bearing = rep(1, n_mask_points),
@@ -384,36 +293,26 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
       f.toa = rep(1, n_mask_points),
       f.combined = rep(1, n_mask_points)
     )
-    
-    out <- list(
-      plots = list()
-    )
+    density_plots = list()
+
     
     for (i in call_id){
         # Sort out plot title
-        if (animal.model) {
-          if (joint.density) {
-            sub_title = paste0("session: ", session, ", animal ID: ", animal_id)
-          } else {
-            sub_title = paste0("session: ", session, ", animal ID: ", animal_id,
-                               ", call ID: ", i)
-          }
-        } else {
-          sub_title = paste0("session: ", session, ", call ID: ", i)
-        }
+        plot_title <- create_locations_plot_title(animal.model, joint.density, session, animal_id, i)
+        base.plot <- base.plot + labs(subtitle = plot_title)
         
-        base.plot <- base.plot + labs(subtitle = sub_title)
         
+        # TODO: This literally does nothing right now?
         if (plot.types["combined"]){
             if ((!combine) | (combine & plot.types["capt"])){
                 f.combined <- f.x
-                densities.list$f.combined <- densities.list$f.combined * f.x
-                
+                densities.df$f.combined <- densities.df$f.combined * f.x
             } else {
                 f.combined <- 0*f.x + 1
             }
         }
         
+        # Extract appropriate capture data
         capt <- get_capt_by_id(fit, i, animal_id, session)
         bincapt <- get_capt_by_id(fit, i, animal_id, session, return_bincapt=T)
         
@@ -421,31 +320,34 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
         if (plot.types["capt"] | plot.types["combined"] | plot.types["ss"]){
             det.probs <- det_prob(detfn, det.pars, dists, ss.link)
             
+            # Note that det_probs() returns E[SS] for ss models
             if(detfn == 'ss'){
               det.probs = 1 - pnorm(det.pars$cutoff, mean = det.probs, sd = det.pars$sigma.ss)
             }
-
+            
+            # Density due to capture history alone
             f.capt <- apply((det.probs ^ bincapt) * ((1 - det.probs) ^ (1 - bincapt)), 2, prod)
             
             # Update joint density
-            densities.list$f.capt <- densities.list$f.capt * f.capt
+            densities.df$f.capt <- densities.df$f.capt * f.capt
             
             if (plot.types["capt"]){
                 if (!combine & !joint.density){
+                  # Calculate contour information
                   contours <- calculate.contour(mask = mask, dens = f.x*f.capt, levels = levels,
                                  nlevels = nlevels, prob = !density)
                   
+                  # Normalize the density
                   capt_normalised_density <- f.x*f.capt / (attr(mask, "a")*10000*sum(f.x*f.capt)) 
-                  
-                  capt_contour <- ggplot2::geom_contour(
-                    data = data.frame(x=mask[,1], y=mask[,2], z=capt_normalised_density),
-                    aes(x = x, y = y, z = z),
-                    breaks=contours$levels,
-                    color = cols$capt,
-                    linetype= ltys$capt
-                    )
-                  
-                  base.plot <- base.plot + capt_contour
+                
+                  # Add contour layer to plot
+                  base.plot <- base.plot + plot.contour(
+                    x = mask[,1], y = mask[,2], 
+                    density = capt_normalised_density,
+                    levels = contours$levels,
+                    color = "black",
+                    probabilities = contours$labels
+                  )
                 }
             }
             if (fit$fit.types["ss"]){
@@ -453,7 +355,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
                 f.ss <- f.ss.capt/f.capt
                 
                 # Update joint density
-                densities.list$f.ss <- densities.list$f.ss * f.ss
+                densities.df$f.ss <- densities.df$f.ss * f.ss
                 
                 ## Such a hack, but this keeps f.combined correct,
                 ## below.
@@ -462,20 +364,21 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
                 f.ss[f.ss == Inf] <- 0
                 if (plot.types["ss"]){
                     if (!combine & !joint.density){
+                      # Calculate contour information
                       contours <- calculate.contour(mask = mask, dens = f.x*f.ss, levels = levels,
                                      nlevels = nlevels, prob = !density)
                       
-                      ss_normalised_density <- t(f.x*f.ss / (attr(mask, "a")*10000*sum(f.x*f.ss)))
+                      # Normalize the density
+                      ss_normalised_density <- f.x*f.ss / (attr(mask, "a")*10000*sum(f.x*f.ss))
                       
-                      ss_contour <- ggplot2::geom_contour(
-                        data = data.frame(x=mask[,1], y=mask[,2], z=t(ss_normalised_density)),
-                        aes(x = x, y = y, z = z),
-                        breaks=contours$levels,               
-                        color = cols$ss,
-                        linetype= ltys$ss
+                      # Add contour layer to plot
+                      base.plot <- base.plot + plot.contour(
+                        x = mask[,1], y = mask[,2], 
+                        density = ss_normalised_density,
+                        levels = contours$levels,
+                        color = "orange",
+                        probabilities = contours$labels
                       )
-                      
-                      base.plot <- base.plot + ss_contour
                     }
                 }
             } else {
@@ -485,19 +388,19 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             ## how this works later.
             if (plot.types["combined"] & !combine){
                 f.combined <- f.combined*f.capt
-                densities.list$f.combined <- densities.list$f.combined * f.capt
+                densities.df$f.combined <- densities.df$f.combined * f.capt
             } else if (plot.types["combined"] & combine){
                 f.true.capt <- f.capt/f.ss
                 f.true.capt[f.ss == 0] <- 0
                 if (plot.types["capt"] & plot.types["ss"]){
                     f.combined <- f.combined*f.capt
-                    densities.list$f.combined <- densities.list$f.combined * f.capt
+                    densities.df$f.combined <- densities.df$f.combined * f.capt
                 } else if (plot.types["capt"] & !plot.types["ss"]){
                     f.combined <- f.combined*f.true.capt
-                    densities.list$f.combined <- densities.list$f.combined * f.true.capt
+                    densities.df$f.combined <- densities.df$f.combined * f.true.capt
                 } else if (!plot.types["capt"] & plot.types["ss"]){
                     f.combined <- f.combined*f.ss
-                    densities.list$f.combined <- densities.list$f.combined * f.ss
+                    densities.df$f.combined <- densities.df$f.combined * f.ss
                 }
             }
         }
@@ -506,30 +409,28 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             f.bearing <- bearing.density(fit, session, mask, call_id = i, animal_id = animal_id)
             
             # Update joint density
-            densities.list$f.bearing <- densities.list$f.bearing * f.bearing
+            densities.df$f.bearing <- densities.df$f.bearing * f.bearing
             
             if (plot.types["bearing"]) {
                 if (!combine & !joint.density) {
                   contours <- calculate.contour(mask = mask, dens = f.x*f.bearing, levels = levels,
                                  nlevels = nlevels, prob = !density)
                   
-                  bearing_normalised_density <- t(f.x*f.bearing / (attr(mask, "a")*10000*sum(f.x*f.bearing)))
+                  bearing_normalised_density <- f.x*f.bearing / (attr(mask, "a")*10000*sum(f.x*f.bearing))
                   
-                  bearing_contour <- ggplot2::geom_contour(
-                    data = data.frame(x=mask[,1], y=mask[,2], z=bearing_normalised_density),
-                    aes(x = x, y = y, z = z),
-                    breaks=contours$levels,                 
-                    color = cols$bearing,
-                    linetype= ltys$bearing
+                  base.plot <- base.plot + plot.contour(
+                    x = mask[,1], y = mask[,2], 
+                    density = bearing_normalised_density,
+                    levels = contours$levels,
+                    color = "red",
+                    probabilities = contours$labels
                   )
-
-                  base.plot <- base.plot + bearing_contour
                 }
             }
             if (plot.types["combined"]){
                 if ((!combine) | (combine & plot.types["bearing"])){
                     f.combined <- f.combined*f.bearing
-                    densities.list$f.combined <- densities.list$f.combined * f.bearing
+                    densities.df$f.combined <- densities.df$f.combined * f.bearing
                 }
             }
         }
@@ -538,21 +439,21 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             f.dist <- dist.density(fit, session, mask, dists, call_id = i, animal_id = animal_id)
             
             # Update joint density
-            densities.list$f.dist <- densities.list$f.dist * f.dist
+            densities.df$f.dist <- densities.df$f.dist * f.dist
             
             if (plot.types["dist"]){
                 if (!combine & !joint.density){
                   contours <- calculate.contour(mask = mask, dens = f.x*f.dist, levels = levels,
                                  nlevels = nlevels, prob = !density)
                   
-                  dist_normalised_density <- t(f.x*f.dist / (attr(mask, "a")*10000*sum(f.x*f.dist)))
+                  dist_normalised_density <- f.x*f.dist / (attr(mask, "a")*10000*sum(f.x*f.dist))
                   
                   dist_contour <- ggplot2::geom_contour(
                     data = data.frame(x=mask[,1], y=mask[,2], z=dist_normalised_density),
                     aes(x = x, y = y, z = z),
                     breaks=contours$levels,  
-                    color = cols$dist,
-                    linetype= ltys$dist
+                    color = "green",
+                    linetype= "dotdash"
                   )
                   
                   base.plot <- base.plot + dist_contour
@@ -561,7 +462,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             if (plot.types["combined"]){
                 if ((!combine) | (combine & plot.types["dist"])){
                     f.combined <- f.combined*f.dist
-                    densities.list$f.combined <- densities.list$f.combined * f.dist
+                    densities.df$f.combined <- densities.df$f.combined * f.dist
                 }
             }
         }
@@ -572,7 +473,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             f.toa <- toa.density(fit, session, mask, dists, call_id = i, animal_id = animal_id)
             
             # Update joint density
-            densities.list$f.toa <- densities.list$f.toa * f.toa
+            densities.df$f.toa <- densities.df$f.toa * f.toa
             
             if (plot.types["toa"]){
                 if (!combine & !joint.density){
@@ -585,8 +486,8 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
                     data = data.frame(x=mask[,1], y=mask[,2], z=toa_normalised_density),
                     aes(x = x, y = y, z = z),
                     breaks=contours$levels,
-                    color = cols$toa,
-                    linetype= ltys$toa
+                    color = "purple",
+                    linetype= "dotdash"
                   )
                   
                   base.plot <- base.plot + toa_contour
@@ -595,7 +496,7 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             if (plot.types["combined"]){
                   if ((!combine) | (combine & plot.types["toa"])){
                       f.combined <- f.combined*f.toa
-                      densities.list$f.combined <- densities.list$f.combined * f.toa
+                      densities.df$f.combined <- densities.df$f.combined * f.toa
                   }
               }
         }
@@ -607,99 +508,71 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
             
             combined_normalised_density <- f.combined / (attr(mask, "a")*10000*sum(f.combined)) 
 
-            base.plot <- plot.contour(
-              base_plot = base.plot,
+            base.plot <- base.plot + plot.contour(
               x = mask[,1], y = mask[,2], 
               density = combined_normalised_density,
               levels = contours$levels,
-              ltys = ltys$combined,
-              color = NA,
+              color = "slateblue",
               probabilities = contours$labels
             )
         }
+        
         if (plot.types["mrds"]){
             loc <- capt.all$mrds[call_id, , drop = FALSE]
             points(loc, pch = 16, col = "black")
         }
-        if (plot.estlocs | keep.estlocs){
-            if ((any.infotypes & plot.types["combined"]) | !any.infotypes){
-                f.estlocs <- if (any.infotypes) f.combined else f.capt*f.x
-                mode.points <- which(f.estlocs == max(f.estlocs))[1]
-                if (plot.estlocs){
-                    points(mask[mode.points, 1], mask[mode.points, 2],
-                           pch = 16, col = "black")
-                }
-                if (keep.estlocs){
-                    estlocs[j, ] <- c(mask[mode.points, 1], mask[mode.points, 2])
-                    j <- j + 1
-                }
-            }
-        }
-
         
         
         ## Plotting traps, and circles around them.
-        if (!add){
-          if (plot.ss & !joint.density) {
-            plot_traps <- data.frame(traps[which(bincapt == 0), , drop = FALSE])
-          } else {
-            plot_traps <- data.frame(traps)
-          }
-          # Plot traps
-          base.plot = base.plot + 
-            geom_point(data = plot_traps, mapping = aes(x = x, y = y, shape = 4), 
-                       size = 3, col="red", stroke=1)
-            
-          
-          if ((circle.traps & !plot.ss) | (circle.traps & joint.density)){
-            base.plot = base.plot + geom_point(
-              data = subset(traps, bincapt == 1),
-              aes(x = x, y = y),
-              shape = 21,
-              color = "red",
-              size = 4.5,
-              stroke = 1
-            )
-          }
-          
-          # Plotting arrows for estimated bearings.
-          if (fit$fit.types["bearing"]) {
-            if (plot.arrows) {
-              base.plot = base.plot + estimated_bearing_arrow_plot(fit = fit,
-                                                                   session = session,
-                                                                   call_id = i,
-                                                                   animal_id = animal_id)
-            }
-          }
-          
-          
-          # Plotting distance circles
-          if (fit$fit.types["dist"]) {
-            if (plot.circles & !plot.arrows){
-              base.plot = base.plot + estimated_distance_plot(fit = fit,
-                                                              session = session,
-                                                              call_id = i,
-                                                              animal_id = animal_id)
-            }
-          }
-          
-          # Plotting ss indicator circles
-          if (fit$fit.types["ss"]) {
-            if (plot.ss & !joint.density){
-              # Need to convert to data frame otherwise issues with ggplot aes
-              activated_traps <- as.data.frame(traps[which(bincapt == 1), , drop = FALSE])
-              activated_traps$ss <- capt$ss
-              base.plot = base.plot + geom_point(data = activated_traps, 
-                                                 mapping = aes(x = x,
-                                                               y = y,
-                                                               colour = ss),
-                                                 size = 5)
-            }
-          }
+        # Used to plot conditionally on `plot.ss`. If there is an issue with 
+        # being able to see the trap "x's" under the ss circle, may need to add
+        # again.
+        traps_to_plot <- data.frame(traps)
+        base.plot = base.plot + 
+          geom_point(data = traps_to_plot, mapping = aes(x = x, y = y, shape = 4), 
+                     size = 3, col="red", stroke=1)
+        
+        
+        if (!plot.ss | joint.density){
+          # Circle the active traps (unless we are plotting ss information)
+          base.plot = base.plot + geom_point(
+            data = subset(traps, bincapt == 1), aes(x = x, y = y),
+            shape = 21, color = "red", size = 4.5, stroke = 1)
         }
         
+        # Plotting arrows for estimated bearings.
+        if (fit$fit.types["bearing"] & plot.arrows) {
+          base.plot = base.plot + 
+            estimated_bearing_arrow_plot(fit = fit, session = session, 
+                                         call_id = i, animal_id = animal_id)
+        }
+        
+        
+        # Plotting distance circles
+        if (fit$fit.types["dist"] & plot.circles & !plot.arrows) {
+          base.plot = base.plot + 
+            estimated_distance_plot(fit = fit, session = session, 
+                                    call_id = i, animal_id = animal_id)
+        }
+        
+        # Plotting ss indicator circles
+        if (fit$fit.types["ss"] & plot.ss & !joint.density) {
+          # Need to convert to data frame otherwise issues with ggplot aes
+          activated_traps <- as.data.frame(subset(traps, bincapt == 1))
+          activated_traps$ss <- capt$ss
+          base.plot = base.plot + geom_point(data = activated_traps, 
+                                             mapping = aes(x = x, y = y, colour = ss),
+                                             size = 5)
+        }
+        
+        
         # Save the most recent plot for returning
-        out$plots[[length(out$plots) + 1]] <- base.plot 
+        density_plots[[length(density_plots) + 1]] <- base.plot 
+        
+        # plot.mask_boundary
+        if (T) {
+          base.plot <- base.plot + plot.mask_boundary(mask)
+        }
         
         if (!joint.density & display.plot) {
           plot(base.plot)
@@ -725,18 +598,16 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
     }
     
     if (joint.density) {
-      contours <- calculate.contour(mask = mask, dens = densities.list$f.combined, levels = levels,
+      contours <- calculate.contour(mask = mask, dens = densities.df$f.combined, levels = levels,
                                     nlevels = nlevels, prob = !density)
       
-      combined_normalised_density <- densities.list$f.combined / (attr(mask, "a")*10000*sum(densities.list$f.combined)) 
+      combined_normalised_density <- densities.df$f.combined / (attr(mask, "a")*10000*sum(densities.df$f.combined)) 
       
-      base.plot <- plot.contour(
-        base_plot = base.plot,
+      base.plot <- base.plot + plot.contour(
         x = mask[,1], y = mask[,2], 
         density = combined_normalised_density,
         levels = contours$levels,
-        ltys = ltys$combined,
-        color = NA,
+        color = "yellow",
         probabilities = contours$labels
       ) + 
         guides(colour = "none") # Remove ss guide for joint density plots
@@ -746,26 +617,43 @@ locations <- function(fit, call_id = "all", animal_id=NULL, session = 1, infotyp
         plot(base.plot)
       }
       
-      out$plots[[length(out$plots) + 1]] <- base.plot
+      density_plots[[length(density_plots) + 1]] <- base.plot
     }
-    
-    # out$estlocs <- estlocs
-    out$densities <- densities.list
+
+    out <- list()
+    out$densities <- densities.df
+    out$plots <- density_plots
     invisible(out)
 }
 
-plot.contour <- function(base_plot, x, y, density, levels, ltys, probabilities=NULL, color=NA) {
-  combined_contour <- ggplot2::geom_contour_filled(
+plot.mask_boundary <- function(mask) {
+  hull_idx <- chull(mask[,1], mask[,2])
+  hull_idx <- c(hull_idx, hull_idx[1])
+  mask_boundary <- mask[hull_idx, ]
+  return(ggplot2::geom_polygon(
+    data = as.data.frame(mask_boundary),
+    aes(x = x, y = y),
+    fill = NA, 
+    color = "white",
+    linetype = "dashed"
+  ))
+}
+
+plot.contour <- function(x, y, density, levels, probabilities=NULL, color="black") {
+  # ggplot2::geom_contour_filled
+  combined_contour <- ggplot2::geom_contour(
     data = data.frame(x=x, y=y, z=density),
-    aes(x = x, y = y, z = z),
+    # mapping=aes(x=x, y=y, z=z),
+    aes(x=x, y=y, z=z),
     breaks=levels,
     color = color,
-    linetype= ltys
+    linetype="solid"
   )
   
   # Create contour fill gradient (virdis, fading into background)
   num_bins <- length(levels) - 1
-  base_colors <- viridisLite::viridis(num_bins)
+  # base_colors <- viridisLite::viridis(num_bins)
+  base_colors <- rep(color, num_bins)
   alpha_values <- seq(0, 1, length.out = num_bins)
   faded_colors <- unlist(
     Map(function(col, a) scales::alpha(col, a), base_colors, alpha_values)
@@ -784,11 +672,14 @@ plot.contour <- function(base_plot, x, y, density, levels, ltys, probabilities=N
     scale_args$name <- "Contour Probability"
   }
 
-    
-  return(base_plot + 
-           combined_contour + 
-           do.call(ggplot2::scale_fill_manual, scale_args)
-         )
+  return(combined_contour)
+  # return(
+  #   list(
+  #     combined_contour,
+  #     # do.call(ggplot2::scale_fill_manual, scale_args)
+  #     do.call(ggplot2::scale_color_manual, scale_args)
+  #     )
+  #   )
 }
 
 ## Function calculates contour levels based by probability rather than density
@@ -847,11 +738,13 @@ bearing.density <- function(fit, session, mask, call_id, animal_id=NULL){
     }
     
     capt <- get_capt_by_id(fit, call_id, animal_id, session)
-    bincapt <- get_capt_by_id(fit, call_id, animal_id, session, return_bincapt=T)
+    bincapt <- get_capt_by_id(fit, call_id, animal_id, session, return_bincapt=T)[,-1]
     bearing.capt <- capt$bearing
     
     # Initialize density matrix for this call
-    mask.dens <- matrix(0, nrow = sum(bincapt), ncol = nrow(mask))
+    # Set it to 1 by default, as we are multiplying together
+    # So if there is an NA bearing it doesn't effect 
+    mask.dens <- matrix(1, nrow = sum(bincapt), ncol = nrow(mask))
     
     # Grab our estimated kappa parameter
     kappa <- coef(fit, type="fitted")[["kappa"]]
@@ -860,8 +753,11 @@ bearing.density <- function(fit, session, mask, call_id, animal_id=NULL){
     mask.bearings <- bearings(get_trap(fit)[[session]][bincapt == 1, , drop = FALSE], as.matrix(mask))
     
     # Calculate the density for each of our detections
-    for (j in 1:sum(bincapt)) {
-      mask.dens[j, ] <- CircStats::dvm(bearing.capt[j], mu = mask.bearings[j, ], kappa = kappa)
+    for (i in 1:sum(bincapt)) {
+      # Make sure bearing isn't missing
+      if (!is.na(bearing.capt[i])) {
+        mask.dens[i, ] <- CircStats::dvm(bearing.capt[i], mu = mask.bearings[i, ], kappa = kappa)
+      }
     }
 
     return(apply(mask.dens, 2, prod))
@@ -874,8 +770,8 @@ dist.density <- function(fit, session, mask, dists, call_id, animal_id=NULL){
     }
     
     capt <- get_capt_by_id(fit, call_id, animal_id, session)
-    bincapt <- get_capt_by_id(fit, call_id, animal_id, session, return_bincapt=T)
-
+    bincapt <- get_capt_by_id(fit, call_id, animal_id, session, return_bincapt=T)[,-1]
+    
     dist.capt <- capt$dist
     
     # Initialize density matrix for this call
@@ -1024,4 +920,17 @@ circles <- function(centres, radius, ...){
     lines(xs, ys, ...)
 }
 
+create_locations_plot_title <- function(animal.model, joint.density, 
+                                        session, animal_id, call_id) {
+  if (animal.model) {
+    if (joint.density) {
+      sub_title = paste0("session: ", session, ", animal ID: ", animal_id)
+    } else {
+      sub_title = paste0("session: ", session, ", animal ID: ", animal_id,
+                         ", call ID: ", call_id)
+    }
+  } else {
+    sub_title = paste0("session: ", session, ", call ID: ", call_id)
+  }
+}
 
