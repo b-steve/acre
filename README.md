@@ -8,7 +8,9 @@
 
 ## Help
 
-The `acre` package is still in development, and the documentation is still a little patchy. There's a tutorial [here](https://bcstevenson.nfshost.com/acre-worksheet.html) that provides an introduction to the basics of the package.
+The `acre` package is still in development, and the documentation is still a very patchy. There's a tutorial [here](https://bcstevenson.nfshost.com/acre-worksheet.html) that provides an introduction to the basics of the package. 
+
+If you want to use a completed package that is no longer under active development, then consider [`ascr`](https://github.com/b-steve/ascr), a predecessor to `acre`. The `ascr` package has full documentation, including examples. However, is more restrictive, particularly in terms of including effects of covariates.
 
 ## References
 
