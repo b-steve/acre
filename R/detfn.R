@@ -3,7 +3,7 @@
 
 #argument orientation is used for ss.dir, not supported yet
 
-det_prob = function(det_fn, det_par, dx, ss.link = NULL, orientation = NULL){
+det_prob = function(det_fn, det_par, dx, ss.link = NULL, orientation = NULL) {
   g0 = NULL
   sigma = NULL
   lambda0 = NULL

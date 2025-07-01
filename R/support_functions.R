@@ -218,13 +218,13 @@ detfn.params = function(detfn){
   return(param.og)
 }
 
-# See section 1.4.2 in Ben's thesis: 
+# See section 1.4.2 in: 
 # https://research-repository.st-andrews.ac.uk/bitstream/handle/10023/18233/BenStevensonPhDThesis.pdf
-# When `returnNumerator` == F, we are returning Eq. 1.4
-# When `returnNumerator` == T, we are returning Eq. 1.3
+# When `return_numerator` == F, we are returning numerator of Eq. 1.4
+# When `return_numerator` == T, we are returning denominator of Eq. 1.4
 p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL, 
-                          ss.link = NULL, pars = NULL, A, n.quadpoints = 8, 
-                          returnNumerator=F){
+                          ss.link = NULL, pars = NULL, A, n.quadpoints = 8,
+                          esa = T) {
   dists <- distances(traps, points)
   probs <- det_prob(detfn, pars, dists, ss.link)
   if(detfn == 'ss'){
@@ -234,12 +234,13 @@ p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
   }
   # prod(1 - x) : P(didn't detect on trap 1 & didn't detect on trap 2 & ...)
   # 1 - prod(1 - x) : P(detect on at least 1 trap)
-  out <- plyr::aaply(probs, 2, function(x) 1 - prod(1 - x))
+  # out <- plyr::aaply(probs, 2, function(x) 1 - prod(1 - x))
+  out <- 1 - apply(1 - probs, 2, prod)
   
-  if (returnNumerator) {
+  if (esa) {
+    out <- A*sum(out)
     return(out)
   } else {
-    out <- A*sum(out)
     return(out)
   }
 }
@@ -1836,12 +1837,11 @@ homo_digit = function(x){
 
 #predict density with information of locations coordinates, only used in the plot currently
 
-predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = NULL, xlim = NULL, ylim = NULL,
+predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, 
+                              D_cov = NULL, xlim = NULL, ylim = NULL,
                               x_pixels = 50, y_pixels = 50, se_fit = FALSE, log_scale = FALSE, set_zero = NULL,
                               convert.loc2mask = NULL,
                               control_boot = list(correct_bias = FALSE, from_boot = TRUE), ...){
-
-
   if(!is.null(set_zero) & se_fit){
     warning('During the calculation of standard error, std_zero will be ignored.')
   }
@@ -1893,43 +1893,54 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
       mask_level_dat_extract = FALSE
     }
 
-
-
+    # If any of
+    # 
+    # - The fit does not contain any location covariate information
+    # - The mask we will be predicting over has changed from the original fit
+    # - The covariate information we will be predicting with has changed from
+    #   the original fit
+    # 
+    # then we will re-interpolate the location covariates
     if(is.null(old_loc_cov)){
+      
+      # Grab the original parameter interpolation data
       old_loc_cov = get_par_extend_data(fit)$mask
+      
+      # If NULL, then the model was fitted without location covariates
       if(!is.null(old_loc_cov)){
+        
         mask_level_dat_extract = TRUE
-        if('session' %in% colnames(old_loc_cov)){
-          old_loc_cov = subset(old_loc_cov, old_loc_cov$session == session_select)
+        
+        # Grab correct session
+        if('session' %in% colnames(old_loc_cov)) {
+          old_loc_cov = subset(old_loc_cov, 
+                               old_loc_cov$session == session_select)
         }
-
-        #when locations/mask in prediction is assigned by xlim/ylim or new_data, we use
-        #the original mask_level data as loc.cov, otherwise, we do not need to do
-        #conversion in the first place
+      
+        # When locations/mask in prediction is assigned by `xlim`/`ylim` or 
+        # `new_data`, we use the original mask level data as `loc.cov`, 
+        # otherwise, we do not need to do conversion in the first place
         if(!original_mask){
-
-          if('session' %in% colnames(old_loc_cov)){
-            old_loc_cov = old_loc_cov[,which(colnames(old_loc_cov)!='session'),drop = FALSE]
+          if('session' %in% colnames(old_loc_cov)) {
+            old_loc_cov = old_loc_cov[, which(colnames(old_loc_cov)!='session'), 
+                                      drop = FALSE]
           }
-          if('mask' %in% colnames(old_loc_cov)){
-            old_loc_cov = old_loc_cov[,which(colnames(old_loc_cov)!='mask'),drop = FALSE]
+          if('mask' %in% colnames(old_loc_cov)) {
+            old_loc_cov = old_loc_cov[, which(colnames(old_loc_cov)!='mask'), 
+                                      drop = FALSE]
           }
-
           tem_mask = get_mask(fit)
           if(is(tem_mask, 'list')) tem_mask = tem_mask[[session_select]]
           stopifnot(nrow(old_loc_cov) == nrow(tem_mask))
           old_loc_cov = cbind(tem_mask, old_loc_cov)
-
         }
       }
-
     }
 
-
-    if(!is.null(old_loc_cov)){
-      #like mentioned right above, if we are using original mask data, and mask-level covariates data
-      #we do not need to do conversion at all
-      if(mask_level_dat_extract & original_mask){
+    if(!is.null(old_loc_cov)) {
+      # Like mentioned right above, if we are using original mask data, and 
+      # mask-level covariates data we do not need to do conversion at all
+      if(mask_level_dat_extract & original_mask) {
         cov_mask = old_loc_cov
       } else {
         if(is.null(convert.loc2mask)){
@@ -1965,7 +1976,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
         cov_mask = cbind(loc_cov_mask, dist_cov_mask)
       }
       
-      # Make sure to remove any unnecessary  session or mask columns
+      # Make sure to remove any unnecessary session or mask columns
       if(any(colnames(cov_mask) %in% c('session', 'mask'))){
         old_covariates = cbind(old_covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
       } else {
@@ -2049,7 +2060,6 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
 
     if(!is.null(set_zero)) values_link[set_zero] = 0
 
-
     tem = get_extended_par_value(gam.model, par_info$n_col_full, par_info$n_col_mask,
                                  values_link, old_covariates, DX_output = TRUE)
     D.mask = unlink.fun(link = par_info$link, value = tem$output)
@@ -2057,7 +2067,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, D_cov = 
     if(se_fit){
       DX = tem$DX
 
-      if(is(fit, 'acre_boot')){
+      if(is(fit, 'acre_boot')) {
         if(log_scale){
           type = 'linked'
         } else {
@@ -2429,8 +2439,8 @@ convert_time_loc_cov_to_loc_cov = function(time.loc.cov, loc.cov, session.cov){
 #'
 #' @examples dataset_names <- get_dataset_names()
 get_dataset_names = function() {
-  # return(data(package="acre")$results[, "Item"])
-  return()
+  return(data(package="acre")$results[, "Item"])
+  # return()
 }
 
 separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
@@ -2444,7 +2454,7 @@ separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
   
   # Check if dist_cov_col_names is a character vector
   if (!is.character(dist_cov_col_names)) {
-    stop("dist_cov must be a character vector of distance covariate column names.")
+    stop("dist_cov_col_names must be a character vector of distance covariate column names.")
   }
   
   distance <- list()

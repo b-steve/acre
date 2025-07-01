@@ -93,9 +93,8 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
   
   # Make sure call_id is either numeric or exactly "all"
   if (is.null(call_id) || 
-      !(is.numeric(call_id) || 
-        (is.character(call_id) && length(call_id) == 1 && call_id == "all"))) {
-    stop("'call_id' must be a numeric vector or the string 'all'")
+      !(is.numeric(call_id) || identical(call_id, "all"))) {
+    stop("'call_id' must be a numeric vector or 'all'")
   }
   if (any(duplicated(call_id))) {
     warning("'call_id' argument contains duplicate values, which will be ignored")
@@ -110,7 +109,7 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
     capt <- subset(capt, capt$animal_ID == animal_id)
   }
   
-  if (!all(call_id %in% capt$ID) & call_id != "all") {
+  if (!all(call_id %in% capt$ID) & !identical(call_id, "all")) {
     missing_calls <- call_id[which(!(call_id %in% capt$ID))]
     missing_calls_msg <- paste(missing_calls, collapse = ", ")
     if (animal.model) {
@@ -120,7 +119,7 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
     }
   }
   
-  if (call_id != "all") {
+  if (!identical(call_id, "all")) {
     capt <- subset(capt, capt$ID %in% call_id)
   }
   
@@ -146,16 +145,6 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
     return(capt)
   }
 }
-
-# get_n_calls = function(fit, id, session=1) {
-#   animal.model <- is_animal_model(fit)
-#   if (!animal.model) {
-#     return(1)
-#   } else {
-#     capt <- get_capt(fit, session)
-#     return(length(unique(subset(capt, capt$animal_ID == id)$ID)))
-#   }
-# }
 
 get_par_extend = function(fit){
   output = fit$args$par.extend
@@ -376,7 +365,109 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
   } else {
     return(output)
   }
+}
 
+# TODO: This is not well documented.
+#' Calculate and return coefficients for extended models
+#' 
+#' Calculate and return coefficients for extended models over the entire mask.
+#' 
+#' Returns a list of (nmask) x (ntrap) columns, for each extended parameter.
+#' values correspond to estimated parameter value for either
+#' (a) The covariate values used to fit the model or
+#' (b) The covariate values provided in newdata
+#' 
+#' Note that because the parameter estimates are calculated for the entire mask,
+#' over every trap, newdata argument will be recycled (or truncated), to the 
+#' correct dimensions.
+#'
+#' @param fit 
+#' @param mask 
+#' @param traps 
+#' @param newdata 
+#' @param select_covariates 
+#'
+#' @return a list of (nmask) x (ntrap) columns, for each extended parameter.
+#'          values correspond to estimated parameter value for the given covariate values.
+#' @export
+#'
+#' @examples
+get_par_extend_matrix <- function(fit, mask, traps, newdata=NULL, 
+                                  warn = T) {
+  # Make sure model is parameter extended
+  par_extended <- !is.null(get_par_extend(fit))
+  if (!par_extended) {
+    stop("Provided model is not parameter extended")
+  }
+  
+  # Make sure user provides all required covariates in the case of newdata
+  if (!is.null(newdata)) {
+    all_covariates <- unlist(get_par_extend_covariate(fit))
+    
+    if (!all(all_covariates %in% names(newdata))) {
+      if (warn) {
+        warning(paste("Missing covariate in 'newdata' argument:", 
+                   all_covariates[-which(all_covariates %in% names(newdata))]),
+                "\nCovariate values from model fitting will be used")
+      }
+    }
+  }
+
+  ext_par_data <- get_par_extend_data(fit)
+  n_mask_ext <- nrow(mask)
+  n_trap_ext <- nrow(traps)
+  
+  # Maybe check whether the detfn params have been extended
+  ext_par_newdata <- NULL
+  if (!is.null(ext_par_data$mask)) {
+    if (!is.null(newdata)) {
+      for (par in names(newdata)) {
+        if (par %in% names(ext_par_data$mask)) {
+          ext_par_data$mask[[par]] <- newdata[[par]]
+        }
+      }
+    }
+    
+    ext_par_newdata <- ext_par_data$mask[rep(
+      seq_len(n_mask_ext), each = n_trap_ext
+    ), , drop=FALSE]
+  }
+  if (!is.null(ext_par_data$trap)) {
+    if (!is.null(newdata)) {
+      for (par in names(newdata)) {
+        if (par %in% names(ext_par_data$trap)) {
+          ext_par_data$trap[[par]] <- newdata[[par]]
+        }
+      }
+    }
+    
+    trap_ext_data <- ext_par_data$trap[rep(
+      seq_len(n_trap_ext), each = n_mask_ext
+    ), , drop=FALSE]
+    
+    if (!is.null(ext_par_newdata)) {
+      ext_par_newdata <- cbind(ext_par_newdata, trap_ext_data)
+    } else {
+      ext_par_newdata <- trap_ext_data
+    }
+  }
+  
+  ext_par_values <- predict(fit, newdata = ext_par_newdata, se.fit = F, 
+                            confidence = F)
+  
+  par_values <- list()
+  ext_par_names <- get_par_extend_name(fit)
+  for (par in ext_par_names) {
+    ext_par_values_matrix <- matrix(
+      ext_par_values[[par]]$Estimate,
+      nr = nrow(traps),
+      nc = nrow(mask),
+      byrow = T
+    )
+    par_values[[par]] <- ext_par_values_matrix
+  }
+  
+  return(par_values)
 }
 
 #for numeric columns in the data frames in par.extend$data, the mean will be

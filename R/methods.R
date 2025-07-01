@@ -917,7 +917,7 @@ predict.acre_tmb = function(fit, type = 'response', newdata = NULL, se.fit = TRU
       n_row = 1
     }
     
-    if(n_row != 0){
+    if(n_row != 0) {
       output[[i]] = data.frame(Estimate = numeric(n_row))
 
       output[[i]]$Estimate = as.vector(coef(fit, types = type, new.covariates = newdata, pars = i))

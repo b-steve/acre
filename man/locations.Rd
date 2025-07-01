@@ -6,6 +6,7 @@
 \usage{
 locations(
   fit,
+  mask = get_mask(fit)[[session]],
   call_id = "all",
   animal_id = NULL,
   session = 1,
@@ -13,34 +14,35 @@ locations(
   combine = FALSE,
   xlim = NULL,
   ylim = NULL,
-  mask = get_mask(fit)[[session]],
   newdata = NULL,
   levels = NULL,
   nlevels = 10,
   density = FALSE,
-  cols = list(combined = 1, capt = 2, ss = 3, bearing = 4, dist = 5, toa = 6),
-  ltys = list(combined = "solid", capt = "solid", ss = "solid", bearing = "solid", dist =
-    "solid", toa = "solid"),
-  trap.col = "red",
-  circle.traps = TRUE,
   show.labels = TRUE,
-  plot.contours = TRUE,
-  plot.estlocs = FALSE,
-  keep.estlocs = FALSE,
   plot.arrows = "bearing" \%in\% fit$infotypes,
   plot.ss = "ss" \%in\% fit$infotypes,
   plot.circles = "dist" \%in\% fit$infotypes & !("bearing" \%in\% fit$infotypes),
   arrow.length = NULL,
   show.legend = FALSE,
-  show.axes = TRUE,
   add = FALSE,
   ask = TRUE,
   joint.density = FALSE,
-  display.plot = TRUE
+  display.plot = TRUE,
+  cols = list(combined = 1, capt = 2, ss = 3, bearing = 4, dist = 5, toa = 6),
+  ltys = list(combined = "solid", capt = "solid", ss = "solid", bearing = "solid", dist =
+    "solid", toa = "solid"),
+  trap.col = "red"
 )
 }
 \arguments{
 \item{fit}{A fitted model from \link{fit.ascr}.}
+
+\item{mask}{A matrix with two columns. Each row provides Cartesian
+coordinates for the location of a mask point. The function
+\link[ascr]{create.mask} will return a suitable object. The
+mask used to fit the model \code{fit} will be used by default;
+this argument is usually used when estimated location contours
+need to be plotted to a higher resolution than this.}
 
 \item{session}{The session with the detector array and invidual(s)
 to be plotted (for multi-session models only).}
@@ -71,13 +73,6 @@ range.}
 \item{ylim}{A numeric vector of length 2, giving the y coordinate
 range.}
 
-\item{mask}{A matrix with two columns. Each row provides Cartesian
-coordinates for the location of a mask point. The function
-\link[ascr]{create.mask} will return a suitable object. The
-mask used to fit the model \code{fit} will be used by default;
-this argument is usually used when estimated location contours
-need to be plotted to a higher resolution than this.}
-
 \item{newdata}{If a new mask is provided in the \code{mask}
 argument, and the model fits an inhomogeneous density surface
 via mask-level covariates, then this argument must provide the
@@ -97,6 +92,31 @@ by \code{levels}) refer to the probability of the individual
 being located within the associated contour under the estimated
 distribution of the individual's location.}
 
+\item{show.labels}{Logical, if \code{TRUE}, contours are labelled
+with the appropriate probability density (if \code{density} is
+\code{TRUE}), or the corresponding probability of the
+individual being within the associated contour, under the
+estimated density (if \code{density} is \code{FALSE}).}
+
+\item{plot.arrows}{Logical, if \code{TRUE}, arrows indicating the
+estimated bearing to the individual are plotted from detectors
+at which detections were made.}
+
+\item{plot.circles}{Logical, if \code{TRUE}, circles indicating the
+estimated distance to the individual are plotted around
+detectors at which detections were made.}
+
+\item{arrow.length}{Numeric, providing the length of the arrows
+(only used if \code{plot.arrows} is \code{TRUE}).}
+
+\item{show.legend}{Logical, if \code{TRUE}, a legend will be added
+to the plot.}
+
+\item{add}{Logical, if \code{TRUE}, contours will be added to an
+existing plot.}
+
+\item{ask}{Logical. If TRUE (and the R session is interactive) the user is asked for input, before a new figure is drawn.}
+
 \item{cols}{A list with named components corresponding to each
 contour type (i.e., a subset of \code{"capt"},
 \code{"bearing"}, \code{"dist"}, \code{"toa"}, and
@@ -114,56 +134,14 @@ syntax as \code{cols}; see \link{par}.}
 \item{trap.col}{The colour of the points representing detector
 locations.}
 
-\item{circle.traps}{Logical, if \code{TRUE} circles are plotted
-around traps that made a detection of the individual in
-question.}
-
-\item{show.labels}{Logical, if \code{TRUE}, contours are labelled
-with the appropriate probability density (if \code{density} is
-\code{TRUE}), or the corresponding probability of the
-individual being within the associated contour, under the
-estimated density (if \code{density} is \code{FALSE}).}
-
-\item{plot.contours}{Logical, if \code{TRUE}, contours are
-plotted. Note that, if \code{FALSE}, nothing corresponding to
-the density of the individuals' locations is plotted unless
-\code{plot.estlocs} is \code{TRUE}.}
-
-\item{plot.estlocs}{Logical, if \code{TRUE}, dots are plotted at
-the mode of the combined densities. If a density has more than
-a single mode (and the modes have the same density value) then
-a dot will only be plotted at one of them.}
-
-\item{keep.estlocs}{Logical, if \code{TRUE}, the locations of the
-estimated locations are invisibly returned.}
-
-\item{plot.arrows}{Logical, if \code{TRUE}, arrows indicating the
-estimated bearing to the individual are plotted from detectors
-at which detections were made.}
-
-\item{plot.circles}{Logical, if \code{TRUE}, circles indicating the
-estimated distance to the individual are plotted around
-detectors at which detections were made.}
-
-\item{arrow.length}{Numeric, providing the length of the arrows
-(only used if \code{plot.arrows} is \code{TRUE}).}
-
-\item{show.legend}{Logical, if \code{TRUE}, a legend will be added
-to the plot.}
-
-\item{show.axes}{Logical, if \code{TRUE}, axes will be added to the
-plot.}
-
-\item{add}{Logical, if \code{TRUE}, contours will be added to an
-existing plot.}
-
-\item{ask}{Logical. If TRUE (and the R session is interactive) the user is asked for input, before a new figure is drawn.}
-
 \item{id}{A numeric vector with row numbers from
 \code{fit$args$capt}, indicating which individuals' locations
 are to be plotted. Alternatively, the character string
 \code{"all"}, indicating all animals within the selected
 session.}
+
+\item{show.axes}{Logical, if \code{TRUE}, axes will be added to the
+plot.}
 }
 \value{
 If \code{keep.estlocs} is \code{TRUE}, then a list
@@ -177,9 +155,6 @@ variables in SECR models.
 \examples{
 locations(example.data$fits$simple.hn, 1)
 locations(example.data$fits$simple.hn, 1, levels = c(0.50, 0.90, 0.95))
-## Saving estimated locations.
-estlocs <- locations(example.data$fits$simple.hn, keep.estlocs = TRUE)
-estlocs
 \dontrun{
 fine.mask <- create.mask(example.data$traps, 20, spacing = 0.2)
 locations(example.data$fits$bearing.hn, 1, infotypes = "all", mask = fine.mask)

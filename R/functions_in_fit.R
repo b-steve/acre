@@ -554,8 +554,6 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
       stop('duplicated column name across different level data sets.')
     }
     
-    
-    
     gam_output = vector('list', length = length(name.extend.par))
     names(gam_output) = name.extend.par
     #check 'model'

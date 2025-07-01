@@ -320,7 +320,7 @@ sim.data.prepare = function(detfn, param, par.extend, traps, mask, survey.length
 
 
 sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, info.bucket,
-                          ss.opts, cue.rates, sound.speed, keep.animal_locs=TRUE){
+                          ss.opts, cue.rates, sound.speed, keep.animal_locs=FALSE){
   #firstly generate the number of animals for each mask
   dat.density$n_animals = rpois(nrow(dat.density), dat.density$D)
   dat.density = subset(dat.density, dat.density$n_animals != 0)
