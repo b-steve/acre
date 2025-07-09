@@ -2,15 +2,21 @@
 % Please edit documentation in R/methods.R
 \name{AIC.acre_tmb}
 \alias{AIC.acre_tmb}
-\title{Title}
+\title{Calculate AIC for acre_tmb Models}
 \usage{
-\method{AIC}{acre_tmb}(object, k = 2)
+\method{AIC}{acre_tmb}(..., k = 2)
 }
 \arguments{
-\item{object}{}
+\item{...}{One or more acre_tmb model objects.}
 
-\item{k}{}
+\item{k}{Penalty parameter (default is 2 for AIC).}
+}
+\value{
+A named vector of AIC values or NA if conditions are not met.
 }
 \description{
-Title
+Calculate AIC for acre_tmb Models
+}
+\examples{
+AIC.acre_tmb(model1, model2, k = 2)
 }

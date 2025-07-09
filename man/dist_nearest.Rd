@@ -16,7 +16,7 @@ dist_nearest.}
 }
 \value{
 a data frame as the same as "from", but with an extra column with assigned column name. For each row,
-        it contains the distance to the nearest point in the "to" data set.
+it contains the distance to the nearest point in the "to" data set.
 }
 \description{
 A helper function to obtain the distances of the nearest points from a data frame

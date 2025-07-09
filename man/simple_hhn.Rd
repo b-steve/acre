@@ -6,19 +6,19 @@
 \title{Data to showcase a "simple_hhn" demo}
 \format{
 a list with all necessary input for the model:
- \describe{
-   \item{detfn}{detechtion function: "hhn" - hazard half normal}
-   \item{traps}{a data frame with the coordinates of the acoustic detectors}
-   \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
-                              to create the detectable area from the coordinates of the detectors}
-   \item{capt}{a data frame of the capture history, contains columns as follows:\cr
-     \cr
-     "session" - the indices of the survey sessions;\cr
-     "ID" - the indices of the calls been detected;\cr
-     "occasion" - not been used, could be ignored;\cr
-     "trap" - the indices of the detectors.\cr
-     }
- }
+\describe{
+\item{detfn}{detechtion function: "hhn" - hazard half normal}
+\item{traps}{a data frame with the coordinates of the acoustic detectors}
+\item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
+to create the detectable area from the coordinates of the detectors}
+\item{capt}{a data frame of the capture history, contains columns as follows:\cr
+\cr
+"session" - the indices of the survey sessions;\cr
+"ID" - the indices of the calls been detected;\cr
+"occasion" - not been used, could be ignored;\cr
+"trap" - the indices of the detectors.\cr
+}
+}
 }
 \source{
 created from the simulation

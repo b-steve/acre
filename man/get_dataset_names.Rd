@@ -10,7 +10,7 @@ get_dataset_names()
 A character vector containing dataset names.
 }
 \description{
-Retrieves all the dataset names included in the [acre] package
+Retrieves all the dataset names included in the \link{acre} package
 }
 \examples{
 dataset_names <- get_dataset_names()

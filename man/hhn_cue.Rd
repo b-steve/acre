@@ -6,22 +6,22 @@
 \title{Data to showcase a "hhn_cue" demo}
 \format{
 a list with all necessary input for the model:
- \describe{
-   \item{detfn}{detechtion function: "hhn" - hazard half normal}
-   \item{traps}{a data frame with the coordinates of the acoustic detectors}
-   \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
-                              to create the detectable area from the coordinates of the detectors}
-   \item{survey.length}{a numeric vector or a scalar contains the length of each session.}
-   \item{cue.rates}{a numeric vector. contains the recorded cue rates in a series of time periods with identical
-                    length. The length should be equal to the unit length in the "survey.length".}
-   \item{capt}{a data frame of the capture history, contains columns as follows:\cr
-     \cr
-     "session" - the indices of the survey sessions;\cr
-     "ID" - the indices of the calls been detected;\cr
-     "occasion" - not been used, could be ignored;\cr
-     "trap" - the indices of the detectors.\cr
-     }
- }
+\describe{
+\item{detfn}{detechtion function: "hhn" - hazard half normal}
+\item{traps}{a data frame with the coordinates of the acoustic detectors}
+\item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
+to create the detectable area from the coordinates of the detectors}
+\item{survey.length}{a numeric vector or a scalar contains the length of each session.}
+\item{cue.rates}{a numeric vector. contains the recorded cue rates in a series of time periods with identical
+length. The length should be equal to the unit length in the "survey.length".}
+\item{capt}{a data frame of the capture history, contains columns as follows:\cr
+\cr
+"session" - the indices of the survey sessions;\cr
+"ID" - the indices of the calls been detected;\cr
+"occasion" - not been used, could be ignored;\cr
+"trap" - the indices of the detectors.\cr
+}
+}
 }
 \source{
 created from the simulation

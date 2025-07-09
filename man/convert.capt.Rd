@@ -28,7 +28,7 @@ required.}
 }
 \value{
 A capture history object appropriate for analysis using
-    either the \code{acre} or the \code{secr} package.
+either the \code{acre} or the \code{secr} package.
 }
 \description{
 These functions convert a capture history object between the

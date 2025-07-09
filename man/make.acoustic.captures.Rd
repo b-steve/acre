@@ -17,7 +17,7 @@ the precise time of arrival of the received sound, and (ii)
 }
 \value{
 A data frame. Specifically, the \code{dets} dataframe, now
-    with a new variable, \code{ID}.
+with a new variable, \code{ID}.
 }
 \description{
 Identifies recaptures and assigns ID numbers to sounds recorded for

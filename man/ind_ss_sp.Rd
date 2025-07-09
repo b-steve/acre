@@ -6,26 +6,26 @@
 \title{Data to showcase a "ind_ss_sp" demo}
 \format{
 a list with all necessary input for the model:
- \describe{
-   \item{detfn}{detechtion function: "ss" - signal strength}
-   \item{traps}{a data frame with the coordinates of the acoustic detectors}
-   \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
-                              to create the detectable area from the coordinates of the detectors}
-   \item{ss.opts}{a list contains signal strength model related options. Here it contains "cutoff",
-                  which indicates the threshold of a distance of 100% detection, and "ss.link", which
-                  indicates the link function for the signal strength detection function.}
-   \item{control_create_cpat}{a list with arguments for the function "create.capt()" which converts the data input
-                              to the data to be fed into the model.}
-   \item{capt}{a data frame of the capture history, contains columns as follows:\cr
-     \cr
-     "session" - the indices of the survey sessions;\cr
-     "ID" - the indices of the calls been detected;\cr
-     "occasion" - not been used, could be ignored;\cr
-     "trap" - the indices of the detectors;\cr
-     "animal_ID" - the indices or identity of the detected individual;\cr
-     "ss" - the detected signal strength.\cr
-     }
- }
+\describe{
+\item{detfn}{detechtion function: "ss" - signal strength}
+\item{traps}{a data frame with the coordinates of the acoustic detectors}
+\item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
+to create the detectable area from the coordinates of the detectors}
+\item{ss.opts}{a list contains signal strength model related options. Here it contains "cutoff",
+which indicates the threshold of a distance of 100\% detection, and "ss.link", which
+indicates the link function for the signal strength detection function.}
+\item{control_create_cpat}{a list with arguments for the function "create.capt()" which converts the data input
+to the data to be fed into the model.}
+\item{capt}{a data frame of the capture history, contains columns as follows:\cr
+\cr
+"session" - the indices of the survey sessions;\cr
+"ID" - the indices of the calls been detected;\cr
+"occasion" - not been used, could be ignored;\cr
+"trap" - the indices of the detectors;\cr
+"animal_ID" - the indices or identity of the detected individual;\cr
+"ss" - the detected signal strength.\cr
+}
+}
 }
 \source{
 created from the simulation

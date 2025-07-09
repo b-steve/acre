@@ -28,12 +28,10 @@ sim.capt(
 }
 \arguments{
 \item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
-the bootstrap process "boot.acre()". If `fit` is provided, then all other
- parameters will be taken from the fitted object, so no other parameters need to be provided.}
+the bootstrap process "boot.acre()". If \code{fit} is provided, then all other
+parameters will be taken from the fitted object, so no other parameters need to be provided.}
 
-\item{detfn}{character string specifying the detection function to be used. One of "hn` (halfnormal),
-`hhn` (hazard halfnormal), `hr` (hazard rate), `th` (threshold), `lth` (log-link threshold), or `ss` (signal strength).
-If `ss` is used, signal strength information must be provided in capt.}
+\item{detfn}{character string specifying the detection function to be used. One of "hn\verb{(halfnormal),}hhn\verb{(hazard halfnormal),}hr\verb{(hazard rate),}th\verb{(threshold),}lth\verb{(log-link threshold), or}ss\verb{(signal strength). If}ss` is used, signal strength information must be provided in capt.}
 
 \item{param}{A named list. Component names are parameter names, and
 each component is the value of the associated parameter. A
@@ -45,73 +43,75 @@ detection function and additional information type(s).}
 \item{model}{a list with named elements. Each element contains the formula for the parameter indicated by the name of
 this element. For example, model = list(D = ~x1+x2, sigma = ~x3+x4)}
 
-\item{traps}{a matrix or a data frame with two columns or a list of such matrices or data frames for a multi-session model.
-Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
-In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
-If the detector locations stayed the same across all sessions, only one matrix/data frame is required.}
+\item{traps}{A matrix or a data frame with two columns, or a list of such
+matrices or data frames for a multi-session model. Each row provides the x-
+and y-coordinates of a detector location, in metres. For multi-session
+models, each component of the list provides detector locations for one
+session.}
 
-\item{control.mask}{a list. It is used together with `traps` to expend masks. Elements should be
-corresponding the arguments of the function `create.mask()` excluding `traps`. e.g. list(buffer = 100)}
+\item{control.mask}{A list specifying additional arguments for
+\code{\link[=create.capt]{create.capt()}}, other than \code{traps} that are used to create a mask object.}
 
-\item{session.cov}{a data frame. It should contain a column named `session` and any session related covariates as
-extra columns.}
+\item{session.cov}{a data frame. It should contain a column named \code{session}
+and any session related covariates as extra columns.}
 
-\item{trap.cov}{a data frame. It is recommended to have columns of `session` and `trap` together, as well as
-any trap related covariates as extra columns. If all sessions share the same set of traps,
-the column of `session` could be skipped.}
+\item{trap.cov}{a data frame. It is recommended to have columns of \code{session}
+and \code{trap} together, as well as any trap related covariates as extra
+columns. If all sessions share the same set of traps, the column of
+\code{session} could be skipped.}
 
-\item{loc.cov}{a list or a data frame. When a data frame, it must contain columns `x` and `y` and columns
-of covariates, so it is a set of locations with covariates values. When a list, each element
-is a data frame, so it can contains different sets of locations with covariates values.}
+\item{loc.cov}{a list or a data frame. When a data frame, it must contain
+columns \code{x} and \code{y} and columns of covariates, so it is a set of locations
+with covariates values. When a list, each element is a data frame, so it can
+contains different sets of locations with covariates values.}
 
-\item{dist.cov}{a list with named elements. Each element is a data frame containing columns `x` and `y`, recording
-the edge of an area. The shortest distance from each mask to this area will be calculated and
-assigned to the `masks - level` covariates, and the name of this element will be assigned as the
-name of this covariate.}
+\item{dist.cov}{a list with named elements. Each element is a data frame
+containing columns \code{x} and \code{y}, recording the edge of an area. The shortest
+distance from each mask to this area will be calculated and assigned to the
+\code{masks - level} covariates, and the name of this element will be assigned as
+the name of this covariate.}
 
-\item{time.loc.cov}{a list or a data frame. It must contain columns `x`, `y` and `time`, and columns of covariates
-related to location but could change over time. When this argument is provided, please also
-fill in the `time` as a covariate in the argument `session.cov` to help with identifying
-the time for each session to allocate these covariates.}
+\item{time.loc.cov}{a list or a data frame. It must contain columns \code{x}, \code{y}
+and \code{time}, and columns of covariates related to location but could change
+over time. When this argument is provided, please also fill in the \code{time} as
+a covariate in the argument \code{session.cov} to help with identifying the time
+for each session to allocate these covariates.}
 
-\item{convert.loc2mask}{a list with 3 possible elements to control an embedded function inside
-this package to convert the location related data provided by `loc.cov`
-to masks level using imputation method. The 3 possible elements are:
-control_nn2, control_weight and control_char.
-=======================================================================
+\item{convert.loc2mask}{a list with 3 possible elements to control an embeddedfunction inside this package to convert the location related data providedby loc.cov to masks level using imputation method. The 3 possible elementsare: control_nn2, control_weight and control_char.
+
 control_nn2: a list contains the arguments for the function RANN::nn2(),
 please refer to the help document in that package for further details;
-control_weight: a list contains 3 elements control the weighted method.
-The function RANN:nn2() gives us a M * k matrix, where M is the number
-of mask points, and each row contains k points provided by `loc.cov`
-which are nearest to this mask point. For this k nearest points,
-we use their values of each covariates to do the imputation to obtain
-the estimated value of this mask point. considering the distances
-between this mask point and these k nearest points are different,
-we need a method to determine their weights. The argument `control_weight`
-is used to do so. Its 3 elements are `method`, which could be `Shepard`
-or `Modified`; `q`, which is used to control both methods; `r`,
-which is used to control method `Modified`.
-Shepard method: w ~ (1/d)^q
-Modified method: modified shepard method, w ~ [max(0, r - d)/(r * d)]^q}
+control_weight: a list contains 3 elements control the weighted method. The
+function RANN:nn2() gives us a M * k matrix, where M is the number of mask
+points, and each row contains k points provided by \code{loc.cov} which are
+nearest to this mask point. For this k nearest points, we use their values
+of each covariates to do the imputation to obtain the estimated value of
+this mask point. considering the distances between this mask point and these
+k nearest points are different, we need a method to determine their weights.
+The argument \code{control_weight} is used to do so. Its 3 elements are \code{method},
+which could be \code{Shepard} or \code{Modified}; \code{q}, which is used to control both
+methods; \code{r}, which is used to control method \code{Modified}. Shepard method: w
+~ (1/d)^q Modified method: modified shepard method, w ~ \link[=max(0, r - d)/(r *
+ d)]{max(0, r - d)/(r * d)}^q}
 
-\item{survey.length}{a numeric vector or a scalar, contains the length of each session. If it is a scalar and
-there are multiple sessions, the value will be assigned to all sessions.}
+\item{survey.length}{a numeric vector or a scalar, contains the length of each
+session. If it is a scalar and there are multiple sessions, the value will
+be assigned to all sessions.}
 
 \item{ss.opts}{a list. It could contain 3 elements related to signal strength model.
 cutoff - the threshold of signal strength could be detected,
-         must be included if signal strength is provided.
-ss.link - the link function of signal strength, could be `identity`, `log` or `spherical`,
-          by default, it is `identity`.
+must be included if signal strength is provided.
+ss.link - the link function of signal strength, could be \code{identity}, \code{log} or \code{spherical},
+by default, it is \code{identity}.
 directional - a logical value, indicate whether to apply signal strength directional model.}
 
-\item{cue.rates}{a numeric vector. Contains the recorded cue rates in a series of time periods with identical
-length. A vector of call rates collected independently ofthe main acoustic survey. This must be measured in calls per
+\item{cue.rates}{a numeric vector. Contains the recorded cue rates in a series
+of time periods with identical length. A vector of call rates collected
+independently ofthe main acoustic survey. This must be measured in calls per
 unit time, where the time units are equivalent to those used by
-\code{survey.length}. For example, if the survey was 30 minutes
-long, the cue rates must be provided in cues per minute if
-\code{survey.length = 30}, but in cues per hour if
-\code{survey.length = 0.5}.}
+\code{survey.length}. For example, if the survey was 30 minutes long, the
+cue rates must be provided in cues per minute if \code{survey.length = 30},
+but in cues per hour if \code{survey.length = 0.5}.}
 
 \item{n.sessions}{An integer for the number of sessions.}
 
@@ -119,7 +119,8 @@ long, the cue rates must be provided in cues per minute if
 
 \item{random.location}{}
 
-\item{sound.speed}{a scalar, the speed of sound in `metres` per `second`. Defaults to 330, approximate speed of sound in air.}
+\item{sound.speed}{a scalar, the speed of sound in \code{metres} per \code{second}.
+Defaults to 330, approximate speed of sound in air.}
 }
 \description{
 Simulates SCR capture histories and associated additional
