@@ -159,15 +159,15 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #'  automatically based on the `traps` and `control.mask` arguments.
 #'@param control.mask A list specifying additional arguments for
 #'  [`create.capt()`], other than `traps` that are used to create a mask object.
-#'@param loc.cov a list or a data frame. When a data frame, it must contain
-#'  columns `x` and `y` and columns of covariates, so it is a set of locations
-#'  with covariates values. When a list, each element is a data frame, so it can
-#'  contains different sets of locations with covariates values.
-#'@param time.loc.cov a list or a data frame. It must contain columns `x`, `y`
-#'  and `time`, and columns of covariates related to location but could change
-#'  over time. When this argument is provided, please also fill in the `time` as
-#'  a covariate in the argument `session.cov` to help with identifying the time
-#'  for each session to allocate these covariates.
+#'@param loc.cov A data frame or a list of data frames containing spatial
+#'  covariates. Data frames must contain columns `x` and `y` for x- and
+#'  y-coordinates, and additional columns for spatial covariates measured at
+#'  these locations. Missing `NA` values are allowed.
+#'@param time.loc.cov A list or list of data frames containing spatial
+#'  covariates that change over time. The data frames must contain columns `x`,
+#'  `y` and `time`, and additional columns for the spatiotemporal covariates.
+#'  When these spatiotemporal covariates are provided, the column `time` must
+#'  also appear in `session.cov`.
 #'@param convert.loc2mask a list with 3 possible elements to control an embedded
 #'  function inside this package to convert the location related data provided
 #'  by `loc.cov` to masks level using imputation method. The 3 possible elements
@@ -188,9 +188,11 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #'  ~ (1/d)^q Modified method: modified shepard method, w ~ [max(0, r - d)/(r *
 #'  d)]^q
 #'
-#'@param session.cov a data frame. It should contain a column named `session`
-#'  and any session related covariates as extra columns.
-#'@param trap.cov a data frame. It is recommended to have columns of `session`
+#'@param session.cov A data frame, containing a column `session` and additional
+#'  session-level covariates. If spatiotemporal covariates are included using
+#'  `time.loc.cov`, then a column `time` must be included, indicating when the
+#'  session took place.
+#'@param trap.cov A data frame. It is recommended to have columns of `session`
 #'  and `trap` together, as well as any trap related covariates as extra
 #'  columns. If all sessions share the same set of traps, the column of
 #'  `session` could be skipped.
