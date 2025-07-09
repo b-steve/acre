@@ -159,9 +159,6 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #'  automatically based on the `traps` and `control.mask` arguments.
 #'@param control.mask A list specifying additional arguments for
 #'  [`create.capt()`], other than `traps` that are used to create a mask object.
-#'@param control.capt a list, contains all other arguments of the function
-#'  `create.capt()` excluding the `captures` and `traps`. e.g. list(n.sessions =
-#'  5, )
 #'@param loc.cov a list or a data frame. When a data frame, it must contain
 #'  columns `x` and `y` and columns of covariates, so it is a set of locations
 #'  with covariates values. When a list, each element is a data frame, so it can
@@ -254,10 +251,8 @@ read.acre = function(captures, traps, mask = NULL,
 
 
   output = list(...)
-  control.capt$captures = captures
-  control.capt$traps = traps
-  capt = do.call('create.capt', control.capt)
-
+  capt = create.capt(captures, traps)
+  
   #obtain n.sessions, the output of create.capt differs based on the model type, if individual id included, then
   #it is data.frame, otherwise, it is a list
   if(is(capt, 'data.frame')){
