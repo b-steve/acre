@@ -25,8 +25,6 @@
 sim.capt = function(fit, detfn, param, model = NULL, traps, control.mask = list(), session.cov = NULL, trap.cov = NULL, loc.cov = NULL,
                     dist.cov = NULL, time.loc.cov = NULL, convert.loc2mask = list(), survey.length = NULL, ss.opts = NULL,
                     cue.rates = NULL, n.sessions = NULL, n.rand = 1, random.location = FALSE, sound.speed = 331){
-  # sim.data <- sim.capt(detfn = get_detfn(bearing_hn.fit), param=get_coef(bearing_hn.fit), traps=get_trap(bearing_hn.fit), control.mask = bearing_hn$control.mask, survey.length = 10)
-  
   if(!missing(fit)) {
     #if 'fit' is provided, get all information from the fitted object
 
@@ -428,7 +426,7 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
       } 
     }
     
-    # For loop bad:
+    # In case we prefer to vectorize at a later point (need to test this):
     # sum_capt <- tapply(dat_capt$bincapt, dat_capt$ID, sum)
     # captured_ids <- as.integer(sum_capt > 0)
     # animal_locs$bincapt <- captured_ids[as.character(animal_locs$ID)]

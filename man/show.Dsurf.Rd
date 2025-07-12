@@ -19,7 +19,7 @@ show.Dsurf(
   plot.contours = FALSE,
   add = FALSE,
   convert.loc2mask = NULL,
-  arg.col = list(n = 100),
+  arg.col = 100,
   trap.plot = NULL,
   ...
 )
@@ -87,7 +87,7 @@ which is used to control method `Modified`.
 Shepard method: w ~ (1/d)^q
 Modified method: modified shepard method, w ~ [max(0, r - d)/(r * d)]^q}
 
-\item{arg.col}{}
+\item{arg.col}{A numeric value, indicating the number of levels to stretch the color over}
 
 \item{trap.plot}{}
 

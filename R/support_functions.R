@@ -2438,7 +2438,6 @@ convert_time_loc_cov_to_loc_cov = function(time.loc.cov, loc.cov, session.cov){
 #' @examples dataset_names <- get_dataset_names()
 get_dataset_names = function() {
   return(data(package="acre")$results[, "Item"])
-  # return()
 }
 
 separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {

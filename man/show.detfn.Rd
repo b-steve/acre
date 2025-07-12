@@ -6,7 +6,7 @@
 \usage{
 show.detfn(
   fit,
-  new.covariates = NULL,
+  newdata = NULL,
   skip.extend.param = NULL,
   xlim = NULL,
   ylim = NULL,
@@ -22,7 +22,7 @@ show.detfn(
 \item{fit}{an object generated from the model fitting function \link{fit.acre} or
 the bootstrap process \link{boot.acre}.}
 
-\item{new.covariates}{data.frame; contains any covariates that will be used for all extended parameters (if not be skipped)}
+\item{newdata}{data.frame; contains any covariates that will be used for all extended parameters (if not be skipped)}
 
 \item{skip.extend.param}{character; skip extended parameter, for skipped extended parameters,
 use its intercept as the value for this parameter}
