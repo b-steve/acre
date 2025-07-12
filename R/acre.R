@@ -3,12 +3,6 @@ NULL
 
 #' @import Rcpp testthat
 
-#' @importFrom ggplot2 ggplot aes geom_point geom_segment geom_path theme_void coord_sf scale_shape_identity labs arrow unit ggtitle guides guide_colourbar
-NULL
-
-#' @importFrom gganimate animate transition_manual
-NULL
-
 #' @importFrom stats aggregate coef confint cor dist median pnorm qnorm quantile rgamma rnorm rpois runif sd sigma vcov
 NULL
 

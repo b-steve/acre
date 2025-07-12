@@ -1798,9 +1798,7 @@ scale_convert = function(from, to){
   return(output)
 }
 
-
-
-circleFun <- function(centre = data.frame(x = 0, y = 0), r = 0.5, npoints = 50){
+circle_fun <- function(centre = data.frame(x = 0, y = 0), r = 0.5, npoints = 50){
   n = nrow(centre)
   if(length(r) != n) r = rep(r, length.out = n)
   output = vector('list', n)
@@ -2532,4 +2530,19 @@ format_conf_int_matrix <- function(mat) {
 
 is_animal_model <- function(fit) {
   return(ifelse(is.null(fit$arg_input$captures$animal_ID), FALSE, TRUE))
+}
+
+faded_virdis <- function(n_levels, max_alpha = 1, min_alpha = 0) {
+  # Generate base virdis colors
+  base_colors <- viridisLite::viridis(n_levels)
+  
+  # Generate sequence of alpha scales
+  alpha_values <- seq(min_alpha, max_alpha, length.out = n_levels)
+  
+  # Apply the alphas to our base colors
+  faded_colors <- unlist(
+    Map(function(col, a) scales::alpha(col, a), base_colors, alpha_values)
+  )
+  
+  return(faded_colors)
 }

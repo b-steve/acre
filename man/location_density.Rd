@@ -11,7 +11,7 @@ location_density(
   session = 1,
   mask = get_mask(fit)[[session]],
   warn_toa = F,
-  new_covariates = NULL
+  newdata = NULL
 )
 }
 \arguments{
@@ -32,7 +32,7 @@ individual(s) to be plotted.}
 \item{warn_toa}{a logical value indicates whether to issue warning in the 
 case of \code{toa} data with only a single call.}
 
-\item{new_covariates}{data.frame; contains any covariates that will be used 
+\item{newdata}{data.frame; contains any covariates that will be used 
 for all extended parameters.}
 }
 \description{
