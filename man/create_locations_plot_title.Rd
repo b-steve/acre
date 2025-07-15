@@ -13,7 +13,7 @@ density for.}
 \item{animal_id}{an numeric value indicating animal ID. Should only be 
 specified if \code{fit} is an \code{animalID} model.}
 
-\item{session}{an integer value indicating the detector array and 
+\item{session}{an integer value indicating the session of detector array and 
 individual(s) to be plotted.}
 }
 \value{

@@ -79,7 +79,7 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
   
   animal.model <- is_animal_model(fit)
   capt <- fit$arg_input$captures
-  capt <- subset(capt, capt$session == session)
+  capt <- capt[capt$session == session,]
   
   if (is.null(animal_id) & animal.model) {
     stop("'animal_id' argument must be provided for animal id models")
@@ -103,7 +103,7 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
   
   if (animal.model) {
     if (!(animal_id %in% capt$animal_ID)) {
-      stop(paste("Could not find capture history with animal id:", animal_id))
+      stop(paste("Could not find capture history with animal id:", animal_id, "in session:", session))
     }
     # Make sure to only grab the appropriate animal's capture history
     capt <- subset(capt, capt$animal_ID == animal_id)
@@ -113,9 +113,12 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
     missing_calls <- call_id[which(!(call_id %in% capt$ID))]
     missing_calls_msg <- paste(missing_calls, collapse = ", ")
     if (animal.model) {
-      stop(paste("Could not find call with 'call_id':", missing_calls_msg, ", for animal with 'animal_id':", animal_id))
+      stop(paste("Could not find call with 'call_id':", missing_calls_msg, 
+                 ", for animal with 'animal_id':", animal_id, 
+                 "in session:", session))
     } else {
-      stop(paste("Could not find call with 'call_id':", missing_calls_msg))
+      stop(paste("Could not find call with 'call_id':", missing_calls_msg, 
+                 "in session:", session))
     }
   }
   
@@ -394,6 +397,8 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
 #'    for all extended parameters.
 #' @param warn Logical; warn users if they have not passed all covariates in 
 #'    model specification.
+#' @param session an integer value indicating the session of detector array and 
+#'    individual(s) to be plotted. 
 #'
 #' @return a list of (nmask) x (ntrap) columns, for each extended parameter.
 #'          values correspond to estimated parameter value for the given covariate values.
@@ -402,7 +407,7 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
 #' @examples 
 #' # Calculates the parameter values for each mask_point - trap combination
 #' ext_par_matrices <- get_par_extend_matrix(fit, mask, traps)
-get_par_extend_matrix <- function(fit, mask, traps, newdata=NULL, 
+get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL, 
                                   warn = T) {
   # Make sure model is parameter extended
   par_extended <- !is.null(get_par_extend(fit))
@@ -471,6 +476,18 @@ get_par_extend_matrix <- function(fit, mask, traps, newdata=NULL,
     } else {
       ext_par_newdata <- trap_ext_data
     }
+  }
+  
+  # Lastly, we need to deal with the session level covariates
+  # IMPORTANT NOTE: session level covariates are not able to be passed through
+  #                 the `newdata` argument currently. 
+  if (!is.null(ext_par_data$session)) {
+    # Retrieve the row corresponding to the `session` argument
+    session_covariates <- subset(ext_par_data$session, 
+                                 ext_par_data$session$session == session)
+    # Since the session level covariates are the same for every mask point &
+    # trap, we just repeat this row and add it to our big covariate matrix
+    ext_par_newdata <- cbind(ext_par_newdata, session_covariates)
   }
   
   # Calculate the coefficients. Notice this is in long format, will have to 

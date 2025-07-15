@@ -4,7 +4,7 @@
 \alias{get_par_extend_matrix}
 \title{Calculate and return coefficients for extended models}
 \usage{
-get_par_extend_matrix(fit, mask, traps, newdata = NULL, warn = T)
+get_par_extend_matrix(fit, mask, traps, session = 1, newdata = NULL, warn = T)
 }
 \arguments{
 \item{fit}{an object generated from the model fitting function 
@@ -14,6 +14,9 @@ get_par_extend_matrix(fit, mask, traps, newdata = NULL, warn = T)
 
 \item{traps}{data frame with numeric columns x and y, corresponding to trap
 coordinates.}
+
+\item{session}{an integer value indicating the session of detector array and 
+individual(s) to be plotted.}
 
 \item{newdata}{data.frame; contains any covariates that will be used 
 for all extended parameters.}

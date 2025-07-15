@@ -653,7 +653,8 @@ prompt_user_for_next_plot <- function() {
 # Call with traps = NULL explicitly to plot without traps
 plot_dev <- function(fit, session = 1, 
                      mask = get_mask(fit)[[session]], 
-                     traps = get_trap(fit)[[session]]) {
+                     traps = get_trap(fit)[[session]],
+                     call_id = NULL) {
   plot(NA, 
        xlim = range(mask[,1]), 
        ylim = range(mask[,1]),
@@ -662,7 +663,7 @@ plot_dev <- function(fit, session = 1,
   grid(col = "grey85", lty = 1, lwd = 0.7)
   
   if (!is.null(traps)) {
-    plot_traps(fit)
+    plot_traps(fit, call_id = call_id)
   }
 }
 
@@ -785,17 +786,16 @@ plot_toa_order <- function(fit, call_id, animal_id=NULL, session=1) {
   capt <- get_capt_by_id(fit, call_id, animal_id, session)
   
   # Remove NA distances
-  toa <- capt$toa[!is.na(capt$toa)]
+  capt <- capt[complete.cases(capt), ]
+  
+  toa <- capt$toa
   
   # Figure out the order of arrival
-  traps <- get_trap(fit)[[session]][!is.na(capt$toa), ,drop = FALSE]
+  traps <- get_trap(fit)[[session]][capt$trap, ,drop = FALSE]
   toa_order <- rank(toa, ties.method = "min")
-  
-  trap_idx <- capt$trap
-  xy <- traps[trap_idx, , drop = FALSE]
-  
+
   # Annotate traps
-  text(xy[, "x"] + 1, xy[, "y"] - 1, labels = toa_order,
+  text(traps[, 1] + 1, traps[, 2] - 1, labels = toa_order,
        col = "black", cex = 0.6, adj = c(0, 1))
 }
 
