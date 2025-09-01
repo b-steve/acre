@@ -258,16 +258,11 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     u_id_match = data.frame(ID = 0)
   }
 
-
-
-
-
   if(is.null(ss.opts)){
     cutoff = 0
   } else {
     cutoff = ss.opts$cutoff
   }
-
 
   #####################################################################
 
@@ -417,12 +412,19 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
   #browser()
   if(!gr.skip) {
-    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = (!tracing), DLL="acre")
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = TRUE, DLL="acre")
     obj$hessian <- TRUE
-    if (data$is_toa) {
-      obj$par[["sigma_toa"]] <- sd(data.ID_mask$toa_ssq)
+    
+    # If tracing is enabled, use custom trace output
+    if (tracing) {
+      # Select ALL fitted parameters
+      trace_cols <- names(obj$par)
+      printer <- make_trace_printer(trace_cols, step = "euclid")
+      orig_fn <- obj$fn
+      obj$fn <- with_trace_printer(orig_fn, printer, par_names = names(obj$par))
     }
-    opt = stats::nlminb(obj$par, obj$fn, obj$gr, control=list(trace=tracing))
+    
+    opt = stats::nlminb(obj$par, obj$fn, obj$gr, control=list(trace=0))
     o = TMB::sdreport(obj)
   } else {
     obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = (!tracing), DLL="acre", type = 'Fun')
@@ -430,12 +432,21 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     par_name_fitted = param.og.4cpp[which(!param.og.4cpp %in% name.fixed.par.4cpp)]
     #the name of this ini_par_val is not right, do it later
     ini_par_val = list_2vector_4value(parameters[par_name_fitted])
-
-    fn = function(par) environment(obj$fn)$f(par, type = 'double')
-    opt = stats::nlminb(ini_par_val, fn)
-    H = stats::optimHess(opt$par, fn)
+    
+    fn_base <- function(par) environment(obj$fn)$f(par, type = "double")
+    
+    # Add custom tracing if not silent
+    if(tracing) {
+      trace_printer <- make_trace_printer(trace_cols = par_name_fitted, step = "euclid")
+      fn_traced <- with_trace_printer(fn_base, trace_printer, par_names = par_name_fitted)
+      opt = stats::nlminb(ini_par_val, fn_traced, control = list(trace = 0))
+    } else {
+      opt = stats::nlminb(ini_par_val, fn_base)
+    }
+    
+    H = stats::optimHess(opt$par, fn_base)
     H = solve(H)
-    o = gr_free_o_restore(fn, opt, H, parameters, param.og.4cpp, dims$n.sessions)
+    o = gr_free_o_restore(fn_base, opt, H, parameters, param.og.4cpp, dims$n.sessions)
   }
 
 

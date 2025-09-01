@@ -19,24 +19,25 @@
 #' @return a named numeric vector
 #' @export
 #'
-coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NULL, ...){
-  
+coef.acre_tmb = function(object, types, pars = NULL, new.covariates = NULL, ...){
+  newdata <- new.covariates
   #deal with default setting for 'types'
-  tem = types_pars_sol(types, pars, new.covariates)
+  tem = types_pars_sol(types, pars, newdata)
+  # tem = types_pars_sol("linked", pars, newdata)
   types = tem$types
   pars = tem$pars
   
   is.fitted = 'fitted' %in% types
   is.linked = 'linked' %in% types
   is.derived = 'derived' %in% types
-  
+  # is.linked = TRUE
   
   #extract some key information for the object
   param_values_og = get_coef(object)
   name_og = get_param_og(object)
   name_extend = get_par_extend_name(object)
   df_param = get_data_param(object)
-  esa = get_esa(object)
+  esa = esa(object)
   
   #check which parameter will be displayed
   if(is.null(pars)){
@@ -45,9 +46,9 @@ coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
     if(any(!pars %in% name_og)) stop("Argument 'pars' only accept parameters' name in this model.")
   }
   
-  if(is.null(name_extend) & !is.null(new.covariates)){
-    warning('No parameter is extended, argument "new.covariates" will be ignored.')
-    new.covariates = NULL
+  if(is.null(name_extend) & !is.null(newdata)){
+    warning('No parameter is extended, argument "newdata" will be ignored.')
+    newdata = NULL
   }
   
   output = NULL
@@ -69,7 +70,7 @@ coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
     } else {
       names(values_link) = gsub(" _ ", "\\.", names(values_link))
       names(values_link) = paste(names(values_link), "link", sep = "_")
-      if(all(extend_par_covariates[[i]] %in% colnames(new.covariates))){
+      if(all(extend_par_covariates[[i]] %in% colnames(newdata))){
         do_BX = TRUE
       }
     }
@@ -80,7 +81,7 @@ coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
       } else {
         gam = get_gam(object, i)
         values_link_evaluated = get_extended_par_value(gam, par_info$n_col_full, par_info$n_col_mask,
-                                                       values_link, new.covariates)
+                                                       values_link, newdata)
         names(values_link_evaluated) = rep(paste(i, "link", sep = "_"), length(values_link_evaluated))
         output = c(output, values_link_evaluated)
       }
@@ -99,10 +100,10 @@ coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
         } else {
           gam = get_gam(object, i)
           values_fitted = get_extended_par_value(gam, par_info$n_col_full,
-                                                 par_info$n_col_mask, values_link, new.covariates)
+                                                 par_info$n_col_mask, values_link, newdata)
 
           names(values_fitted) = rep(i, length(values_fitted))
-          
+
         }
       } else {
         values_fitted = values_link
@@ -1234,7 +1235,18 @@ logLik.acre_tmb <- function(object, ...) {
   return(object$loglik)
 }
 
-
+#' Title
+#'
+#' @param fit 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+esa = function(fit){
+  output = fit$esa
+  return(output)
+}
 
 
 

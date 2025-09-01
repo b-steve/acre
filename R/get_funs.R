@@ -22,12 +22,6 @@ get_loc_cov = function(fit){
   return(output)
 }
 
-
-get_esa = function(fit){
-  output = fit$esa
-  return(output)
-}
-
 get_data_full = function(fit){
   output = fit$output.tmb$data.full
   return(output)

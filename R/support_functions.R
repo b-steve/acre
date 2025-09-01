@@ -450,7 +450,15 @@ default.sv = function(param, info){
   } else if(param == "z"){
     return(1)
   } else if(param == "sigma.toa"){
-    return(0.0025)
+    # Take the average of the sd of each call 
+    # Average over each session
+    sd_sum <- 0
+    for (sess in unique(data.full$session)) {
+      sess.data <- data.full[data.full$session == sess, ]
+      toa_by_call_matrix <- matrix(sess.data$toa, nc = max(sess.data$trap))
+      sd_sum <- sd_sum + mean(apply(toa_by_call_matrix, 1, sd))
+    }
+    return(sd_sum / length(unique(data.full$session)))
   } else if(param == "kappa"){
     return(10)
   } else if(param == "b0.ss"){
@@ -458,7 +466,6 @@ default.sv = function(param, info){
       return(log(max(data.full[['ss']], na.rm = TRUE)))
     } else {
       return(quantile(data.full[['ss']], 0.90, na.rm = TRUE))
-      # return(max(data.full[['ss']], na.rm = TRUE))
     }
   } else if(param == "sigma.b0.ss"){
     if(ss.link == 'log'){
@@ -468,9 +475,7 @@ default.sv = function(param, info){
     }
   } else if(param == "b1.ss"){
     quantile.ss = quantile(data.full[['ss']], 0.90, na.rm = TRUE)
-    out = (quantile.ss - cutoff)/(mean(buffer))
-    # max.ss = max(data.full[["ss"]], na.rm = TRUE)
-    # out = (max.ss - cutoff)/(mean(buffer)/2)
+    out = (quantile.ss - cutoff)/(mean(buffer)/2)
     if(ss.link == "log"){
       max.ss = max(data.full[["ss"]], na.rm = TRUE)
       out = (max.ss - cutoff)/(mean(buffer)/2)

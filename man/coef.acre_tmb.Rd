@@ -4,7 +4,7 @@
 \alias{coef.acre_tmb}
 \title{Extract coefficients from the output of acre_tmb model}
 \usage{
-\method{coef}{acre_tmb}(object, types = NULL, pars = NULL, new.covariates = NULL, ...)
+\method{coef}{acre_tmb}(object, types, pars = NULL, new.covariates = NULL, ...)
 }
 \arguments{
 \item{object}{a fitted model from fit.acre().}

@@ -1821,3 +1821,101 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
   ############################################################################################################
   return(out)
 }
+
+
+#' Title
+#'
+#' @param trace_cols 
+#' @param only_improvements 
+#' @param step 
+#'
+#' @return
+#'
+#' @examples
+make_trace_printer <- function(trace_cols, only_improvements = TRUE,
+                               step = c("euclid","max","none")) {
+  step <- match.arg(step)
+  
+  local({
+    st <- new.env(parent = emptyenv())
+    st$iter <- 0L
+    st$best_f <- Inf
+    st$printed <- FALSE
+    st$prev_par <- NULL
+    
+    heads <- c("iter","fval", trace_cols)
+    if (step != "none") {
+      heads <- append(heads, "step", after = 2)
+    }
+    
+    fmts <- c(iter = "%6d", fval = "%12.6f", step = "%10.4g",
+               setNames(rep("%10.4g", length(trace_cols)), trace_cols))
+    
+    minw <- function(fmt) as.integer(sub(".*%([0-9]+).*", "\\1", fmt))
+    widths <- mapply(function(h, f) max(nchar(h), minw(f)), heads, fmts[heads])
+    
+    print_header <- function() {
+      pieces <- mapply(function(h, w) format(h, width = w, justify = "right"),
+                       heads, widths, SIMPLIFY = TRUE)
+      cat(paste(pieces, collapse=" "), "\n"); flush.console()
+    }
+    
+    step_size <- switch(step,
+                        euclid = function(a,b) if (is.null(b)) NA_real_ else sqrt(sum((a-b)^2)),
+                        max = function(a,b) if (is.null(b)) NA_real_ else max(abs(a-b)),
+                        none = function(a,b) NA_real_
+    )
+
+    function(par_vec, fval, par_names) {
+      st$iter <- st$iter + 1L
+      if (only_improvements) {
+        if (!is.finite(fval) || fval >= st$best_f - 1e-12) return(invisible(NULL))
+      }
+      st$best_f <- min(st$best_f, fval)
+      
+      if (!st$printed) {
+        print_header()
+        st$printed <- TRUE 
+      }
+      
+      # Build a full row with NA defaults
+      row <- setNames(rep(NA_real_, length(heads)), heads)
+      row["iter"] <- st$iter
+      row["fval"] <- fval
+      
+      if ("step" %in% heads) {
+        s <- step_size(par_vec, st$prev_par)
+        row["step"] <- s
+      }
+      st$prev_par <- par_vec
+      
+      keep <- intersect(trace_cols, par_names)
+      if (length(keep)) {
+        row[keep] <- par_vec[match(keep, par_names)]
+      }
+      
+      pieces <- mapply(function(v, fmt, w) sprintf(fmt, v),
+                       row, fmts[heads], widths, SIMPLIFY = TRUE)
+      cat(paste(pieces, collapse = " "), "\n")
+      flush.console()
+    }
+  })
+}
+
+#' Title
+#'
+#' @param fn 
+#' @param printer 
+#' @param par_names 
+#'
+#' @return
+#'
+#' @examples
+with_trace_printer <- function(fn, printer, par_names) {
+  force(par_names) 
+  function(p, ...) {
+    f <- fn(p, ...)
+    printer(as.numeric(p), f, par_names)
+    f
+  }
+}

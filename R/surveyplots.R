@@ -232,7 +232,7 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
     fields::imagePlot(x = unique.x, y = unique.y, z = z, zlim = zlim, 
                       col = faded_virdis(arg.col, min_alpha = 1),
                        asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y", legend.width = 2,
-                       main = "Density surface", legend.line = 4, legend.lab = "calls per ___",
+                       main = "Density surface", legend.line = 4, legend.lab = expression("Density per " ~ ha^"-1"),
                        legend.shrink = 1, legend.mar = 7)
   } else {
     image(x = unique.x, y = unique.y, z = z, zlim = zlim, 
@@ -363,9 +363,6 @@ plot.acre_data <- function(x, ...){
       buffer = attr(masks, 'buffer')
       masks = as.data.frame(masks)
       capt_session = subset(capt, capt$session == s)
-      
-      # Constrain the dist below buffer, need to be confirmed with Ben
-      if(is.dist) capt_session$dist = pmin(buffer, capt_session$dist)
       
       if(animal.model){
         if(a_id != 0){
@@ -654,11 +651,12 @@ prompt_user_for_next_plot <- function() {
 plot_dev <- function(fit, session = 1, 
                      mask = get_mask(fit)[[session]], 
                      traps = get_trap(fit)[[session]],
-                     call_id = NULL) {
+                     call_id = NULL, ...) {
   plot(NA, 
        xlim = range(mask[,1]), 
        ylim = range(mask[,1]),
-       xlab = "x", ylab = "y"
+       xlab = "x", ylab = "y",
+       ...
        )
   grid(col = "grey85", lty = 1, lwd = 0.7)
   
@@ -798,5 +796,6 @@ plot_toa_order <- function(fit, call_id, animal_id=NULL, session=1) {
   text(traps[, 1] + 1, traps[, 2] - 1, labels = toa_order,
        col = "black", cex = 0.6, adj = c(0, 1))
 }
+
 
 

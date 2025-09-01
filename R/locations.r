@@ -375,7 +375,8 @@ toa_density <- function(fit, call_id, animal_id=NULL, session=1,
         # doesn't do what we want
         toa.ssq <- matrix(rep(toa.ssq, times = nrow(sig2)), nr=nrow(sig2), byrow=T)
         mask.dens <- (2*pi*sig2)^((1 - sum(sub_bin))/2)*exp(toa.ssq/(-2*sig2))
-        mask.dens <- matrixStats::colProds(mask.dens)
+        # mask.dens <- matrixStats::colProds(mask.dens)
+        mask.dens <- colSums(mask.dens)
       } else {
         mask.dens <- (2*pi*sigma_toa^2)^((1 - sum(sub_bin))/2)*
           exp(toa.ssq/(-2*sigma_toa^2))
