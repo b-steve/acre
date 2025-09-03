@@ -188,31 +188,29 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #'  ~ (1/d)^q Modified method: modified shepard method, w ~ [max(0, r - d)/(r *
 #'  d)]^q
 #'
-#'@param session.cov A data frame, containing a column `session` and additional
-#'  session-level covariates. If spatiotemporal covariates are included using
-#'  `time.loc.cov`, then a column `time` must be included, indicating when the
-#'  session took place.
-#'@param trap.cov A data frame. It is recommended to have columns of `session`
-#'  and `trap` together, as well as any trap related covariates as extra
-#'  columns. If all sessions share the same set of traps, the column of
-#'  `session` could be skipped.
-#'@param dist.cov a list with named elements. Each element is a data frame
-#'  containing columns `x` and `y`, recording the edge of an area. The shortest
-#'  distance from each mask to this area will be calculated and assigned to the
-#'  `masks - level` covariates, and the name of this element will be assigned as
-#'  the name of this covariate.
-#'@param cue.rates a numeric vector. Contains the recorded cue rates in a series
-#'  of time periods with identical length. A vector of call rates collected
-#'  independently ofthe main acoustic survey. This must be measured in calls per
-#'  unit time, where the time units are equivalent to those used by
+#'@param session.cov A data frame containing session covariates. It must contain
+#'  a column `session` and additional columns for the session-level covariates.
+#'  If spatiotemporal covariates are included using `time.loc.cov`, then a
+#'  column `time` must be included, indicating when the session took place.
+#'@param trap.cov A data frame containing trap covariates. It must contain a
+#'  column `trap` and additional columns for the trap-level covariates. The
+#'  column `session` must be included for multisession data.
+#'@param dist.cov A list containing locations of features from which distances
+#'  are calculated, and can be used as spatial covariates. Each component must
+#'  be named after a feature, with a data frame containing columns `x` and `y`,
+#'  recording the the location of a feature.
+#'@param cue.rates A numeric vector containing the recorded cue rates in a
+#'  series of time periods with identical length. A vector of call rates
+#'  collected independently of the main acoustic survey. This must be measured
+#'  in calls per unit time, where the time units are equivalent to those used by
 #'  \code{survey.length}. For example, if the survey was 30 minutes long, the
 #'  cue rates must be provided in cues per minute if \code{survey.length = 30},
 #'  but in cues per hour if \code{survey.length = 0.5}.
-#'@param survey.length a numeric vector or a scalar, contains the length of each
-#'  session. If it is a scalar and there are multiple sessions, the value will
-#'  be assigned to all sessions.
-#'@param sound.speed a scalar, the speed of sound in `metres` per `second`.
-#'  Defaults to 330, approximate speed of sound in air.
+#'@param survey.length A numeric vector or a scalar, containing the length of
+#'  each session. If it is a scalar and there are multiple sessions, the value
+#'  will be assigned to all sessions.
+#'@param sound.speed A scalar, the speed of sound in metres per second. Defaults
+#'  to 330, approximate speed of sound in air.
 #'@param convert.dist.unit a numeric value for the conversion between the unit
 #'  for the data and `metre`. If the distance unit in data is `km`, then assign
 #'  1000 here.
