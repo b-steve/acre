@@ -1,8 +1,8 @@
 
 #' Plot the detection function
 #'
-#' @param fit an object generated from the model fitting function \link{fit.acre} or
-#'            the bootstrap process \link{boot.acre}.
+#' @param fit an object generated from the model fitting function [fit.acre] or
+#'            the bootstrap process [boot.acre].
 #' @param newdata data.frame; contains any covariates that will be used for all extended parameters (if not be skipped)
 #' @param skip.extend.param character; skip extended parameter, for skipped extended parameters,
 #'                          use its intercept as the value for this parameter
@@ -149,33 +149,33 @@ show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NUL
 
 #' Plotting an estimated density surface
 #' 
-#' Plots density surface estimated by a model fitted with the function \link{fit.acre}
+#' Plots density surface estimated by a model fitted with the function [fit.acre]
 #'
 #' @param fit an object generated from the model fitting function "fit.acre()" or
 #'            the bootstrap process "boot.acre()".
 #' @param session The session with the detector array and invidual(s)
-#'     to be plotted. Ignored if the \code{newdata} argument is
+#'     to be plotted. Ignored if the `newdata` argument is
 #'     provided.
 #' @param new.data A data frame including new mask points and covariate
 #'     values, from which to estimate and plot density estimates
 #'     for. This allows, for example, estimates to be provided for new
 #'     regions not included in the mask used to fit the model. Two
-#'     columns, named \code{x} and \code{y}, must be included,
+#'     columns, named `x` and `y`, must be included,
 #'     providing the x- and y-coordinates of the new mask
 #'     points. Additional columns must provide the covariates used to
 #'     fit the model.
 #' @param show.cv Logical. If true, the CV of the density estimate is
 #'        plotted rather than the estimate itself. At present, this will
-#'        only work if \code{newdata} is also provided.
+#'        only work if `newdata` is also provided.
 #' @param D.cov 
 #' @param x.pixels 
 #' @param y.pixels 
 #' @param zlim A numeric vector of length 2, giving the range of the density contours
 #' @param scale By default, density is in animals per hectare. The 
 #'        plotted values are multiplied by this argument, allowing 
-#'        for user-specified units. For example, setting \code{scale = 100} 
+#'        for user-specified units. For example, setting `scale = 100` 
 #'        results in densities plotted as animals per square kilometre.
-#' @param plot.contours Logical, if \code{TRUE}, contours are plotted. 
+#' @param plot.contours Logical, if `TRUE`, contours are plotted. 
 #' @param add a logical value indicates whether to add the lines into the existing plot
 #' @param arg.col A numeric value, indicating the number of levels to stretch the color over
 #' @param trap.plot 

@@ -1,11 +1,11 @@
 #' Simulate acre-formatted SCR data.
 #'
 #' @param sim_name a string denoting type of data to be simulated. Supported 
-#'                 types can be found using the \code{get_dataset_names()} 
+#'                 types can be found using the `get_dataset_names()` 
 #'                 function.
 #' @param n.rand a numeric value denoting the number of data sets to be 
-#'               generated. If n.rand > 1, \code{output$capt} will be a list of 
-#'               length \code{n.rand}.
+#'               generated. If n.rand > 1, `output$capt` will be a list of 
+#'               length `n.rand`.
 #' @param seed a numeric value denoting the random seed, defaults to 810.
 #' @param suppress_messages a logical value which indicates whether to suppress 
 #'                          helper messages.
@@ -95,12 +95,12 @@ sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = 
 #' Runs a simulation study 
 #'
 #' @param sim_name a string denoting type of data to be simulated. Supported 
-#'                 types can be found using the \code{get_dataset_names()} 
+#'                 types can be found using the `get_dataset_names()` 
 #'                 function.
 #' @param n.rand a numeric value denoting the number of data sets to be 
 #'               generated and fit. Must be > 1.
 #' @param n.cores a numeric value denoting the number of cores to use for 
-#'                simulation. Defaults to \code{floor(parallel::detectCores() * 0.80)}
+#'                simulation. Defaults to `floor(parallel::detectCores() * 0.80)`
 #' @param save a logical value, indicating whether the sim study data should be saved.
 #'             By default creates a "sim_study" folder to save RDS object to. 
 #' @param plot a logical value, indicating whether or not to plot the simulated 

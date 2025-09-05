@@ -15,33 +15,33 @@ sim_study(
 )
 }
 \arguments{
-\item{sim_name}{a string denoting type of data to be simulated. Supported 
-types can be found using the \code{get_dataset_names()} 
+\item{sim_name}{a string denoting type of data to be simulated. Supported
+types can be found using the \code{get_dataset_names()}
 function.}
 
-\item{n.rand}{a numeric value denoting the number of data sets to be 
+\item{n.rand}{a numeric value denoting the number of data sets to be
 generated and fit. Must be > 1.}
 
 \item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
-the bootstrap process "boot.acre()". If `fit` is provided, then all
+the bootstrap process "boot.acre()". If \code{fit} is provided, then all
 parameters will be taken from the fitted object.}
 
-\item{n.cores}{a numeric value denoting the number of cores to use for 
+\item{n.cores}{a numeric value denoting the number of cores to use for
 simulation. Defaults to \code{floor(parallel::detectCores() * 0.80)}}
 
 \item{save}{a logical value, indicating whether the sim study data should be saved.
 By default creates a "sim_study" folder to save RDS object to.}
 
-\item{plot}{a logical value, indicating whether or not to plot the simulated 
+\item{plot}{a logical value, indicating whether or not to plot the simulated
 estimates.}
 
 \item{proportion_missing}{a numeric value used to set a proportion of the
-covariate data to NA. Will apply to all covariates 
+covariate data to NA. Will apply to all covariates
 present.}
 }
 \value{
-A list of length `n.rand` containing fitted coefficients from the 
-        simulation study.
+A list of length \code{n.rand} containing fitted coefficients from the
+simulation study.
 }
 \description{
 Runs a simulation study

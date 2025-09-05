@@ -408,40 +408,70 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     par_name = name.fixed.par.4cpp[i]
     map[[par_name]] = factor(rep(NA, length(parameters[[par_name]])))
   }
-
-
+  
+  # If scaling and centering has been applied to the extended parameters,
+  # we are going to need the back-transformation matrices
+  # Note that in the case that scaling has not been applied, or a parameter has
+  # not been extended, the associated back transformation matrix is the identity
+  # matrix
+  # Also note that we need to make sure the parameter names we use match the
+  # output style of TMB
+  TMB_par_names <- rep(param.og, lengths(parameters[param.og]))
+  G_lst <- construct_G_matrix_list(TMB_par_names, name.extend.par, lst_mean_std,
+                                   is.scale)
+  
   #browser()
   if(!gr.skip) {
     obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = TRUE, DLL="acre")
     obj$hessian <- TRUE
-    
+ 
     # If tracing is enabled, use custom trace output
     if (tracing) {
-      # Select ALL fitted parameters
-      trace_cols <- names(obj$par)
-      printer <- make_trace_printer(trace_cols, step = "euclid")
+      # If the model is extended, make sure to build extended parameter names
+      par_names <- get_coef_names(names(obj$par), name.extend.par, 
+                                  data.full, data.mask)
+      tap <- make_buffer_printer(trace_cols = par_names,
+                                 step = "none",
+                                 show_mgc = TRUE)
+      
+      # capture originals and wrap safely
       orig_fn <- obj$fn
-      obj$fn <- with_trace_printer(orig_fn, printer, par_names = names(obj$par))
+      orig_gr <- obj$gr
+      obj$fn <- with_fn_tap(orig_fn, tap, par_names, G_lst)
+      if (!is.null(orig_gr)) obj$gr <- with_gr_tap(orig_gr, tap, par_names, G_lst)
     }
     
     opt = stats::nlminb(obj$par, obj$fn, obj$gr, control=list(trace=0))
+    
+    # restore originals before heavy post-processing (avoids extra prints)
+    if (tracing) { 
+      obj$fn <- orig_fn 
+      obj$gr <- orig_gr 
+    }
+    
     o = TMB::sdreport(obj)
   } else {
     obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = (!tracing), DLL="acre", type = 'Fun')
 
-    par_name_fitted = param.og.4cpp[which(!param.og.4cpp %in% name.fixed.par.4cpp)]
+    par_name_fitted = setdiff(param.og.4cpp, name.fixed.par.4cpp)
     #the name of this ini_par_val is not right, do it later
     ini_par_val = list_2vector_4value(parameters[par_name_fitted])
     
     fn_base <- function(par) environment(obj$fn)$f(par, type = "double")
     
-    # Add custom tracing if not silent
-    if(tracing) {
-      trace_printer <- make_trace_printer(trace_cols = par_name_fitted, step = "euclid")
-      fn_traced <- with_trace_printer(fn_base, trace_printer, par_names = par_name_fitted)
-      opt = stats::nlminb(ini_par_val, fn_traced, control = list(trace = 0))
+    if (tracing) {
+      # If the model is extended, make sure to build extended parameter names
+      par_names <- get_coef_names(par_name_fitted, name.extend.par, 
+                                  data.full, data.mask)
+      
+      tap <- make_buffer_printer(trace_cols = par_names,
+                                 step = "max",
+                                 show_mgc = FALSE)
+      fn_traced <- with_fn_tap(fn_base, tap, par_names, G_lst)
+      
+      opt <- stats::nlminb(ini_par_val, fn_traced, control = list(trace = 0))
     } else {
-      opt = stats::nlminb(ini_par_val, fn_base)
+      opt <- stats::nlminb(ini_par_val, fn_base)
     }
     
     H = stats::optimHess(opt$par, fn_base)
@@ -449,56 +479,28 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     o = gr_free_o_restore(fn_base, opt, H, parameters, param.og.4cpp, dims$n.sessions)
   }
 
-
-
-  #browser()
   tmb_output_og = list(est = o$value, vcov = o$cov)
-  #if is.scale, restore the estimated parameters' estimation and variance matrix to original scale
-  if(is.scale){
-    est_names = names(o$value)
-    u_names = unique(est_names)
-    #contains the first derivative matrices for each parameter
-    G_lst = vector('list', length(u_names))
-    names(G_lst) = u_names
+  
+  # Restore the estimated parameters' estimation and variance matrix to original scale
+  G_lst[["esa"]] = matrix(1)
+  est_names = names(o$value)
+  u_names = unique(est_names)
 
-    for(i in u_names){
-      index_u_name = which(est_names == i)
-      np = length(index_u_name)
-      if(i %in% name.extend.par){
-        #extract the mean_sd matrix. this matrix's first row is mean, and the 2nd row is sd.
-        #indices of columns correspond to location of each coefficient within the formula for
-        #that extended parameter
-        mean_sd = lst_mean_std[[i]]
-        G_lst[[i]] = matrix(0, nrow = np, ncol = np)
-        for(j in 1:np){
-
-          if(j == 1){
-            G_lst[[i]][j, 1] = 1
-            for(k in 2:np){
-              G_lst[[i]][j, k] = -1 * mean_sd[1,k]/mean_sd[2,k]
-            }
-          } else {
-            G_lst[[i]][j, j] = 1/mean_sd[2, j]
-          }
-
-        }
-
-
-        o$value[index_u_name] = G_lst[[i]] %*% o$value[index_u_name]
-
-      } else {
-        G_lst[[i]] = diag(nrow = np)
-      }
-    }
-
-    #restore the names
-    names(o$value) = est_names
-
-    #combine all these matrix for all coefficient
-    G = diag_block_combine(G_lst)
-    o$cov = G %*% o$cov %*% t(G)
-    o$sd = sqrt(diag(o$cov))
+  for(i in u_names) {
+    index_u_name = which(est_names == i)
+    o$value[index_u_name] = G_lst[[i]] %*% o$value[index_u_name]
   }
+  
+  #restore the names
+  names(o$value) = est_names
+  
+  # Combine all these matrix for all coefficient
+  G = diag_block_combine(G_lst)
+  # Delta method to get standard errors
+  # Note this is exact, not approximation as transofrmation was only linear
+  o$cov = G %*% o$cov %*% t(G)
+  o$sd = sqrt(diag(o$cov))
+  
 
   #browser()
   out = outFUN(data.par = data.par,
@@ -547,14 +549,14 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 #' ADMB uses a quasi-Newton method to find maximum likelihood
 #' estimates for the model parameters. Standard errors are calculated
 #' by taking the inverse of the negative of the
-#' Hessian. Alternatively, \link{boot.acre} can be used to carry out a
+#' Hessian. Alternatively, [boot.acre] can be used to carry out a
 #' parametric bootstrap procedure.
 #' 
 #' If the data are from an acoustic survey where stationary
 #' individuals call more than once (i.e., the argument
-#' \code{cue.rates} contains values that are not 1), then standard
+#' `cue.rates` contains values that are not 1), then standard
 #' errors calculated from the inverse of the negative Hessian are not
-#' correct. The method used by the function \link{boot.ascr} is
+#' correct. The method used by the function [boot.ascr] is
 #' currently the only way to calculate these reliably (see Stevenson
 #' et al., 2015, for details).
 #'
@@ -648,8 +650,7 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
   } else {
     dat$par.extend = NULL
   }
-
-
+  
   dat$local = local
   dat$tracing = tracing
   dat$gr.skip = gr.skip
@@ -660,7 +661,6 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
   dat$fix = fix
   dat$ss.opts = ss.opts
   dat$sv.link = sv.link
-
 
   output = do.call('fit_og', dat)
   output$arg_input = arg.input
@@ -687,7 +687,7 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #'
 #'  \item A column named `dist`, containing the estimated distance between the detected animal or sound.
 #'
-#'  \item A column named `ss` containing the measured signal strengh of the detected sound.
+#'  \item A column named `ss` containing the measured signal strength of the detected sound.
 #'
 #'  \item A column named `toa` containing the measured time of arrival (in seconds) since the start of the survey (or some other
 #' reference time) of the detected sound (only possible when the detectors are microphones).
@@ -750,10 +750,10 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #' @param cue.rates a numeric vector. Contains the recorded cue rates in a series of time periods with identical
 #'                  length. A vector of call rates collected independently ofthe main acoustic survey. This must be measured in calls per
 #'                  unit time, where the time units are equivalent to those used by
-#'                  \code{survey.length}. For example, if the survey was 30 minutes
+#'                  `survey.length`. For example, if the survey was 30 minutes
 #'                  long, the cue rates must be provided in cues per minute if
-#'                  \code{survey.length = 30}, but in cues per hour if
-#'                  \code{survey.length = 0.5}.
+#'                  `survey.length = 30`, but in cues per hour if
+#'                  `survey.length = 0.5`.
 #' @param survey.length a numeric vector or a scalar, contains the length of each session. If it is a scalar and
 #'                      there are multiple sessions, the value will be assigned to all sessions.
 #' @param sound.speed a scalar, the speed of sound in `metres` per `second`. Defaults to 330, approximate speed of sound in air.  

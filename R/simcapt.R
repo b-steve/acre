@@ -2,9 +2,9 @@
 #'
 #' Simulates SCR capture histories and associated additional
 #' information in the correct format for use with the function
-#' \link{fit.ascr}. If \code{fit} is provided then no other arguments
-#' are required. Otherwise, at least \code{traps}, \code{mask}, and
-#' \code{pars} are needed.
+#' [fit.ascr]. If `fit` is provided then no other arguments
+#' are required. Otherwise, at least `traps`, `mask`, and
+#' `pars` are needed.
 #'
 #' @param fit an object generated from the model fitting function "fit.acre_tmb()" or
 #'            the bootstrap process "boot.acre()". If `fit` is provided, then all other
@@ -13,7 +13,7 @@
 #' @inheritParams fit.acre
 #' @param param A named list. Component names are parameter names, and
 #'     each component is the value of the associated parameter. A
-#'     value for the parameter \code{D}, animal density (or call
+#'     value for the parameter `D`, animal density (or call
 #'     density, if it an acoustic survey) must always be provided,
 #'     along with values for parameters associated with the chosen
 #'     detection function and additional information type(s).

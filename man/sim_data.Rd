@@ -14,25 +14,25 @@ sim_data(
 )
 }
 \arguments{
-\item{sim_name}{a string denoting type of data to be simulated. Supported 
-types can be found using the \code{get_dataset_names()} 
+\item{sim_name}{a string denoting type of data to be simulated. Supported
+types can be found using the \code{get_dataset_names()}
 function.}
 
-\item{n.rand}{a numeric value denoting the number of data sets to be 
-generated. If n.rand > 1, \code{output$capt} will be a list of 
+\item{n.rand}{a numeric value denoting the number of data sets to be
+generated. If n.rand > 1, \code{output$capt} will be a list of
 length \code{n.rand}.}
 
 \item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
-the bootstrap process "boot.acre()". If `fit` is provided, then all
+the bootstrap process "boot.acre()". If \code{fit} is provided, then all
 parameters will be taken from the fitted object.}
 
 \item{seed}{a numeric value denoting the random seed, defaults to 810.}
 
-\item{suppress_messages}{a logical value which indicates whether to suppress 
+\item{suppress_messages}{a logical value which indicates whether to suppress
 helper messages.}
 
-\item{proportion_missing}{a numeric value used to set a proportion of the 
-covariate data generated to NA (currently only 
+\item{proportion_missing}{a numeric value used to set a proportion of the
+covariate data generated to NA (currently only
 bearing, distance and toa supported)}
 }
 \value{

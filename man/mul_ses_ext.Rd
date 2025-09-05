@@ -6,29 +6,29 @@
 \title{Data to showcase a "mul_ses_ext" demo}
 \format{
 a list with all necessary input for the model:
- \describe{
-   \item{detfn}{detechtion function: "hn" - half normal}
-   \item{model}{a list with the name of coefficients to be modeled with additional covariates
-                           as the elements names, and each element contains a formula for that modeled coefficient.}
-   \item{traps}{a list with a data frame with the coordinates of the acoustic detectors as each of its element}
-   \item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
-                              to create the detectable area from the coordinates of the detectors}
-   \item{session.cov}{a data frame contains survey sessions related covariates for the modeled coefficients,
-                      it must contains the indices of sessions}
-   \item{trap.cov}{a data frame contains detectors related covariates for the modeled coefficients, it must
-                   contains the indices of detectors, if the detectors are different between any survey sessions,
-                   the indices of sessions should be provided as well}
-   \item{capt}{a data frame of the capture history, contains columns as follows:\cr
-     \cr
-     "session" - the indices of the survey sessions;\cr
-     "ID" - the indices of the calls been detected;\cr
-     "occasion" - not been used, could be ignored;\cr
-     "trap" - the indices of the detectors;\cr
-     "bearing" - extra information, the direction of the location where a call is detected;\cr
-     "dist" - extra information, the distance to and the location where a call is detected.\cr
-     }
-   \item{sv}{a list, contains the coefficient which been assigned a start value for modeling}
- }
+\describe{
+\item{detfn}{detechtion function: "hn" - half normal}
+\item{model}{a list with the name of coefficients to be modeled with additional covariates
+as the elements names, and each element contains a formula for that modeled coefficient.}
+\item{traps}{a list with a data frame with the coordinates of the acoustic detectors as each of its element}
+\item{control.mask}{a list with the basic argument "buffer", which is the max detectable distance,
+to create the detectable area from the coordinates of the detectors}
+\item{session.cov}{a data frame contains survey sessions related covariates for the modeled coefficients,
+it must contains the indices of sessions}
+\item{trap.cov}{a data frame contains detectors related covariates for the modeled coefficients, it must
+contains the indices of detectors, if the detectors are different between any survey sessions,
+the indices of sessions should be provided as well}
+\item{capt}{a data frame of the capture history, contains columns as follows:\cr
+\cr
+"session" - the indices of the survey sessions;\cr
+"ID" - the indices of the calls been detected;\cr
+"occasion" - not been used, could be ignored;\cr
+"trap" - the indices of the detectors;\cr
+"bearing" - extra information, the direction of the location where a call is detected;\cr
+"dist" - extra information, the distance to and the location where a call is detected.\cr
+}
+\item{sv}{a list, contains the coefficient which been assigned a start value for modeling}
+}
 }
 \source{
 created from the simulation

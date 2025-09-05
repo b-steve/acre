@@ -368,7 +368,6 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
   identical_traps = all(n.traps == n.traps[1])
   identical_masks = all(n.masks == n.masks[1])
   
-  
   ihd_merge = FALSE
   #if the user is using ADMB version input for ihd model, there will be an argument named 'ihd.opts'
   #in the extra_args, merge it into 'par.extend'
@@ -381,8 +380,6 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
     ihd_model = extra_args$ihd.opts$model
     stopifnot(!is.null(ihd_data) & !is.null(ihd_model))
     if(is.null(ihd_scale)) ihd_scale = TRUE
-    
-    
     
     if(is.null(par.extend)){
       par.extend = list(data = list(mask = ihd_data), model = list(D=ihd_model), scale = ihd_scale)
@@ -616,7 +613,7 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
         if(is.scale){
           col_mean = apply(design.matrix, 2, mean)
           col_sd = apply(design.matrix, 2, stats::sd)
-          
+
           lst_mean_std[[i]] = rbind(col_mean, col_sd)
           nrow_X = nrow(design.matrix)
           mean_matrix = matrix(rep(col_mean, nrow_X), nrow = nrow_X, byrow = T)
@@ -626,6 +623,10 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
           #modify its first column to be 1 as we do not scale intercept column, it should be just 1
           sd_matrix[,1] = 1
           design.matrix = (design.matrix - mean_matrix)/sd_matrix
+          
+          # Built-in magic 
+          # design.matrix <- cbind(design.matrix[, 1], scale(design.matrix[, -1]))
+          # colnames(design.matrix) = paste(i, "_", colnames(design.matrix), sep = " ")
         }
         
         
@@ -683,6 +684,9 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
           #here we do not modify the first column because in the mask related design matrx, the
           #intercept column has been removed.
           design.matrix = (design.matrix - mean_matrix)/sd_matrix
+          
+          # Built-in magic 
+          # design.matrix <- scale(design.matrix)
         }
         
         design.matrix[['session']] = tem.data[['session']]
@@ -789,7 +793,48 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
               lst_mean_std = lst_mean_std))
 }
 
+# Constructs the Jacobian used to back-transform the scaling & centering done
+# on the model covariates
+construct_G_matrix <- function(mean_sd) {
+  G = diag(1 / mean_sd[2,])
+  G[1,] = -1 * mean_sd[1,] / mean_sd[2,]
+  # Intercept needs to be reset manually, as standard deviation will be
+  # 0, and 1 / standard deviation = infinity
+  G[1,1] = 1
+  
+  return(G)
+}
 
+construct_G_matrix_list <- function(par_names, extended_par_names, mean_sd_list, is.scale) {
+  # est_names = names(o$value)
+  u_names = unique(par_names)
+  #contains the first derivative matrices for each parameter
+  G_list = vector('list', length(u_names))
+  names(G_list) = u_names
+  
+  for(i in u_names) {
+    index_u_name = which(par_names == i)
+    np = length(index_u_name)
+    if(i %in% extended_par_names & is.scale) {
+      #extract the mean_sd matrix. this matrix's first row is mean, and the 2nd row is sd.
+      #indices of columns correspond to location of each coefficient within the formula for
+      #that extended parameter
+      mean_sd = mean_sd_list[[i]]
+      # Generates the Jacobian for the given parameter
+      G_list[[i]] <- construct_G_matrix(mean_sd)
+
+      # Jacobian restores the scaled parameter values to their original scale
+      # o$value[index_u_name] = G_list[[i]] %*% o$value[index_u_name]
+      
+    } else {
+      # If the parameter is not extended, don't need to worry about back
+      # transforming, as there was never a transformation to begin with
+      G_list[[i]] = diag(nrow = np)
+    }
+  }
+  
+  return(G_list)
+}
 
 #############################################################################
 
@@ -1822,100 +1867,359 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
   return(out)
 }
 
-
-#' Title
+#' Buffered trace printer for TMB objectives (paired fn/grad)
 #'
-#' @param trace_cols 
-#' @param only_improvements 
-#' @param step 
+#' Returns a small tap object with callbacks that you attach to the objective
+#' and gradient produced by [TMB::MakeADFun()]. While optimizing (e.g. via
+#' [stats::nlminb()]), it prints a right-aligned, fixed-width row **only when**
+#' the objective value and gradient were both evaluated at the **same**
+#' parameter vector. This guarantees the `mgc` column (maximum absolute gradient
+#' component) corresponds to the printed `fval`.
 #'
-#' @return
+#' Because optimizers often evaluate the objective and gradient at different
+#' points and in different orders (e.g. line search), the tap uses an internal
+#' buffer to: (a) remember the most recent `fn` and `gr` evaluations, and
+#' (b) print a row only when those evaluations match in parameters (within
+#' `mgc_tol`).
 #'
-#' @examples
-make_trace_printer <- function(trace_cols, only_improvements = TRUE,
-                               step = c("euclid","max","none")) {
+#' Columns are `iter` (count of printed rows), `fval`, optional `mgc`, optional
+#' `step` (Euclidean or max coordinate change since the previous *printed* row),
+#' followed by the parameter columns in `trace_cols`.
+#'
+#' @param trace_cols Character vector of parameter names to print as columns
+#'   (typically `names(obj$par)` or a subset).
+#' @param only_improvements Logical; if `TRUE` (default) print only when `fval`
+#'   strictly improves over the best so far (an “outer-like” trace). Set `FALSE`
+#'   to print every paired evaluation.
+#' @param step One of `"euclid"`, `"max"`, `"none"`. Controls the optional
+#'   step-size column between successive *printed* parameter vectors.
+#' @param show_mgc Logical; if `TRUE`, include a `mgc` column equal to
+#'   `max(abs(grad))` at the matched point. Set `FALSE` if you do not have a
+#'   gradient (e.g. `gr.skip = TRUE`).
+#' @param mgc_tol Numeric tolerance used to decide whether `fn` and `gr`
+#'   parameter vectors “match” (default `1e-10`).
+#'
+#' @return A list with callbacks:
+#' \itemize{
+#'   \item `on_fn(par_vec, fval, par_names, G_matrix_list)`: 
+#'   record an objective evaluation.
+#'   \item `on_gr(par_vec, grad_vec, par_names, G_matrix_list)`: 
+#'   record a gradient evaluation.
+#' }
+#' Each callback returns `invisible(NULL)`; printing happens as a side effect.
+#'
+#' @section Usage:
+#' \preformatted{
+#' tap <- make_buffer_printer(trace_cols = names(obj$par),
+#'                            step = "euclid",
+#'                            show_mgc = TRUE)
+#' obj$fn <- with_fn_tap(obj$fn, tap, par_names = names(obj$par))
+#' obj$gr <- with_gr_tap(obj$gr, tap, par_names = names(obj$par))
+#'
+#' opt <- stats::nlminb(obj$par, obj$fn, obj$gr, 
+#'                                control = list(trace = 0))
+#' }
+#'
+#' @notes
+#' - `iter` counts **printed rows** (accepted, paired evaluations), not
+#'   `nlminb`'s internal major-iteration counter. Official counts are in
+#'   `opt$iterations` / `opt$evaluations`.
+#' - `mgc` and `step` are on the **TMB parameterization** scale.
+#'
+#' @seealso [TMB::MakeADFun()], [stats::nlminb()]
+make_buffer_printer <- function(trace_cols,
+                                only_improvements = TRUE,
+                                step = c("euclid","max","none"),
+                                show_mgc = TRUE,
+                                mgc_tol = 1e-10) {
+  # Method to be used when calculating step size
   step <- match.arg(step)
   
-  local({
-    st <- new.env(parent = emptyenv())
-    st$iter <- 0L
-    st$best_f <- Inf
-    st$printed <- FALSE
-    st$prev_par <- NULL
+  # Initialize the printer state
+  st <- new.env(parent = emptyenv())
+  st$printed_header <- FALSE
+  st$best_f <- Inf
+  st$iter_print <- 0L
+  st$prev_print_par <- NULL
+  st$busy <- FALSE
+  
+  # fn & gr buffers
+  # Required in order to match corresponding gradient calculation to parameter
+  # vector
+  st$buf_fn_par <- NULL
+  st$buf_fn_f <- NULL
+  st$buf_gr_par <- NULL
+  st$buf_gr_mgc <- NA_real_
+  
+  # Determine columns to be printed
+  cols <- c("iter","fval")
+  if (isTRUE(show_mgc)) {
+    cols <- append(cols, "mgc", after = 2L)
+  }
+  if (step != "none") {
+    cols <- append(cols, "step", after = match("fval", cols))
+  }
+  # Add columns for each parameter
+  cols <- c(cols, trace_cols)
+  
+  # base fmts (keep your precisions/types here)
+  fmts <- c(iter = "%6d", fval = "%12.6f", mgc = "%10.4g", step = "%10.4g",
+            setNames(rep("%10.4g", length(trace_cols)), trace_cols))
+  
+  # robust width extractor (returns 0 if not found)
+  minw <- function(fmt) {
+    w <- suppressWarnings(as.integer(sub(".*%([0-9]+).*", "\\1", fmt)))
+    if (is.na(w)) 0L else w
+  }
+  
+  # compute column widths = max(header width, fmt's min width)
+  widths <- mapply(function(h, f) max(nchar(h), minw(f)), cols, fmts[cols])
+  
+  # rebuild fmts so their WIDTH matches the computed width (keep precision/type)
+  mkfmt <- function(fmt, width) {
+    # % [flags] [width] [.prec] [type]
+    sub("^%([-+ 0#]*)([0-9]*)(\\.?[0-9]*)([a-zA-Z])$",
+        paste0("%\\1", width, "\\3\\4"),
+        fmt)
+  }
+  fmts_aligned <- mapply(mkfmt, fmts[cols], widths, SIMPLIFY = TRUE, USE.NAMES = TRUE)
+  
+  # Header will be printed when the `printed_header` flag is FALSE
+  print_header <- function() {
+    pieces <- mapply(function(h, w) format(h, width=w, justify="right"),
+                     cols, widths, SIMPLIFY=TRUE)
+    cat(paste(pieces, collapse=" "), "\n")
+    # `flush.console()` is here to make sure printing still works if the user 
+    # is working in the console. Potential for weird print formatting if not 
+    # included
+    flush.console()
+  }
+  
+  # Euclid corresponds to euclidean norm, max to the max absolute difference
+  # over the parameters being optimized
+  step_size <- switch(step,
+                      euclid = function(a,b) if (is.null(b)) NA_real_ else sqrt(sum((a-b)^2)),
+                      max = function(a,b) if (is.null(b)) NA_real_ else max(abs(a-b)),
+                      none = function(a,b) NA_real_
+  )
+  
+  # The actual print function
+  maybe_print <- function(par_names) {
+    # If there is no fn buffer currently, do nothing
+    if (is.null(st$buf_fn_par)) return(invisible())
     
-    heads <- c("iter","fval", trace_cols)
-    if (step != "none") {
-      heads <- append(heads, "step", after = 2)
+    # If showing mgc, require matching gr buffer
+    if (isTRUE(show_mgc)) {
+      if (is.null(st$buf_gr_par)) return(invisible())
+      # Check if the fn buffer matches the gr buffer by comparing the 
+      # current parameter estimate values, and making sure the difference
+      # between them is negligible
+      same <- length(st$buf_fn_par) == length(st$buf_gr_par) &&
+        max(abs(st$buf_fn_par - st$buf_gr_par)) <= mgc_tol
+      # If they are different, again do nothing
+      if (!same) return(invisible())
     }
     
-    fmts <- c(iter = "%6d", fval = "%12.6f", step = "%10.4g",
-               setNames(rep("%10.4g", length(trace_cols)), trace_cols))
-    
-    minw <- function(fmt) as.integer(sub(".*%([0-9]+).*", "\\1", fmt))
-    widths <- mapply(function(h, f) max(nchar(h), minw(f)), heads, fmts[heads])
-    
-    print_header <- function() {
-      pieces <- mapply(function(h, w) format(h, width = w, justify = "right"),
-                       heads, widths, SIMPLIFY = TRUE)
-      cat(paste(pieces, collapse=" "), "\n"); flush.console()
+    # Retrieve current function value (negative log likelihood)
+    fval <- st$buf_fn_f
+    if (only_improvements) {
+      # If the NLL is infinity (edge case), or if it is less than the best
+      # NLL so far, then ignore this step and reset the buffers
+      if (!is.finite(fval) || fval >= st$best_f - 1e-12) {
+        st$buf_fn_par <- NULL 
+        st$buf_fn_f <- NULL
+        # Move on to the next step
+        return(invisible())
+      }
     }
+    st$best_f <- min(st$best_f, fval)
     
-    step_size <- switch(step,
-                        euclid = function(a,b) if (is.null(b)) NA_real_ else sqrt(sum((a-b)^2)),
-                        max = function(a,b) if (is.null(b)) NA_real_ else max(abs(a-b)),
-                        none = function(a,b) NA_real_
-    )
-
-    function(par_vec, fval, par_names) {
-      st$iter <- st$iter + 1L
-      if (only_improvements) {
-        if (!is.finite(fval) || fval >= st$best_f - 1e-12) return(invisible(NULL))
-      }
-      st$best_f <- min(st$best_f, fval)
-      
-      if (!st$printed) {
-        print_header()
-        st$printed <- TRUE 
-      }
-      
-      # Build a full row with NA defaults
-      row <- setNames(rep(NA_real_, length(heads)), heads)
-      row["iter"] <- st$iter
-      row["fval"] <- fval
-      
-      if ("step" %in% heads) {
-        s <- step_size(par_vec, st$prev_par)
-        row["step"] <- s
-      }
-      st$prev_par <- par_vec
-      
-      keep <- intersect(trace_cols, par_names)
-      if (length(keep)) {
-        row[keep] <- par_vec[match(keep, par_names)]
-      }
-      
-      pieces <- mapply(function(v, fmt, w) sprintf(fmt, v),
-                       row, fmts[heads], widths, SIMPLIFY = TRUE)
-      cat(paste(pieces, collapse = " "), "\n")
-      flush.console()
+    # Print header if it hasn't been printed yet
+    if (!st$printed_header) { 
+      print_header()
+      # Update the flag so the header is not printed again
+      st$printed_header <- TRUE 
     }
-  })
+    st$iter_print <- st$iter_print + 1L
+    
+    # Build the row to be printed
+    row <- setNames(rep(NA_real_, length(cols)), cols)
+    row["iter"] <- st$iter_print
+    row["fval"] <- fval
+    if ("mgc" %in% cols) {
+      row["mgc"] <- st$buf_gr_mgc
+    }
+    if ("step" %in% cols) {
+      row["step"] <- step_size(st$buf_fn_par, st$prev_print_par)
+    }
+    st$prev_print_par <- st$buf_fn_par
+    
+    keep <- intersect(trace_cols, par_names)
+    if (length(keep)) {
+      row[keep] <- st$buf_fn_par[match(keep, par_names)]
+    }
+    # Build the row string
+    # pieces <- mapply(function(v, fmt, w) sprintf(fmt, v),
+    #                  row, fmts[cols], widths, SIMPLIFY=TRUE)
+    pieces <- mapply(function(v, fmt) sprintf(fmt, v),
+                     row, fmts_aligned, SIMPLIFY = TRUE)
+    # Print the row
+    cat(paste(pieces, collapse=" "), "\n")
+    flush.console()
+    
+    # Clear buffers
+    st$buf_fn_par <- NULL
+    st$buf_fn_f <- NULL
+    st$buf_gr_par <- NULL
+    st$buf_gr_mgc <- NA_real_
+    invisible()
+  }
+  
+  on_fn_evaluation <- function(par_vec, fval, par_names) {
+    # If there is already a connection to the buffer environment
+    # then make sure recursive looping avoided
+    if (st$busy) return(invisible(NULL))
+    st$busy <- TRUE
+    on.exit({ st$busy <- FALSE }, add = TRUE)
+    
+    # Fill function-side buffer; gradient-side may arrive earlier or later
+    st$buf_fn_par <- par_vec
+    st$buf_fn_f <- fval
+    
+    # Attempt to print; will only print when required buffers are present
+    # and (if `show_mgc=TRUE`) par vectors match within tolerance.
+    maybe_print(par_names)
+    invisible(NULL)
+  }
+  
+  on_gr_evaluation <- function(par_vec, grad_vec, par_names) {
+    # See above `on_fn_evaluation()`
+    if (st$busy) return(invisible(NULL))
+    st$busy <- TRUE
+    on.exit({ st$busy <- FALSE }, add = TRUE)
+    st$buf_gr_par <- par_vec
+    st$buf_gr_mgc <- max(abs(grad_vec))
+    maybe_print(par_names)
+    invisible(NULL)
+  }
+  
+  list(on_fn_evaluation = on_fn_evaluation, on_gr_evaluation = on_gr_evaluation)
+  
 }
 
-#' Title
+#' Wrap an objective to emit buffered trace rows on each evaluation
 #'
-#' @param fn 
-#' @param printer 
-#' @param par_names 
+#' Creates an idempotent wrapper around an objective function `fn(par, ...)`
+#' that forwards the call unchanged, then notifies a tap object produced by
+#' [make_buffer_printer()] via `tap$on_fn_evaluation(par_vec, fval, par_names)`.
+#' Use this with [stats::nlminb()] (or similar optimizers) to stream live,
+#' correctly paired trace rows when combined with [with_gr_tap()].
 #'
-#' @return
+#' The wrapper is **idempotent**: if it detects the function was already wrapped
+#' (attribute `.__fn_tapped`), it returns `fn` unchanged. Arguments are
+#' `force()`d so the wrapper closes over the current objects.
 #'
-#' @examples
-with_trace_printer <- function(fn, printer, par_names) {
-  force(par_names) 
-  function(p, ...) {
+#' @param fn Objective function with signature `function(par, ...) -> scalar`.
+#' @param tap Tap/list returned by [make_buffer_printer()], expected to provide
+#'   a method `on_fn_evaluation(par_vec, fval, par_names)`.
+#' @param par_names Character vector of names corresponding to `par`. These are
+#'   used by the tap to map positions in `par` onto the `trace_cols` it prints.
+#' @param G_matrix_list List of back-transformation matrices used to back 
+#'   transform parameter values in the case they have been scaled and centered
+#'   for model fitting.
+#'
+#' @return A function with the same signature and return value as `fn`, which
+#'   also triggers the tap side-effect after each evaluation.
+#'
+#'
+#' @seealso [with_gr_tap()], [make_buffer_printer()], [stats::nlminb()]
+with_fn_tap <- function(fn, tap, par_names, G_matrix_list) {
+  # Make sure we evaluate the arguments as they are currently. 
+  force(fn)
+  force(tap)
+  force(par_names)
+  force(G_matrix_list)
+  
+  # Make sure that the function is not already wrapped
+  if (isTRUE(attr(fn, ".__fn_tapped"))) return(fn)
+  
+  # Wrap the function
+  wrapped <- function(p, ...) {
     f <- fn(p, ...)
-    printer(as.numeric(p), f, par_names)
+    
+    u_names = unique(names(p))
+    for(i in u_names) {
+      index_u_name = which(names(p) == i)
+      p[index_u_name] = G_matrix_list[[i]] %*% p[index_u_name]
+    }
+    tap$on_fn_evaluation(as.numeric(p), f, par_names)
     f
   }
+  
+  attr(wrapped, ".__fn_tapped") <- TRUE
+  wrapped
 }
+
+#' Wrap a gradient to emit buffered trace rows (mgc) on each evaluation
+#'
+#' Creates an idempotent wrapper around a gradient function `gr(par, ...)`
+#' that forwards the call unchanged, then notifies a tap object produced by
+#' [make_buffer_printer()] via `tap$on_gr_evaluation(par_vec, grad_vec, par_names)`.
+#' When used together with [with_fn_tap()], the tap can pair `fn` and `gr`
+#' evaluations at the same parameter vector and print a trace row that includes
+#' `mgc = max(abs(grad))`.
+#'
+#' If `gr` is `NULL`, this helper returns `NULL` (no wrapping).
+#' The wrapper is **idempotent**: if it detects the function was already wrapped
+#' (attribute `.__gr_tapped`), it returns `gr` unchanged. Arguments are
+#' `force()`d so the wrapper closes over the current objects.
+#'
+#' @param gr Gradient function with signature `function(par, ...) -> numeric`
+#'   (same length/order as `par`), or `NULL` if no gradient is supplied.
+#' @param tap Tap/list returned by [make_buffer_printer()], expected to provide
+#'   a method `on_gr_evaluation(par_vec, grad_vec, par_names)`.
+#' @param par_names Character vector of names corresponding to `par`. These are
+#'   used by the tap to map gradient components to parameter columns.
+#' @param G_matrix_list List of back-transformation matrices used to back 
+#'   transform parameter values in the case they have been scaled and centered
+#'   for model fitting.
+#'
+#' @return A function with the same signature and return value as `gr`,
+#'   which also triggers the tap side-effect after each evaluation; or `NULL`
+#'   if `gr` was `NULL`.
+#'
+#' @seealso [with_fn_tap()], [make_buffer_printer()], [stats::nlminb()]
+with_gr_tap <- function(gr, tap, par_names, G_matrix_list) {
+  # Make sure we evaluate the arguments as they are currently. 
+  if (is.null(gr)) return(NULL)
+  force(gr)
+  force(tap)
+  force(par_names)
+  force(G_matrix_list)
+  
+  # Make sure that the function is not already wrapped
+  if (isTRUE(attr(gr, ".__gr_tapped"))) return(gr)
+  
+  # Wrap the function
+  wrapped <- function(p, ...) {
+    g <- gr(p, ...)
+    
+    u_names = unique(names(p))
+    for(i in u_names) {
+      index_u_name = which(names(p) == i)
+      p[index_u_name] = G_matrix_list[[i]] %*% p[index_u_name]
+    }
+    
+    tap$on_gr_evaluation(as.numeric(p), g, par_names)
+    g
+  }
+  
+  attr(wrapped, ".__gr_tapped") <- TRUE
+  wrapped
+}
+
+
+
+
+
+

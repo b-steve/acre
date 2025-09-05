@@ -2197,7 +2197,7 @@ types_pars_sol = function(types, pars, new.covariates){
   #if new.covariates is provided, we need "fitted"
   #if(!is.null(new.covariates) & (!"fitted" %in% types)) types = c(types, 'fitted')
   #if types is still nothing, set it as 'linked'
-  if(is.null(types)) types = 'linked'
+  if(missing(types)) types = 'linked'
 
   #confirm types is within the valid set of options
   if(any(!types %in% c('all', 'fitted', 'linked', 'derived'))){

@@ -9,10 +9,10 @@ get_density_breaks_from_probability(dens, probability_breaks)
 \arguments{
 \item{dens}{a numeric vector of densities.}
 
-\item{probability_breaks}{the probabilities at which to calculate density 
+\item{probability_breaks}{the probabilities at which to calculate density
 breaks.}
 }
 \description{
-Calculates appropriate breaks for given density from provided probability 
+Calculates appropriate breaks for given density from provided probability
 bins.
 }

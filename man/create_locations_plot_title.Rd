@@ -10,10 +10,10 @@ create_locations_plot_title(call_id, animal_id, session)
 \item{call_id}{an numeric vector indicating which call ID's to calculate
 density for.}
 
-\item{animal_id}{an numeric value indicating animal ID. Should only be 
+\item{animal_id}{an numeric value indicating animal ID. Should only be
 specified if \code{fit} is an \code{animalID} model.}
 
-\item{session}{an integer value indicating the session of detector array and 
+\item{session}{an integer value indicating the session of detector array and
 individual(s) to be plotted.}
 }
 \value{

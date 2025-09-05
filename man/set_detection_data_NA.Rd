@@ -7,7 +7,7 @@
 set_detection_data_NA(capt_data, dataset_name, n_missing)
 }
 \arguments{
-\item{dataset_name}{Name of the data set (must include the additional 
+\item{dataset_name}{Name of the data set (must include the additional
 information to be removed in the name)}
 
 \item{n_missing}{Number of data to be set to NA}

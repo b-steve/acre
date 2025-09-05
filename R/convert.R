@@ -463,17 +463,17 @@ dist_nearest = function(from, to, col_name = 'dist_nearest'){
 
 #' Convert traps object
 #'
-#' Converts an \code{acre} traps matrix to a \code{secr} traps
+#' Converts an `acre` traps matrix to a `secr` traps
 #' object.
 #'
-#' The returned object is suitable for use as the \code{traps}
-#' argument of the function \link{make.capthist}.
+#' The returned object is suitable for use as the `traps`
+#' argument of the function [make.capthist].
 #'
-#' @param ss Logical, set to \code{TRUE} if a signal strength
+#' @param ss Logical, set to `TRUE` if a signal strength
 #'     detection function is to be used.
 #' @param traps a matrix or a data frame, contains one session's detectors' coordinates
 #'
-#' @return An object of class \code{traps} comprising a data frame of
+#' @return An object of class `traps` comprising a data frame of
 #'     x- and y-coordinates, the detector type ('single', 'multi',
 #'     'proximity', 'count', 'polygon' etc.), and possibly other
 #'     attributes.
@@ -492,15 +492,15 @@ convert.traps <- function(traps, ss = FALSE){
 
 #' Convert mask object
 #'
-#' Converts an \code{acre} mask matrix to a \code{secr} mask
+#' Converts an `acre` mask matrix to a `secr` mask
 #' object.
 #'
-#' The returned object is suitable for use as the \code{mask}
-#' argument of the function \link{secr.fit}.
+#' The returned object is suitable for use as the `mask`
+#' argument of the function [secr.fit].
 #'
 #' @inheritParams fit.acre
 #'
-#' @return An object of class \code{mask}.
+#' @return An object of class `mask`.
 #'
 #' @export
 convert.mask <- function(mask){
@@ -513,22 +513,22 @@ convert.mask <- function(mask){
 #' Capture history conversion.
 #'
 #' These functions convert a capture history object between the
-#' structures required for the \code{acre} and \code{secr}
+#' structures required for the `acre` and `secr`
 #' packages.
 #'
-#' @param capt A \code{secr} capture history object for
-#'     \code{convert.capt.to.acre}, or an \code{acre} capture
-#'     history object for \code{convert.capt.to.secr}.
-#' @param capthist Logical, if \code{TRUE}, a \code{capthist} object
+#' @param capt A `secr` capture history object for
+#'     `convert.capt.to.acre`, or an `acre` capture
+#'     history object for `convert.capt.to.secr`.
+#' @param capthist Logical, if `TRUE`, a `capthist` object
 #'     is returned. Otherwise a data frame is returned, which is
-#'     suitable for the \code{captures} argument to the
-#'     \link{make.capthist} function.
+#'     suitable for the `captures` argument to the
+#'     [make.capthist] function.
 #' @param cutoff The signal strength threshold for detection, if
 #'     required.
 #' @inheritParams fit.acre
 #'
 #' @return A capture history object appropriate for analysis using
-#'     either the \code{acre} or the \code{secr} package.
+#'     either the `acre` or the `secr` package.
 #'
 #' @name convert.capt
 NULL
@@ -593,8 +593,8 @@ convert.capt.to.secr <- function(capt, traps, capthist = TRUE, cutoff = NULL){
 #' Create a capture history object from a PAMGuard output file
 #'
 #' Converts a PAMGuard output file to a capture history object
-#' suitable for use with the \link{fit.acre} function. This uses
-#' \link{make.acoustic.captures} to allocate call identities to
+#' suitable for use with the [fit.acre] function. This uses
+#' [make.acoustic.captures] to allocate call identities to
 #' detections.
 #'
 #' @param dets Detection output dataframe from PAMGuard.
@@ -604,7 +604,7 @@ convert.capt.to.secr <- function(capt, traps, capthist = TRUE, cutoff = NULL){
 #'     times for which a subset should be taken to create the capture
 #'     history.
 #' @param sound.speed The speed of sound in metres per second.
-#' @param new.allocation Logical, if \code{TRUE}, an improved
+#' @param new.allocation Logical, if `TRUE`, an improved
 #'     call-allocation method is used. The old version is retained so
 #'     that older analyses can be replicated.
 #' @export
@@ -641,8 +641,8 @@ convert.pamguard <- function(dets, mics, time.range = NULL,
 #' Create a capture history object from a Raven output file
 #'
 #' Converts a Raven output file to a capture history object
-#' suitable for use with the \link{fit.acre} function. This uses
-#' \link{make.acoustic.captures} to allocate call identities to
+#' suitable for use with the [fit.acre] function. This uses
+#' [make.acoustic.captures] to allocate call identities to
 #' detections.
 #'
 #' @param dets Detection output dataframe from Raven.
@@ -688,12 +688,12 @@ convert.raven <- function(dets, mics, time.range = NULL, sound.speed = 330,
 #' time it would take for sound to travel between these microphones.
 #'
 #' @param mics a matrix containing the coordinates of trap locations.
-#' @param dets a data frame containing (at least): (i) \code{$toa},
+#' @param dets a data frame containing (at least): (i) `$toa`,
 #'     the precise time of arrival of the received sound, and (ii)
-#'     \code{$trap} the trap at which the sound was recorded.
+#'     `$trap` the trap at which the sound was recorded.
 #' @param sound.speed the speed of sound in metres per second.
-#' @return A data frame. Specifically, the \code{dets} dataframe, now
-#'     with a new variable, \code{ID}.
+#' @return A data frame. Specifically, the `dets` dataframe, now
+#'     with a new variable, `ID`.
 #' @author David Borchers
 #'
 #' @export
