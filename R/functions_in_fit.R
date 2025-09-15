@@ -805,10 +805,13 @@ construct_G_matrix <- function(mean_sd) {
   return(G)
 }
 
+# Constructs a list of back-transformation matrices which undoes the changes
+# in scale and shift in the cases such is present. In the case in which it is 
+# not, the identity matrix is returned for the corresponding parameter
 construct_G_matrix_list <- function(par_names, extended_par_names, mean_sd_list, is.scale) {
-  # est_names = names(o$value)
   u_names = unique(par_names)
-  #contains the first derivative matrices for each parameter
+  
+  # Contains the first derivative matrices for each parameter
   G_list = vector('list', length(u_names))
   names(G_list) = u_names
   
@@ -816,16 +819,13 @@ construct_G_matrix_list <- function(par_names, extended_par_names, mean_sd_list,
     index_u_name = which(par_names == i)
     np = length(index_u_name)
     if(i %in% extended_par_names & is.scale) {
-      #extract the mean_sd matrix. this matrix's first row is mean, and the 2nd row is sd.
-      #indices of columns correspond to location of each coefficient within the formula for
-      #that extended parameter
+      # Extract the mean_sd matrix. this matrix's first row is mean, and the 2nd row is sd.
+      # Indices of columns correspond to location of each coefficient within the formula for
+      # that extended parameter
       mean_sd = mean_sd_list[[i]]
+      
       # Generates the Jacobian for the given parameter
       G_list[[i]] <- construct_G_matrix(mean_sd)
-
-      # Jacobian restores the scaled parameter values to their original scale
-      # o$value[index_u_name] = G_list[[i]] %*% o$value[index_u_name]
-      
     } else {
       # If the parameter is not extended, don't need to worry about back
       # transforming, as there was never a transformation to begin with
@@ -835,8 +835,6 @@ construct_G_matrix_list <- function(par_names, extended_par_names, mean_sd_list,
   
   return(G_list)
 }
-
-#############################################################################
 
 ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_info, sv, fix){
   cutoff <- ss.opts[["cutoff"]]
@@ -1333,7 +1331,6 @@ gr_free_o_restore = function(fn, opt, H, parameters, param.og.4cpp, n.sessions){
   o$cov.fixed = H
   o$gradient.fixed = matrix(numDeriv::grad(fn, opt$par), nrow = 1)
   return(o)
-  
 }
 
 
@@ -1962,26 +1959,33 @@ make_buffer_printer <- function(trace_cols,
   # Add columns for each parameter
   cols <- c(cols, trace_cols)
   
-  # base fmts (keep your precisions/types here)
+  # Base formatting
+  # iter - %6d - integer in a field width of 6
+  # fval - %12.6f - fixed-point number, width 12 with 6 decimals
+  # rest - %10.4g - general format, 4 significant digits in a field width of 10
   fmts <- c(iter = "%6d", fval = "%12.6f", mgc = "%10.4g", step = "%10.4g",
             setNames(rep("%10.4g", length(trace_cols)), trace_cols))
   
-  # robust width extractor (returns 0 if not found)
+  # Pulls the width out of a format of similar form to "%6d" above
   minw <- function(fmt) {
     w <- suppressWarnings(as.integer(sub(".*%([0-9]+).*", "\\1", fmt)))
+    # If there are no digits immediately after "%", w will be NA
     if (is.na(w)) 0L else w
   }
   
-  # compute column widths = max(header width, fmt's min width)
+  # Compute final column widths
+  # Ensures that the printed columns will have same width as the column headers
   widths <- mapply(function(h, f) max(nchar(h), minw(f)), cols, fmts[cols])
   
-  # rebuild fmts so their WIDTH matches the computed width (keep precision/type)
+  # Rebuild fmts so their width matches the computed width (keep precision/type)
   mkfmt <- function(fmt, width) {
+    # Regex which reconstructs the width formatting like:
     # % [flags] [width] [.prec] [type]
     sub("^%([-+ 0#]*)([0-9]*)(\\.?[0-9]*)([a-zA-Z])$",
         paste0("%\\1", width, "\\3\\4"),
         fmt)
   }
+  # Update with the new formatting
   fmts_aligned <- mapply(mkfmt, fmts[cols], widths, SIMPLIFY = TRUE, USE.NAMES = TRUE)
   
   # Header will be printed when the `printed_header` flag is FALSE
@@ -2058,9 +2062,7 @@ make_buffer_printer <- function(trace_cols,
     if (length(keep)) {
       row[keep] <- st$buf_fn_par[match(keep, par_names)]
     }
-    # Build the row string
-    # pieces <- mapply(function(v, fmt, w) sprintf(fmt, v),
-    #                  row, fmts[cols], widths, SIMPLIFY=TRUE)
+    # Build the final row string
     pieces <- mapply(function(v, fmt) sprintf(fmt, v),
                      row, fmts_aligned, SIMPLIFY = TRUE)
     # Print the row

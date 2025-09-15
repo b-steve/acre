@@ -425,12 +425,6 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
         animal_locs$bincapt[i] = 1
       } 
     }
-    
-    # In case we prefer to vectorize at a later point (need to test this):
-    # sum_capt <- tapply(dat_capt$bincapt, dat_capt$ID, sum)
-    # captured_ids <- as.integer(sum_capt > 0)
-    # animal_locs$bincapt <- captured_ids[as.character(animal_locs$ID)]
-    # animal_locs$bincapt[is.na(animal_locs$bincapt)] <- 0
   }
   
   dat_capt = subset(dat_capt, dat_capt$bincapt == 1)

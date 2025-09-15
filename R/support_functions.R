@@ -220,8 +220,6 @@ detfn.params = function(detfn){
 
 # See section 1.4.2 in: 
 # https://research-repository.st-andrews.ac.uk/bitstream/handle/10023/18233/BenStevensonPhDThesis.pdf
-# When `return_numerator` == F, we are returning numerator of Eq. 1.4
-# When `return_numerator` == T, we are returning denominator of Eq. 1.4
 p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL, 
                           ss.link = NULL, pars = NULL, A, n.quadpoints = 8,
                           esa = T) {
@@ -435,7 +433,7 @@ default.sv = function(param, info){
       pars$cutoff <- cutoff
     }
     esa <- p.dot.defaultD(points = mask, traps = traps, detfn = detfn,
-                          ss.link = ss.link, pars = pars, A = A, n.quadpoints = 8)
+                          ss.link = ss.link, pars = pars, A = A, n.quadpoints = 8, esa = T)
     if(animal.model){
       return(dims$n.animals[session_to_use]/(esa*survey.length))
     } else {

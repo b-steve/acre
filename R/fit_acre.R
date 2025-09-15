@@ -419,31 +419,39 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   TMB_par_names <- rep(param.og, lengths(parameters[param.og]))
   G_lst <- construct_G_matrix_list(TMB_par_names, name.extend.par, lst_mean_std,
                                    is.scale)
-  
-  #browser()
+
   if(!gr.skip) {
-    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = TRUE, DLL="acre")
+    # Have TMB build the likelihood function
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, 
+                          silent = TRUE, DLL="acre")
+    # True so that when we optimize, hessian is calculated alongside
     obj$hessian <- TRUE
  
     # If tracing is enabled, use custom trace output
     if (tracing) {
       # If the model is extended, make sure to build extended parameter names
+      # These need to correspond to the GLM design matrix column names
       par_names <- get_coef_names(names(obj$par), name.extend.par, 
                                   data.full, data.mask)
+      
       tap <- make_buffer_printer(trace_cols = par_names,
                                  step = "none",
                                  show_mgc = TRUE)
       
-      # capture originals and wrap safely
+      # Capture originals and wrap safely
       orig_fn <- obj$fn
       orig_gr <- obj$gr
+      
+      # Wrap the objective / gradient functions, so each time they are
+      # evaluated, we print the custom trace information
       obj$fn <- with_fn_tap(orig_fn, tap, par_names, G_lst)
-      if (!is.null(orig_gr)) obj$gr <- with_gr_tap(orig_gr, tap, par_names, G_lst)
+      obj$gr <- with_gr_tap(orig_gr, tap, par_names, G_lst)
     }
     
     opt = stats::nlminb(obj$par, obj$fn, obj$gr, control=list(trace=0))
     
-    # restore originals before heavy post-processing (avoids extra prints)
+    # Restore originals once the initial optimization is done 
+    # (avoid additional prints when using sdreport())
     if (tracing) { 
       obj$fn <- orig_fn 
       obj$gr <- orig_gr 
@@ -451,22 +459,32 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     
     o = TMB::sdreport(obj)
   } else {
-    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, silent = (!tracing), DLL="acre", type = 'Fun')
+    # In the case we don't use TMB to calculate the gradients, we will need to 
+    # proceed slightly differently
+    
+    # type = 'Fun' specifies to skip the gradient calculation
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, 
+                          silent = TRUE, DLL="acre", type = 'Fun')
 
+    # Get the names of the fitted parameters
+    # That is, all the parameters we pass to TMB, which are not fixed
     par_name_fitted = setdiff(param.og.4cpp, name.fixed.par.4cpp)
-    #the name of this ini_par_val is not right, do it later
+    
+    # The name of this ini_par_val is not right, do it later <- ? mysterious and scary
     ini_par_val = list_2vector_4value(parameters[par_name_fitted])
     
     fn_base <- function(par) environment(obj$fn)$f(par, type = "double")
     
+    # If tracing is enabled, use custom trace output
     if (tracing) {
-      # If the model is extended, make sure to build extended parameter names
+      # As before, if the model is extended, make sure to build extended names
       par_names <- get_coef_names(par_name_fitted, name.extend.par, 
                                   data.full, data.mask)
       
       tap <- make_buffer_printer(trace_cols = par_names,
                                  step = "max",
                                  show_mgc = FALSE)
+      
       fn_traced <- with_fn_tap(fn_base, tap, par_names, G_lst)
       
       opt <- stats::nlminb(ini_par_val, fn_traced, control = list(trace = 0))
@@ -474,6 +492,10 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
       opt <- stats::nlminb(ini_par_val, fn_base)
     }
     
+    # Numerically solve for the hessian
+    # Note that the standard errors for g0 may be NaN due to numerical issues,
+    # alongside the fact that its true value lies on the boundary of the
+    # parameter space
     H = stats::optimHess(opt$par, fn_base)
     H = solve(H)
     o = gr_free_o_restore(fn_base, opt, H, parameters, param.og.4cpp, dims$n.sessions)
@@ -491,18 +513,15 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     o$value[index_u_name] = G_lst[[i]] %*% o$value[index_u_name]
   }
   
-  #restore the names
+  # Restore the names
   names(o$value) = est_names
   
   # Combine all these matrix for all coefficient
   G = diag_block_combine(G_lst)
   # Delta method to get standard errors
-  # Note this is exact, not approximation as transofrmation was only linear
   o$cov = G %*% o$cov %*% t(G)
   o$sd = sqrt(diag(o$cov))
   
-
-  #browser()
   out = outFUN(data.par = data.par,
                data.full = data.full,
                data.traps = data.traps,

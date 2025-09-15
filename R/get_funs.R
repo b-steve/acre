@@ -758,8 +758,8 @@ get_coef_names <- function(pars, pars_extended, data.full, data.mask) {
     return(pars)
   }
   
-  data.full_names <- strsplit(colnames(data.full), " _ ")
-  data.mask_names <- strsplit(colnames(data.mask), " _ ")
+  data_full_names <- strsplit(colnames(data.full), " _ ")
+  data_mask_names <- strsplit(colnames(data.mask), " _ ")
   
   # Bad code, should pre-define length and fill rather than grow with iterations
   name_output = c()
