@@ -448,15 +448,11 @@ default.sv = function(param, info){
   } else if(param == "z"){
     return(1)
   } else if(param == "sigma.toa"){
-    # Take the average of the sd of each call 
-    # Average over each session
-    sd_sum <- 0
-    for (sess in unique(data.full$session)) {
-      sess.data <- data.full[data.full$session == sess, ]
-      toa_by_call_matrix <- matrix(sess.data$toa, nc = max(sess.data$trap))
-      sd_sum <- sd_sum + mean(apply(toa_by_call_matrix, 1, sd))
-    }
-    return(sd_sum / length(unique(data.full$session)))
+    # Matrix where columns correspond to traps, rows correspond to call_id
+    toa_by_call_matrix <- matrix(data.full$toa, nc = max(data.full$trap), byrow = T)
+    # Take the average of the standard deviations of every call
+    mean(apply(toa_by_call_matrix, 1, sd))
+    return(mean(apply(toa_by_call_matrix, 1, sd)))
   } else if(param == "kappa"){
     return(10)
   } else if(param == "b0.ss"){
