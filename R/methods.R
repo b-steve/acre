@@ -19,7 +19,7 @@
 #' @return a named numeric vector
 #' @export
 #'
-coef.acre_tmb = function(object, types, pars = NULL, new.covariates = NULL, ...){
+coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NULL, ...){
   newdata <- new.covariates
   #deal with default setting for 'types'
   tem = types_pars_sol(types, pars, newdata)
@@ -30,7 +30,6 @@ coef.acre_tmb = function(object, types, pars = NULL, new.covariates = NULL, ...)
   is.fitted = 'fitted' %in% types
   is.linked = 'linked' %in% types
   is.derived = 'derived' %in% types
-  # is.linked = TRUE
   
   #extract some key information for the object
   param_values_og = get_coef(object)
