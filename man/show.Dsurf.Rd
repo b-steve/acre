@@ -19,7 +19,7 @@ show.Dsurf(
   plot.contours = FALSE,
   add = FALSE,
   convert.loc2mask = NULL,
-  arg.col = 100,
+  arg.col = list(n = 100),
   trap.plot = NULL,
   ...
 )
@@ -66,28 +66,24 @@ results in densities plotted as animals per square kilometre.}
 
 \item{add}{a logical value indicates whether to add the lines into the existing plot}
 
-\item{convert.loc2mask}{a list with 3 possible elements to control an embedded function inside
-this package to convert the location related data provided by \code{loc.cov}
-to masks level using imputation method. The 3 possible elements are:
-control_nn2, control_weight and control_char.
-=======================================================================
+\item{convert.loc2mask}{a list with 3 possible elements to control an embeddedfunction inside this package to convert the location related data providedby loc.cov to masks level using imputation method. The 3 possible elementsare: control_nn2, control_weight and control_char.
+
 control_nn2: a list contains the arguments for the function RANN::nn2(),
 please refer to the help document in that package for further details;
-control_weight: a list contains 3 elements control the weighted method.
-The function RANN:nn2() gives us a M * k matrix, where M is the number
-of mask points, and each row contains k points provided by \code{loc.cov}
-which are nearest to this mask point. For this k nearest points,
-we use their values of each covariates to do the imputation to obtain
-the estimated value of this mask point. considering the distances
-between this mask point and these k nearest points are different,
-we need a method to determine their weights. The argument \code{control_weight}
-is used to do so. Its 3 elements are \code{method}, which could be \code{Shepard}
-or \code{Modified}; \code{q}, which is used to control both methods; \code{r},
-which is used to control method \code{Modified}.
-Shepard method: w ~ (1/d)^q
-Modified method: modified shepard method, w ~ \link{max(0, r - d)/(r * d)}^q}
+control_weight: a list contains 3 elements control the weighted method. The
+function RANN:nn2() gives us a M * k matrix, where M is the number of mask
+points, and each row contains k points provided by \code{loc.cov} which are
+nearest to this mask point. For this k nearest points, we use their values
+of each covariates to do the imputation to obtain the estimated value of
+this mask point. considering the distances between this mask point and these
+k nearest points are different, we need a method to determine their weights.
+The argument \code{control_weight} is used to do so. Its 3 elements are \code{method},
+which could be \code{Shepard} or \code{Modified}; \code{q}, which is used to control both
+methods; \code{r}, which is used to control method \code{Modified}. Shepard method: w
+~ (1/d)^q Modified method: modified shepard method, w ~ \link[=max(0, r - d)/(r *
+ d)]{max(0, r - d)/(r * d)}^q}
 
-\item{arg.col}{A numeric value, indicating the number of levels to stretch the color over}
+\item{arg.col}{}
 
 \item{trap.plot}{}
 

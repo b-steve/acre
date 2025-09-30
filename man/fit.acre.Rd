@@ -72,20 +72,5 @@ which will use less RAM, but the optimization process will consume more time.}
 \item{sv.link}{a list; this is mostly for development purpose, not recommended to use}
 }
 \description{
-Fits an acoustic SCR model. Parameter estimation is done by maximum likelihood through an AD Model Builder (ADMB) executable.
-}
-\details{
-ADMB uses a quasi-Newton method to find maximum likelihood
-estimates for the model parameters. Standard errors are calculated
-by taking the inverse of the negative of the
-Hessian. Alternatively, \link{boot.acre} can be used to carry out a
-parametric bootstrap procedure.
-
-If the data are from an acoustic survey where stationary
-individuals call more than once (i.e., the argument
-\code{cue.rates} contains values that are not 1), then standard
-errors calculated from the inverse of the negative Hessian are not
-correct. The method used by the function \link{boot.ascr} is
-currently the only way to calculate these reliably (see Stevenson
-et al., 2015, for details).
+Fits an acoustic SCR model.
 }
