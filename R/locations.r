@@ -699,7 +699,7 @@ plot_locations <- function(fit, call_id = NULL, animal_id = NULL, session=1,
     # Calculate densities for this call
     dens <- location_density(fit, cid, animal_id, session = session)
     
-    # Plot the density contours
+    # Plot the density contours 
     if (filled) {
       plot_contour(dens$x, dens$y, dens$combined_density, n_levels, filled = TRUE)
     } else {

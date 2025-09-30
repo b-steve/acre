@@ -393,7 +393,6 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
 #'
 #' @return a list of (nmask) x (ntrap) columns, for each extended parameter.
 #'          values correspond to estimated parameter value for the given covariate values.
-#' @export
 #'
 #' @examples 
 #' # Calculates the parameter values for each mask_point - trap combination

@@ -623,10 +623,6 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
           #modify its first column to be 1 as we do not scale intercept column, it should be just 1
           sd_matrix[,1] = 1
           design.matrix = (design.matrix - mean_matrix)/sd_matrix
-          
-          # Built-in magic 
-          # design.matrix <- cbind(design.matrix[, 1], scale(design.matrix[, -1]))
-          # colnames(design.matrix) = paste(i, "_", colnames(design.matrix), sep = " ")
         }
         
         
@@ -684,9 +680,6 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
           #here we do not modify the first column because in the mask related design matrx, the
           #intercept column has been removed.
           design.matrix = (design.matrix - mean_matrix)/sd_matrix
-          
-          # Built-in magic 
-          # design.matrix <- scale(design.matrix)
         }
         
         design.matrix[['session']] = tem.data[['session']]
