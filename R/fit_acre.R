@@ -809,7 +809,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   tmb_output_og = list(est = o$value, vcov = o$cov)
   
   # Restore the estimated parameters' estimation and variance matrix to original scale
-  G_lst[["esa"]] = matrix(1)
+  G_lst[["esa"]] = diag(dims$n.sessions)
   est_names = names(o$value)
   u_names = unique(est_names)
 
