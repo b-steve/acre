@@ -114,113 +114,117 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 }
 
 
-#'Combining all data for model fitting
+#' Combining all data for model fitting
 #'
-#'Combines detection data, detector locations, and covariate data into a single
-#'object. The resulting object can be used for model fitting with
-#'[`fit.acre()`].
+#' Combines detection data, detector locations, and covariate data
+#' into a single object. The resulting object can be used for model
+#' fitting with [`fit.acre()`].
 #'
-#'@section Captures argument The `captures` argument will be passed to the
-#'  function `create.capt`. The main arguments provided are the session, the
-#'  identification number of the detected animal or sound, and the
-#'  identification number of the trap which made the detection (where the
-#'  identification number is the row number of the corresponding trap in the
-#'  matrix of trap locations. These columns must be exactly labelled `session`,
-#'  `ID` and `trap` respectively.
+#' @section Captures argument:
 #'
-#'  Additional columns can specify the auxiliary information collected over the
-#'  course of the survey: borchers 2015
+#' The `captures` argument will be passed to the function
+#' `create.capt`. The main columns required are the session, the
+#' identification number of the detected animal or sound, and the
+#' identification number of the trap which made the detection (where
+#' the identification number is the row number of the corresponding
+#' trap in the matrix of trap locations). These columns must be
+#' exactly labelled `session`, `ID` and `trap` respectively.
+#'
+#' Additional columns can specify the auxiliary information collected
+#' over the course of the survey:
 #'
 #' \itemize{
-#'  \item A column named `bearing`, containing estimated bearings (in radians) from the detector to each detected animal or sound.
+#' 
+#'  \item A column named `bearing`, containing estimated bearings (in
+#'  radians) from the detector to each detected animal or sound.
 #'
-#'  \item A column named `dist`, containing the estimated distance between the detected animal or sound.
+#'  \item A column named `dist`, containing the estimated distance (in
+#'  metres) between the detected animal or sound.
 #'
-#'  \item A column named `ss` containing the measured signal strengh of the detected sound.
+#'  \item A column named `ss` containing the measured signal strengh
+#'  of the detected sound.
 #'
-#'  \item A column named `toa` containing the measured time of arrival (in seconds) since the start of the survey (or some other
-#' reference time) of the detected sound (only possible when the detectors are microphones).
+#'  \item A column named `toa` containing the measured time of arrival
+#'  (in seconds) since the start of the survey (or some other
+#'  reference time) of the detected sound (only possible when the
+#'  detectors are microphones).
 #'
-#'  \item
 #'  }
+#' 
 #'  A column named `animal_ID` containing the identification number of animals
 #'  can be provided if individuals could be distinguished by their acoustic
-#'  detection. ref to (2021 ben) calls with same animal ID come from the same
-#'  location
+#'  detection.
 #'
-#'@param captures A data frame with detection data. Further details are
-#'  available below.
-#'@param traps A matrix or a data frame with two columns, or a list of such
-#'  matrices or data frames for a multi-session model. Each row provides the x-
-#'  and y-coordinates of a detector location, in metres. For multi-session
-#'  models, each component of the list provides detector locations for one
-#'  session.
-#'@param mask Optional. A mask object. If `NULL`, a mask object will be created
-#'  automatically based on the `traps` and `control.mask` arguments.
-#'@param control.mask A list specifying additional arguments for
-#'  [`create.capt()`], other than `traps` that are used to create a mask object.
-#'@param loc.cov A data frame or a list of data frames containing spatial
-#'  covariates. Data frames must contain columns `x` and `y` for x- and
-#'  y-coordinates, and additional columns for spatial covariates measured at
-#'  these locations. Missing `NA` values are allowed.
-#'@param time.loc.cov A list or list of data frames containing spatial
-#'  covariates that change over time. The data frames must contain columns `x`,
-#'  `y` and `time`, and additional columns for the spatiotemporal covariates.
-#'  When these spatiotemporal covariates are provided, the column `time` must
-#'  also appear in `session.cov`.
-#'@param convert.loc2mask a list with 3 possible elements to control an embedded
-#'  function inside this package to convert the location related data provided
-#'  by `loc.cov` to masks level using imputation method. The 3 possible elements
-#'  are: control_nn2, control_weight and control_char.
-#'  =======================================================================
-#'  control_nn2: a list contains the arguments for the function RANN::nn2(),
-#'  please refer to the help document in that package for further details;
-#'  control_weight: a list contains 3 elements control the weighted method. The
-#'  function RANN:nn2() gives us a M * k matrix, where M is the number of mask
-#'  points, and each row contains k points provided by `loc.cov` which are
-#'  nearest to this mask point. For this k nearest points, we use their values
-#'  of each covariates to do the imputation to obtain the estimated value of
-#'  this mask point. considering the distances between this mask point and these
-#'  k nearest points are different, we need a method to determine their weights.
-#'  The argument `control_weight` is used to do so. Its 3 elements are `method`,
-#'  which could be `Shepard` or `Modified`; `q`, which is used to control both
-#'  methods; `r`, which is used to control method `Modified`. Shepard method: w
-#'  ~ (1/d)^q Modified method: modified shepard method, w ~ [max(0, r - d)/(r *
-#'  d)]^q
+#' @section Controlling spatial interpolation:
 #'
-#'@param session.cov A data frame containing session covariates. It must contain
-#'  a column `session` and additional columns for the session-level covariates.
-#'  If spatiotemporal covariates are included using `time.loc.cov`, then a
-#'  column `time` must be included, indicating when the session took place.
-#'@param trap.cov A data frame containing trap covariates. It must contain a
-#'  column `trap` and additional columns for the trap-level covariates. The
-#'  column `session` must be included for multisession data.
-#'@param dist.cov A list containing locations of features from which distances
-#'  are calculated, and can be used as spatial covariates. Each component must
-#'  be named after a feature, with a data frame containing columns `x` and `y`,
-#'  recording the the location of a feature.
-#'@param cue.rates A numeric vector containing the recorded cue rates in a
-#'  series of time periods with identical length. A vector of call rates
-#'  collected independently of the main acoustic survey. This must be measured
-#'  in calls per unit time, where the time units are equivalent to those used by
-#'  \code{survey.length}. For example, if the survey was 30 minutes long, the
-#'  cue rates must be provided in cues per minute if \code{survey.length = 30},
-#'  but in cues per hour if \code{survey.length = 0.5}.
-#'@param survey.length A numeric vector or a scalar, containing the length of
-#'  each session. If it is a scalar and there are multiple sessions, the value
-#'  will be assigned to all sessions.
-#'@param sound.speed A scalar, the speed of sound in metres per second. Defaults
-#'  to 330, approximate speed of sound in air.
-#'@param convert.dist.unit a numeric value for the conversion between the unit
-#'  for the data and `metre`. If the distance unit in data is `km`, then assign
-#'  1000 here.
-#'@param convert.time.unit a numeric value for the conversion between the unit
-#'  for the data and `second`. If the time unit for the data is `millisecond`,
-#'  then assign 0.001 here.
-#'@param ...
+#' (Still to write.)
+#' 
+#' @param captures A data frame with detection data. Further details
+#'     are available below.
+#' @param traps A matrix or a data frame with two columns, or a list
+#'     of such matrices or data frames for a multi-session model. Each
+#'     row provides the x- and y-coordinates of a detector location,
+#'     in metres. For multi-session models, each component of the list
+#'     provides detector locations for one session.
+#' @param mask Optional. A mask object. If `NULL`, a mask object will
+#'     be created automatically based on the `traps` and
+#'     `control.mask` arguments.
+#' @param control.mask A list specifying additional arguments for
+#'     [`create.capt()`], other than `traps` that are used to create a
+#'     mask object.
+#' @param loc.cov A data frame or a list of data frames containing
+#'     spatial covariates. Data frames must contain columns `x` and
+#'     `y` for x- and y-coordinates, and additional columns for
+#'     spatial covariates measured at these locations. Missing `NA`
+#'     values are allowed.
+#' @param time.loc.cov A list or list of data frames containing
+#'     spatial covariates that change over time. The data frames must
+#'     contain columns `x`, `y` and `time`, and additional columns for
+#'     the spatiotemporal covariates.  When these spatiotemporal
+#'     covariates are provided, the column `time` must also appear in
+#'     `session.cov`.
+#' @param convert.loc2mask A list to control the spatial interpolation
+#'     method used to compute covariate values for mask locations
+#'     based on data provided in `loc.cov` and `time.loc.cov`. See
+#'     `Details`.
+#' @param session.cov A data frame containing session covariates. It
+#'     must contain a column `session` and additional columns for the
+#'     session-level covariates.  If spatiotemporal covariates are
+#'     included using `time.loc.cov`, then a column `time` must be
+#'     included, indicating when the session took place.
+#' @param trap.cov A data frame containing trap covariates. It must
+#'     contain a column `trap` and additional columns for the
+#'     trap-level covariates. The column `session` must be included
+#'     for multisession data.
+#' @param dist.cov A list containing locations of features from which
+#'     distances are calculated, and can be used as spatial
+#'     covariates. Each component must be named after a feature, with
+#'     a data frame containing columns `x` and `y`, recording the the
+#'     location of a feature.
+#' @param cue.rates A numeric vector containing the recorded cue rates
+#'     in a series of time periods with identical length. A vector of
+#'     call rates collected independently of the main acoustic
+#'     survey. This must be measured in calls per unit time, where the
+#'     time units are equivalent to those used by
+#'     \code{survey.length}. For example, if the survey was 30 minutes
+#'     long, the cue rates must be provided in cues per minute if
+#'     \code{survey.length = 30}, but in cues per hour if
+#'     \code{survey.length = 0.5}.
+#' @param survey.length A numeric vector or a scalar, containing the
+#'     length of each session. If it is a scalar and there are
+#'     multiple sessions, the value will be assigned to all sessions.
+#' @param sound.speed A scalar, the speed of sound in metres per
+#'     second. Defaults to 330, approximate speed of sound in air.
+#' @param convert.dist.unit a numeric value for the conversion between
+#'     the unit for the data and `metre`. If the distance unit in data
+#'     is `km`, then assign 1000 here.
+#' @param convert.time.unit a numeric value for the conversion between
+#'     the unit for the data and `second`. If the time unit for the
+#'     data is `millisecond`, then assign 0.001 here.
+#' @param ...
 #'
 #'
-#'@examples
+#' @examples
 #' \dontrun{
 #' ## Getting some data.
 #' example <- get("simple_hhn")
@@ -232,8 +236,8 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #' simple.hr.fit <- read.acre(capt = example_hr$capt, traps = example_hr$traps, control.mask = list(buffer = 30),
 #'                            detfn = "hr")
 #'
-#'@return
-#'@export
+#' @return
+#' @export
 #'
 read.acre = function(captures, traps, mask = NULL,
                     control.mask = list(), control.capt = list(), loc.cov = NULL, time.loc.cov = NULL,
