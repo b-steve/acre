@@ -528,8 +528,7 @@ plot.acre_data <- function(x, ...){
           }
           keys = capt_session$ID
         }
-
-        if(length(keys) == 0) stop("Nothing to plot, please double check the assigned animal_ID or ID.")
+        if(length(keys) != 0){
         
         u_keys = unique(keys)
         
@@ -571,16 +570,15 @@ plot.acre_data <- function(x, ...){
         
         
         #plot calls one by one
-        for(k in u_keys){
+          for(k in u_keys){
           i_k = which(keys == k)
           one_call = capt_session[i_k,,drop = FALSE]
           actived_traps = traps[one_call$trap,]
-          
           if(animal.model){
             sub_title = paste0("session: ",s, ", animal ID: ", one_call$animal_ID[1],
                                ", call ID: ", one_call$ID[1])
           } else {
-            sub_title = paste0("session: ",s, ", call ID: ", one_call$ID[1])
+            sub_title = paste0("session: ",s, ", call ID: ", rownames(data$capt[[s]]$bincapt)[one_call$ID[1]])
           }
           
           plot_with_lab = trap.plot + labs(subtitle = sub_title)
@@ -602,7 +600,6 @@ plot.acre_data <- function(x, ...){
             } else {
               if(is.null(control$arrow_len)) arrow_len = 0.382 * buffer else arrow_len = control$arrow_len
             }
-            
             plot_one_call = plot_one_call + 
               geom_segment(data = actived_traps, mapping = aes(x = actived_traps$x, y = actived_traps$y,
                                                                xend = actived_traps$x + sin(one_call$bearing) * arrow_len,
@@ -636,7 +633,7 @@ plot.acre_data <- function(x, ...){
           }
           
         }
-        
+        }
         
        #end of session s 
       }
