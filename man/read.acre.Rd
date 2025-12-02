@@ -25,90 +25,130 @@ read.acre(
 )
 }
 \arguments{
-\item{captures}{A data frame with detection data. Further details are
-available below.}
+\item{captures}{A data frame with detection data. Further details
+are available below.}
 
-\item{traps}{A matrix or a data frame with two columns, or a list of such
-matrices or data frames for a multi-session model. Each row provides the x-
-and y-coordinates of a detector location, in metres. For multi-session
-models, each component of the list provides detector locations for one
-session.}
+\item{traps}{A matrix or a data frame with two columns, or a list
+of such matrices or data frames for a multi-session model. Each
+row provides the x- and y-coordinates of a detector location,
+in metres. For multi-session models, each component of the list
+provides detector locations for one session.}
 
-\item{mask}{Optional. A mask object. If \code{NULL}, a mask object will be created
-automatically based on the \code{traps} and \code{control.mask} arguments.}
+\item{mask}{Optional. A mask object. If \code{NULL}, a mask object will
+be created automatically based on the \code{traps} and
+\code{control.mask} arguments.}
 
 \item{control.mask}{A list specifying additional arguments for
-\code{\link[=create.capt]{create.capt()}}, other than \code{traps} that are used to create a mask object.}
+\code{\link[=create.capt]{create.capt()}}, other than \code{traps} that are used to create a
+mask object.}
 
-\item{loc.cov}{A data frame or a list of data frames containing spatial
-covariates. Data frames must contain columns \code{x} and \code{y} for x- and
-y-coordinates, and additional columns for spatial covariates measured at
-these locations. Missing \code{NA} values are allowed.}
+\item{loc.cov}{A data frame or a list of data frames containing
+spatial covariates. Data frames must contain columns \code{x} and
+\code{y} for x- and y-coordinates, and additional columns for
+spatial covariates measured at these locations. Missing \code{NA}
+values are allowed.}
 
-\item{time.loc.cov}{A list or list of data frames containing spatial
-covariates that change over time. The data frames must contain columns \code{x},
-\code{y} and \code{time}, and additional columns for the spatiotemporal covariates.
-When these spatiotemporal covariates are provided, the column \code{time} must
-also appear in \code{session.cov}.}
+\item{time.loc.cov}{A list or list of data frames containing
+spatial covariates that change over time. The data frames must
+contain columns \code{x}, \code{y} and \code{time}, and additional columns for
+the spatiotemporal covariates.  When these spatiotemporal
+covariates are provided, the column \code{time} must also appear in
+\code{session.cov}.}
 
-\item{convert.loc2mask}{a list with 3 possible elements to control an embeddedfunction inside this package to convert the location related data providedby loc.cov to masks level using imputation method. The 3 possible elementsare: control_nn2, control_weight and control_char.
+\item{convert.loc2mask}{A list to control the spatial interpolation
+method used to compute covariate values for mask locations
+based on data provided in \code{loc.cov} and \code{time.loc.cov}. See
+\code{Details}.}
 
-control_nn2: a list contains the arguments for the function RANN::nn2(),
-please refer to the help document in that package for further details;
-control_weight: a list contains 3 elements control the weighted method. The
-function RANN:nn2() gives us a M * k matrix, where M is the number of mask
-points, and each row contains k points provided by \code{loc.cov} which are
-nearest to this mask point. For this k nearest points, we use their values
-of each covariates to do the imputation to obtain the estimated value of
-this mask point. considering the distances between this mask point and these
-k nearest points are different, we need a method to determine their weights.
-The argument \code{control_weight} is used to do so. Its 3 elements are \code{method},
-which could be \code{Shepard} or \code{Modified}; \code{q}, which is used to control both
-methods; \code{r}, which is used to control method \code{Modified}. Shepard method: w
-~ (1/d)^q Modified method: modified shepard method, w ~ \link[=max(0, r - d)/(r *
- d)]{max(0, r - d)/(r * d)}^q}
+\item{session.cov}{A data frame containing session covariates. It
+must contain a column \code{session} and additional columns for the
+session-level covariates.  If spatiotemporal covariates are
+included using \code{time.loc.cov}, then a column \code{time} must be
+included, indicating when the session took place.}
 
-\item{session.cov}{A data frame containing session covariates. It must contain
-a column \code{session} and additional columns for the session-level covariates.
-If spatiotemporal covariates are included using \code{time.loc.cov}, then a
-column \code{time} must be included, indicating when the session took place.}
+\item{trap.cov}{A data frame containing trap covariates. It must
+contain a column \code{trap} and additional columns for the
+trap-level covariates. The column \code{session} must be included
+for multisession data.}
 
-\item{trap.cov}{A data frame containing trap covariates. It must contain a
-column \code{trap} and additional columns for the trap-level covariates. The
-column \code{session} must be included for multisession data.}
+\item{dist.cov}{A list containing locations of features from which
+distances are calculated, and can be used as spatial
+covariates. Each component must be named after a feature, with
+a data frame containing columns \code{x} and \code{y}, recording the the
+location of a feature.}
 
-\item{dist.cov}{A list containing locations of features from which distances
-are calculated, and can be used as spatial covariates. Each component must
-be named after a feature, with a data frame containing columns \code{x} and \code{y},
-recording the the location of a feature.}
+\item{cue.rates}{A numeric vector containing the recorded cue rates
+in a series of time periods with identical length. A vector of
+call rates collected independently of the main acoustic
+survey. This must be measured in calls per unit time, where the
+time units are equivalent to those used by
+\code{survey.length}. For example, if the survey was 30 minutes
+long, the cue rates must be provided in cues per minute if
+\code{survey.length = 30}, but in cues per hour if
+\code{survey.length = 0.5}.}
 
-\item{cue.rates}{A numeric vector containing the recorded cue rates in a
-series of time periods with identical length. A vector of call rates
-collected independently of the main acoustic survey. This must be measured
-in calls per unit time, where the time units are equivalent to those used by
-\code{survey.length}. For example, if the survey was 30 minutes long, the
-cue rates must be provided in cues per minute if \code{survey.length = 30},
-but in cues per hour if \code{survey.length = 0.5}.}
+\item{survey.length}{A numeric vector or a scalar, containing the
+length of each session. If it is a scalar and there are
+multiple sessions, the value will be assigned to all sessions.}
 
-\item{survey.length}{A numeric vector or a scalar, containing the length of
-each session. If it is a scalar and there are multiple sessions, the value
-will be assigned to all sessions.}
+\item{sound.speed}{A scalar, the speed of sound in metres per
+second. Defaults to 330, approximate speed of sound in air.}
 
-\item{sound.speed}{A scalar, the speed of sound in metres per second. Defaults
-to 330, approximate speed of sound in air.}
+\item{convert.dist.unit}{a numeric value for the conversion between
+the unit for the data and \code{metre}. If the distance unit in data
+is \code{km}, then assign 1000 here.}
 
-\item{convert.dist.unit}{a numeric value for the conversion between the unit
-for the data and \code{metre}. If the distance unit in data is \code{km}, then assign
-1000 here.}
-
-\item{convert.time.unit}{a numeric value for the conversion between the unit
-for the data and \code{second}. If the time unit for the data is \code{millisecond},
-then assign 0.001 here.}
+\item{convert.time.unit}{a numeric value for the conversion between
+the unit for the data and \code{second}. If the time unit for the
+data is \code{millisecond}, then assign 0.001 here.}
 
 \item{...}{}
 }
 \description{
-Combines detection data, detector locations, and covariate data into a single
-object. The resulting object can be used for model fitting with
-\code{\link[=fit.acre]{fit.acre()}}.
+Combines detection data, detector locations, and covariate data
+into a single object. The resulting object can be used for model
+fitting with \code{\link[=fit.acre]{fit.acre()}}.
 }
+\section{Captures argument}{
+
+
+The \code{captures} argument will be passed to the function
+\code{create.capt}. The main columns required are the session, the
+identification number of the detected animal or sound, and the
+identification number of the trap which made the detection (where
+the identification number is the row number of the corresponding
+trap in the matrix of trap locations). These columns must be
+exactly labelled \code{session}, \code{ID} and \code{trap} respectively.
+
+Additional columns can specify the auxiliary information collected
+over the course of the survey:
+
+\itemize{
+
+\item A column named \code{bearing}, containing estimated bearings (in
+radians) from the detector to each detected animal or sound.
+
+\item A column named \code{dist}, containing the estimated distance (in
+metres) between the detected animal or sound.
+
+\item A column named \code{ss} containing the measured signal strengh
+of the detected sound.
+
+\item A column named \code{toa} containing the measured time of arrival
+(in seconds) since the start of the survey (or some other
+reference time) of the detected sound (only possible when the
+detectors are microphones).
+
+}
+
+A column named \code{animal_ID} containing the identification number of animals
+can be provided if individuals could be distinguished by their acoustic
+detection.
+}
+
+\section{Controlling spatial interpolation}{
+
+
+(Still to write.)
+}
+
