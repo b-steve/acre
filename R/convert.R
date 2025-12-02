@@ -356,6 +356,7 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
 
             for (i in 1:length(out)){
                 out[[i]] <- matrix(0, nrow = n, ncol = n.traps[s])
+                rownames(out[[i]]) <- unique(id)
             }
 
             names(out) <- c("bincapt", info.types, "mrds"[is.mrds])
@@ -366,7 +367,6 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
                     u.id <- unique(id)[i]
                     trig <- trap[id == u.id]
                     out[["bincapt"]][i, trig] <- 1
-
                     for (j in info.types){
                         for (k in trig){
                             out[[j]][i, k] <- tem[id == u.id & trap == k, j][1]
@@ -390,7 +390,7 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
         }
     } else {
         #if is.animal_ID, output the modified 'captures' directly
-
+        
         captures$bincapt = 1
 
         #create a data frame contains all combinations of "session-animal_ID-ID-trap", as captures does not
@@ -419,7 +419,6 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
 
         #this data frame will be naturally well sorted, do not need to sort it again
         head_data = do.call('rbind', tem_session)
-
         captures = merge(head_data, captures, by = c('session', 'animal_ID', 'ID','trap'), all.x = TRUE)
         captures = captures[,which(colnames(captures) %in% c('session', 'animal_ID', 'ID', 'trap', 'bincapt',
                                                              'bearing', 'toa', 'dist', 'ss', 'mrds_x', 'mrds_y'))]
