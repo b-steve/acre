@@ -114,39 +114,47 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 }
 
 
-#'Combining all data for model fitting
+#' Combining all data for model fitting
 #'
-#'Combines detection data, detector locations, and covariate data into a single
-#'object. The resulting object can be used for model fitting with
-#'[`fit.acre()`].
+#' Combines detection data, detector locations, and covariate data into a single
+#' object. The resulting object can be used for model fitting with
+#' [`fit.acre()`].
 #'
-#'@section Captures argument The `captures` argument will be passed to the
-#'  function `create.capt`. The main arguments provided are the session, the
-#'  identification number of the detected animal or sound, and the
-#'  identification number of the trap which made the detection (where the
-#'  identification number is the row number of the corresponding trap in the
-#'  matrix of trap locations. These columns must be exactly labelled `session`,
-#'  `ID` and `trap` respectively.
+#' @section Captures argument
 #'
-#'  Additional columns can specify the auxiliary information collected over the
-#'  course of the survey: borchers 2015
+#' The `captures` argument will be passed to the function
+#' `create.capt`. The main arguments provided are the session, the
+#' identification number of the detected animal or sound, and the
+#' identification number of the trap which made the detection, where
+#' the identification number is the row number of the corresponding
+#' trap in the matrix of trap locations. These columns must be
+#' labelled `session`, `ID` and `trap` respectively.
+#'
+#' Additional columns can specify the auxiliary information collected
+#' over the course of the survey: borchers 2015
 #'
 #' \itemize{
-#'  \item A column named `bearing`, containing estimated bearings (in radians) from the detector to each detected animal or sound.
 #'
-#'  \item A column named `dist`, containing the estimated distance between the detected animal or sound.
+#' \item A column named `bearing`, containing estimated bearings (in
+#' radians) from the detector to each detected animal or sound.
 #'
-#'  \item A column named `ss` containing the measured signal strengh of the detected sound.
+#' \item A column named `dist`, containing the estimated distance
+#' between the detected animal or sound.
 #'
-#'  \item A column named `toa` containing the measured time of arrival (in seconds) since the start of the survey (or some other
-#' reference time) of the detected sound (only possible when the detectors are microphones).
+#' \item A column named `ss` containing the measured signal strengh of
+#' the detected sound.
 #'
-#'  \item
+#' \item A column named `toa` containing the measured time of arrival
+#' (in seconds) since the start of the survey (or some other reference
+#' time) of the detected sound (only possible when the detectors are
+#' microphones).
+#'
 #'  }
-#'  A column named `animal_ID` containing the identification number of animals
-#'  can be provided if individuals could be distinguished by their acoustic
-#'  detection. ref to (2021 ben) calls with same animal ID come from the same
-#'  location
+#' 
+#'  A column named `animal_ID` containing the identification number of
+#'  animals can be provided if individuals could be distinguished by
+#'  their acoustic detection. ref to (2021 ben) calls with same animal
+#'  ID come from the same location
 #'
 #'@param captures A data frame with detection data. Further details are
 #'  available below.
