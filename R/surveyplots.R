@@ -379,7 +379,7 @@ plot.acre_data <- function(x, ...){
         keys = capt_session$ID
       }
       
-      if(length(keys) == 0) stop("Nothing to plot, please double check the assigned animal_ID or ID.")
+      if(length(keys) > 0){
       
       u_keys = unique(keys)
       
@@ -481,6 +481,7 @@ plot.acre_data <- function(x, ...){
             prompt_user_for_next_plot()
           }
         }
+      }
       }
       # End of session s 
     }
