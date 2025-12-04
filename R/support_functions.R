@@ -954,7 +954,7 @@ delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new
       }
 
     }
-    #browser()
+
 
     G_grad = do.call('rbind', G_grad)
   }
@@ -1876,8 +1876,6 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
 
     old_covariates = as.data.frame(mask)
 
-
-
     if(original_mask&is.null(convert.loc2mask)&is.null(D_cov)){
       #when there is no sign of any modification, assign old_loc_cov to NULL to make sure
       #the function can enter the process to try to obtain mask level data, to avoid re-interpolation
@@ -1972,24 +1970,23 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
         # The distance mask should (read: will) have x, y columns matching old_covariates
         cov_mask = cbind(loc_cov_mask, dist_cov_mask)
       }
-      
       # Make sure to remove any unnecessary session or mask columns
       if(any(colnames(cov_mask) %in% c('session', 'mask'))){
-        old_covariates = cbind(old_covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
+        old_covariates = cbind(old_covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask', 'x', 'y')), drop = FALSE])
       } else {
         old_covariates = cbind(old_covariates, cov_mask)
       }
     }
 
     session_data_in_model = get_par_extend_data(fit)$session
-    ##for session related covariates, it is simple, just take them from the input argument of fit
-
-    if(!is.null(session_data_in_model)){
+    ## For session related covariates, it is simple, just take them
+    ## from the input argument of fit. But don't do this if new data
+    ## are provided.
+    if(!is.null(session_data_in_model) & is.null(new_data)){
       tem = session_data_in_model[which(session_data_in_model$session == session_select), , drop = FALSE]
       tem = tem[, -which(colnames(tem) == 'session'), drop = FALSE]
       for(i in colnames(tem)) old_covariates[[i]] = tem[1,i]
     }
-
 
     if(!is.null(D_cov) | !is.null(new_data)){
       #firstly deal with all scenarios that there may be any new covariate provided
@@ -2012,7 +2009,6 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
       } else {
         new.covariates = as.data.frame(mask)
       }
-
       #build the new.covariates based on all information we could have
       if(!is.null(D_cov$location)){
         if(is.null(convert.loc2mask)){
@@ -2021,7 +2017,6 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
         }
         convert.loc2mask$mask = list(mask)
         convert.loc2mask$loc.cov = D_cov$location
-
 
         cov_mask = do.call('location_cov_to_mask', convert.loc2mask)
         new.covariates = cbind(new.covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
@@ -2034,11 +2029,10 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
         for(i in colnames(D_cov$session)) new.covariates[[i]] = D_cov$session[1,i]
 
       }
-
       #update the old_covariates by the new.covariates
 
-      for(i in colnames(old_covariates)){
-        if(all(i != 'x', i != 'y', i %in% colnames(new.covariates))){
+      for(i in colnames(new.covariates)){
+        if(all(i != 'x', i != 'y')){
           old_covariates[[i]] = new.covariates[[i]]
         }
       }

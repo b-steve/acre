@@ -195,7 +195,7 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
                             new_data = new.data, D_cov = D.cov, xlim = xlim, ylim = ylim,
                             x_pixels = x.pixels, y_pixels = y.pixels, se_fit = show.cv,
                             convert.loc2mask= convert.loc2mask)
-  #browser()
+
   mask = as.matrix(pred[, c('x', 'y')])
   if(!show.cv){
     D.mask = pred[,'est']
