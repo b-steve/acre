@@ -523,10 +523,13 @@ plot.acre_data <- function(x, ...){
     D_cov_for_model = merge(D_cov_for_model, masks, by = 'mask', all = FALSE)
     D_cov_for_model = D_cov_for_model[order(D_cov_for_model$mask),]
     D_cov_for_model = D_cov_for_model[, -which(colnames(D_cov_for_model) == 'mask')]
-    
+
     cov_list = colnames(D_cov_for_model)
     cov_list = cov_list[-which(cov_list == 'x' | cov_list == 'y')]
-    
+
+    if (!is.null(extra_args$cov_names)){
+        cov_list = cov_list[which(cov_list %in% extra_args$cov_names)]
+    }
     
     unique.x <- sort(unique(masks[, 'x']))
     unique.y <- sort(unique(masks[, 'y']))
