@@ -726,7 +726,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   # matrix
   # Also note that we need to make sure the parameter names we use match the
   # output style of TMB
-  TMB_par_names <- rep(param.og, lengths(parameters[param.og]))
+  TMB_par_names <- rep(gsub("\\.", "_", param.og), lengths(parameters[gsub("\\.", "_", param.og)]))
   G_lst <- construct_G_matrix_list(TMB_par_names, name.extend.par, lst_mean_std,
                                    is.scale)
 
