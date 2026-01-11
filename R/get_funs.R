@@ -22,12 +22,6 @@ get_loc_cov = function(fit){
   return(output)
 }
 
-
-get_esa = function(fit){
-  output = fit$esa
-  return(output)
-}
-
 get_data_full = function(fit){
   output = fit$output.tmb$data.full
   return(output)
@@ -71,6 +65,84 @@ get_trap_from_data = function(dat){
   return(output)
 }
 
+## Retrieve the capture data (optionally binary) for given animal_id / call_id
+get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_bincapt=F) {
+  if (!(session %in% unique(fit$arg_input$captures$session))) {
+    stop("Session ", session, " not found in fit.")
+  }
+  
+  animal.model <- is_animal_model(fit)
+  capt <- fit$arg_input$captures
+  capt <- capt[capt$session == session,]
+  
+  if (is.null(animal_id) & animal.model) {
+    stop("'animal_id' argument must be provided for animal id models")
+  }
+  if (!animal.model & !is.null(animal_id)) {
+    stop("'animal_id' argument should only be provided for animal id models")
+  }
+  if (!is.null(animal_id) & (length(animal_id) > 1 | !is.numeric(animal_id))) {
+    stop("'animal_id' argument should be a numeric vector of length 1")
+  }
+  
+  # Make sure call_id is either numeric or exactly "all"
+  if (is.null(call_id) || 
+      !(is.numeric(call_id) || identical(call_id, "all"))) {
+    stop("'call_id' must be a numeric vector or 'all'")
+  }
+  if (any(duplicated(call_id))) {
+    warning("'call_id' argument contains duplicate values, which will be ignored")
+    call_id <- unique(call_id)
+  }
+  
+  if (animal.model) {
+    if (!(animal_id %in% capt$animal_ID)) {
+      stop(paste("Could not find capture history with animal id:", animal_id, "in session:", session))
+    }
+    # Make sure to only grab the appropriate animal's capture history
+    capt <- subset(capt, capt$animal_ID == animal_id)
+  }
+  
+  if (!all(call_id %in% capt$ID) & !identical(call_id, "all")) {
+    missing_calls <- call_id[which(!(call_id %in% capt$ID))]
+    missing_calls_msg <- paste(missing_calls, collapse = ", ")
+    if (animal.model) {
+      stop(paste("Could not find call with 'call_id':", missing_calls_msg, 
+                 ", for animal with 'animal_id':", animal_id, 
+                 "in session:", session))
+    } else {
+      stop(paste("Could not find call with 'call_id':", missing_calls_msg, 
+                 "in session:", session))
+    }
+  }
+  
+  if (!identical(call_id, "all")) {
+    capt <- subset(capt, capt$ID %in% call_id)
+  }
+  
+  if (return_bincapt) {
+    # Return a data frame with ID column, and 1 column for each trap
+    n.traps <- nrow(get_trap(fit)[[session]])
+    
+    bincapt <- lapply(unique(capt$ID), function(id) {
+      # Grab all rows for this ID
+      sub_capt <- subset(capt, ID == id) 
+      bincapt  <- numeric(n.traps)
+      bincapt[sub_capt$trap] <- 1
+      c(id, bincapt)
+    })
+    bincapt <- do.call(rbind, bincapt)
+    
+    # Convert bincapt from matrix to data frame
+    bincapt <- as.data.frame(bincapt, stringsAsFactors = FALSE)
+    colnames(bincapt) <- c("ID", paste0("trap", seq_len(n.traps)))
+    
+    return(bincapt)
+  } else {
+    return(capt)
+  }
+}
+
 get_par_extend = function(fit){
   output = fit$args$par.extend
   return(output)
@@ -86,7 +158,6 @@ get_par_extend_name = function(fit){
   output = fit$output.tmb$param.extend
   return(output)
 }
-
 
 get_par_extend_covariate = function(fit){
   ext_name = get_par_extend_name(fit)
@@ -185,8 +256,6 @@ get_buffer = function(fit){
   return(output)
 }
 
-
-
 get_sound_speed = function(fit){
   output = fit$output.tmb$sound.speed
   return(output)
@@ -272,7 +341,7 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
   if(n_col_mask > 0){
     gam.model = gam$gam_mask
     DX_mask_new = get_DX_new_gam(gam.model, new.covariates)
-    #get rid of the first column since the intercept is not here
+    # Get rid of the first column since the intercept is not here
     DX_mask_new = DX_mask_new[, -1, drop = FALSE]
   } else {
     DX_mask_new = NULL
@@ -290,7 +359,146 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
   } else {
     return(output)
   }
+}
 
+#' Calculate and return coefficients for extended models
+#' 
+#' Returns a list of (nmask) x (ntrap) matrices, for each extended parameter.
+#' values correspond to estimated parameter value for either
+#' (a) The covariate values used to fit the model or
+#' (b) The covariate values provided in newdata
+#' 
+#' Each row corresponds to a trap, and each column a mask point.
+#' EXAMPLE: let a model have have `sigma` mask-level extended by brand 
+#' (2 traps, 1 "sony" and 1 "panasonic"), and also be mask level extended, say 
+#' with covariate "noise". Then element [1, 1] of the returned `sigma` element,
+#' corresponds to the coefficient of `sigma` with "sony" brand, and noise at
+#' mask point 1. [2, 1] to that of "panasonic" brand, and noise at mask point 1.
+#' 
+#' Note that because the parameter estimates are calculated for the entire mask,
+#' over every trap, newdata argument will be recycled (or truncated), to the 
+#' correct dimensions.
+#'
+#' @param fit an object generated from the model fitting function 
+#'    [fit.acre] or the bootstrap process [boot.acre].
+#' @param mask a list or a data frame. Generated by [create.mask()].
+#' @param traps data frame with numeric columns x and y, corresponding to trap
+#'    coordinates.
+#' @param newdata data.frame; contains any covariates that will be used 
+#'    for all extended parameters.
+#' @param warn Logical; warn users if they have not passed all covariates in 
+#'    model specification.
+#' @param session an integer value indicating the session of detector array and 
+#'    individual(s) to be plotted. 
+#'
+#' @return a list of (nmask) x (ntrap) columns, for each extended parameter.
+#'          values correspond to estimated parameter value for the given covariate values.
+#'
+#' @examples 
+#' # Calculates the parameter values for each mask_point - trap combination
+#' ext_par_matrices <- get_par_extend_matrix(fit, mask, traps)
+get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL, 
+                                  warn = T) {
+  # Make sure model is parameter extended
+  par_extended <- !is.null(get_par_extend(fit))
+  if (!par_extended) {
+    stop("Provided model is not parameter extended")
+  }
+  
+  # Make sure user provides all required covariates in the case of newdata
+  if (!is.null(newdata)) {
+    all_covariates <- unlist(get_par_extend_covariate(fit))
+    
+    if (!all(all_covariates %in% names(newdata))) {
+      if (warn) {
+        warning(paste("Missing covariate in 'newdata' argument:", 
+                   all_covariates[-which(all_covariates %in% names(newdata))]),
+                "\nCovariate values from model fitting will be used")
+      }
+    }
+  }
+
+  ext_par_data <- get_par_extend_data(fit)
+  n_mask_ext <- nrow(mask)
+  n_trap_ext <- nrow(traps)
+  
+  ext_par_newdata <- NULL
+  # If there is mask-level data
+  if (!is.null(ext_par_data$mask)) {
+    # And we passed newdata
+    if (!is.null(newdata)) {
+      # Then replace all the old mask-level data with the corresponding newdata
+      for (par in names(newdata)) {
+        if (par %in% names(ext_par_data$mask)) {
+          ext_par_data$mask[[par]] <- newdata[[par]]
+        }
+      }
+    }
+    
+    # Now since we need a row for every mask_point - trap pair, we repeat the
+    # mask level data n_trap times.
+    # Note we could just repeat the number of unique trap times, for example, 
+    # if only 2 trap levels (i.e. "sony" or "panasonic") we would only really 
+    # need 2 combination of trap - mask_points. Easier though to just assume
+    # each trap is unique, saves a lot of hassle here and down the line.
+    ext_par_newdata <- ext_par_data$mask[rep(
+      seq_len(n_mask_ext), each = n_trap_ext
+    ), , drop=FALSE]
+  }
+  
+  # Now do the same as above, but with trap-level covariates
+  if (!is.null(ext_par_data$trap)) {
+    if (!is.null(newdata)) {
+      for (par in names(newdata)) {
+        if (par %in% names(ext_par_data$trap)) {
+          ext_par_data$trap[[par]] <- newdata[[par]]
+        }
+      }
+    }
+    
+    trap_ext_data <- ext_par_data$trap[rep(
+      seq_len(n_trap_ext), length.out = n_mask_ext * n_trap_ext
+    ), , drop=FALSE]
+    
+    # And combine both the trap and mask level data if necessary, for prediction
+    if (!is.null(ext_par_newdata)) {
+      ext_par_newdata <- cbind(ext_par_newdata, trap_ext_data)
+    } else {
+      ext_par_newdata <- trap_ext_data
+    }
+  }
+  
+  # Lastly, we need to deal with the session level covariates
+  # IMPORTANT NOTE: session level covariates are not able to be passed through
+  #                 the `newdata` argument currently. 
+  if (!is.null(ext_par_data$session)) {
+    # Retrieve the row corresponding to the `session` argument
+    session_covariates <- subset(ext_par_data$session, 
+                                 ext_par_data$session$session == session)
+    # Since the session level covariates are the same for every mask point &
+    # trap, we just repeat this row and add it to our big covariate matrix
+    ext_par_newdata <- cbind(ext_par_newdata, session_covariates)
+  }
+  
+  # Calculate the coefficients. Notice this is in long format, will have to 
+  # reformat before returning
+  ext_par_values <- predict(fit, newdata = ext_par_newdata, se.fit = F, 
+                            confidence = F)
+  
+  par_values <- list()
+  ext_par_names <- get_par_extend_name(fit)
+  # Reformat the predicted values
+  for (par in ext_par_names) {
+    ext_par_values_matrix <- matrix(
+      ext_par_values[[par]]$Estimate,
+      nr = nrow(traps),
+      nc = nrow(mask),
+      byrow = F
+    )
+    par_values[[par]] <- ext_par_values_matrix
+  }
+  
+  return(par_values)
 }
 
 #for numeric columns in the data frames in par.extend$data, the mean will be
@@ -541,6 +749,39 @@ get_bias <- function(res, coefs){
   bias = apply(res, 2, f) - coefs
 
   return(bias)
+}
+
+get_coef_names <- function(pars, pars_extended, data.full, data.mask) {
+  # If there are no extended parameters, just return the default parameter names
+  if (length(pars_extended) == 0) {
+    return(pars)
+  }
+  
+  data_full_names <- strsplit(colnames(data.full), " _ ")
+  data_mask_names <- strsplit(colnames(data.mask), " _ ")
+  
+  # Bad code, should pre-define length and fill rather than grow with iterations
+  name_output = c()
+  u_pars <- unique(pars)
+  
+  for (i in seq_along(u_pars)) {
+    if (u_pars[i] %in% pars_extended) {
+      index_full = which(sapply(data_full_names, function(x) x[1] == u_pars[i]))
+      index_mask = which(sapply(data_mask_names, function(x) x[1] == u_pars[i]))
+      
+      for (j in index_full) {
+        name_output = c(name_output, paste0(data_full_names[[j]], collapse = "."))
+      }
+      for (j in index_mask) {
+        name_output = c(name_output, paste0(data_mask_names[[j]], collapse = "."))
+      }
+    }
+    else {
+      name_output = c(name_output, u_pars[i])
+    }
+  }
+  
+  return(name_output)
 }
 
 ###################################################################################

@@ -19,7 +19,7 @@ show.Dsurf(
   plot.contours = FALSE,
   add = FALSE,
   convert.loc2mask = NULL,
-  arg.col = list(n = 100),
+  arg.col = 100,
   trap.plot = NULL,
   ...
 )
@@ -71,7 +71,7 @@ method used to compute covariate values for mask locations
 based on data provided in \code{loc.cov} and \code{time.loc.cov}. See
 \code{Details}.}
 
-\item{arg.col}{}
+\item{arg.col}{A numeric value, indicating the number of levels to stretch the color over}
 
 \item{trap.plot}{}
 

@@ -625,7 +625,6 @@ Type acreTMB(objective_function<Type>* obj)
   DATA_MATRIX(mu_bound);
   
 
-
   //define a pointer variable which point to a detect function
   //based on our input "detfn_index"
   //and also point out the number of parameters for that detfn
@@ -709,6 +708,7 @@ Type acreTMB(objective_function<Type>* obj)
   } else {
     sigma_vec_mask = sigma_DX_mask * sigma_mask;
   }
+  
   if(incheck_scalar(2, param_og) == 1) ADREPORT(sigma);
   
   //lambda0
@@ -1141,7 +1141,7 @@ Type acreTMB(objective_function<Type>* obj)
   
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //begin of likelihood function
-
+  
   // For every session
   // Starting at session #1
   for(s = 1; s <= n_sessions; s++){
@@ -1718,7 +1718,6 @@ Type acreTMB(objective_function<Type>* obj)
       }
       //end of if(is_animalID == 0)
     } else {
-      std::cout << "Fitting animal model." << std::endl;
       //begin of animal_ID model
       if(n_a > 0){
 
@@ -1858,7 +1857,7 @@ Type acreTMB(objective_function<Type>* obj)
 				        fy_dist_log +=  ((-1) * (alpha_tem * (log(*p_dx) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) * 
 				          log(*p_capt_dist) - alpha_tem * (*p_capt_dist) / *p_dx);
 				    } else {
-				      std::cout << *p_capt_dist << std::endl;
+				      // std::cout << *p_capt_dist << std::endl;
 				    }
 					} 
 
@@ -1873,14 +1872,14 @@ Type acreTMB(objective_function<Type>* obj)
 					  *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
 					  trans(p_sigma_ss_tem, par_link(11));
 					  
-					  //if(s == 105 && a == 1 && i == 1 && m < 50){
-						//  std::cout << "mask: " << m  << ", trap" << t << ", ss: " << (*p_capt_ss) << std::endl;
-						//  std::cout << "mask: " << m <<  ", trap" << t << ", essx: " << (*p_essx) << std::endl;
-						//  std::cout << "mask: " << m <<  ", trap" << t << ", sigma_ss: " << sigma_ss_tem << std::endl;
-					  //}
+					// if(s == 105 && a == 1 && i == 1 && m < 50){
+					//  std::cout << "mask: " << m  << ", trap" << t << ", ss: " << (*p_capt_ss) << std::endl;
+					//  std::cout << "mask: " << m <<  ", trap" << t << ", essx: " << (*p_essx) << std::endl;
+					//  std::cout << "mask: " << m <<  ", trap" << t << ", sigma_ss: " << sigma_ss_tem << std::endl;
+					// }
 					  
-
 					  fy_ss_log += dnorm(*p_capt_ss, *p_essx, sigma_ss_tem, true);
+					  
 					}
 
 					p_capt_ss++;
@@ -1893,10 +1892,10 @@ Type acreTMB(objective_function<Type>* obj)
 				//end of call 'i'
 			  }
 			  
-			  //if(s == 105 && a == 1 && m >900 & m<2000){
+			  //if(s == 105 && a == 1 && m >900 & m<2000) {
 				//  std::cout << "until mask: " << m - 1 << ", l_i: " << l_i << std::endl;
 				//  std::cout << "mask: " << m << ", D(m): " << (*p_D_tem) << std::endl;
-				//  std::cout << "mask: " << m << ", ci: " << ci << std::endl;
+				 // std::cout << "mask: " << m << ", ci: " << ci << std::endl;
 				//  std::cout << "mask: " << m << ", mu: " << *p_mu_tem << std::endl;
 				//  std::cout << "mask: " << m << ", l_w: " << l_w << std::endl;
 				//  std::cout << "mask: " << m << ", p_dot[m - 1]: " << p_dot[m - 1] << std::endl;
@@ -1976,6 +1975,8 @@ Type acreTMB(objective_function<Type>* obj)
 				      trans(p_sigma_toa_tem, par_link(14));
 				      
 				      fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * (*p_toa_ssq) / pow(sigma_toa_tem, 2);
+				      // std::cout << "p_toa_ssq: " << *p_toa_ssq << std::endl;
+				      // std::cout << "fy_toa_log: " << fy_toa_log << "\n" << std::endl;
 				    }
 					//"sigma_toa" is not trap extendable nor ID either, so take index_data_full_D as well
 					
@@ -2066,9 +2067,8 @@ Type acreTMB(objective_function<Type>* obj)
 
 			//end of 'is_local == 1'
 		  }
-
-		  *pointer_nll -= log(l_i * area_unit);
-
+		  
+		  *pointer_nll -= log((l_i * area_unit) + std::numeric_limits<double>::min());
 		  //end of animal 'a'
         }
         //end of if(n_a > 0)
@@ -2086,6 +2086,8 @@ Type acreTMB(objective_function<Type>* obj)
 	//}
     //end for session s
   }
+  
+  
   ADREPORT(esa);
   return nll;
 }

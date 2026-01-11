@@ -149,18 +149,18 @@ test_that("heterogeneous density model with sigma extended -- half normal", {
   pars_names_og_unfixed = pars_names_og[-1]
   
   expected_values = c(1, 5.728178, 830.341102)
-  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(0.9222248, 400.2406206)
-  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og_unfixed]
+  o = stdEr(fit, types = 'fitted', new.covariates = new_data)[pars_names_og_unfixed]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = matrix(c(1, 4.178061, 322.820254, 1, 7.853408, 2135.759253),
                            ncol = 2)
-  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
+  o = confint(fit, types = 'fitted', new.covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -237,19 +237,19 @@ test_that("joint bearing/dist model with 2 sessions and g0 & sigma extended -- h
   pars_names_og = c('g0', 'sigma', 'kappa', 'alpha', 'D')
   
   expected_values = c(0.6155777, 3.5037832, 33.8371920, 2.7981405, 2621.3660367)
-  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(0.1210091, 0.2763892, 17.5278506, 0.5904343, 469.7509821)
-  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
+  o = stdEr(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = matrix(c(0.370184, 3.001870, 12.259345, 1.850367, 1844.979909,
                              0.8135231, 4.0896168, 93.3945155, 4.2313715, 3724.4632673),
                            ncol = 2)
-  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
+  o = confint(fit, types = 'fitted', new.covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -468,19 +468,19 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   pars_names_og = c('sigma', 'lambda0', 'sigma.toa', 'D', 'mu')
   
   expected_values = c(2.162743e+00, 6.266772e+00, 1.308608e-03, 9.464759e+02, 8.721441e+00)
-  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(1.625058e-01, 1.691736e+00, 1.425272e-04, 1.374890e+03, 1.244500e+00)
-  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
+  o = stdEr(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = matrix(c(1.866580094, 3.691978393, 0.001057063, 54.905962639, 6.593661321,
                              2.505896e+00, 1.063723e+01, 1.620012e-03, 1.631547e+04, 1.153586e+01),
                            ncol = 2)
-  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
+  o = confint(fit, types = 'fitted', new.covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -710,18 +710,18 @@ test_that("heterogeneous density model with sigma extended -- half normal - no g
   pars_names_og_unfixed = pars_names_og[-1]
   
   expected_values = c(1, 5.728178, 830.341085)
-  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(0.9222219, 400.2402285)
-  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og_unfixed]
+  o = stdEr(fit, types = 'fitted', new.covariates = new_data)[pars_names_og_unfixed]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
 
   expected_values = matrix(c(1, 4.178065, 322.820540, 1, 7.8534, 2135.7573),
                            ncol = 2)
-  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
+  o = confint(fit, types = 'fitted', new.covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -867,19 +867,19 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   pars_names_og = c('sigma', 'lambda0', 'sigma.toa', 'D', 'mu')
   
   expected_values = c(2.162743e+00, 6.266772e+00, 1.308608e-03, 9.464758e+02, 8.721442e+00)
-  o = coef(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
+  o = coef(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = c(1.625042e-01, 1.691730e+00, 1.425270e-04, 1.374889e+03, 1.244500e+00)
-  o = stdEr(fit, types = 'fitted', new_covariates = new_data)[pars_names_og]
+  o = stdEr(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   expected_values = matrix(c(1.866582775, 3.691986084, 0.001057063, 54.905971702, 6.593661864,
                              2.505893e+00, 1.063721e+01, 1.620012e-03, 1.631546e+04, 1.153586e+01),
                            ncol = 2)
-  o = confint(fit, types = 'fitted', new_covariates = new_data)[pars_names_og,]
+  o = confint(fit, types = 'fitted', new.covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -897,7 +897,6 @@ test_that("signal strength model with spherical link and individual identity - n
   
   pars_link_names = c("b0.ss_link", "b1.ss_link", "sigma.ss_link", "D_link", "mu_link")
   pars_names = c('b0.ss', 'b1.ss', 'sigma.ss', 'D', 'mu')
-  
   
   #test linked estimations
   relative.error = max(abs((coef(fit, types = 'linked')[pars_link_names] - pars_link_est_values)/pars_link_est_values))

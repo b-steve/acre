@@ -9,9 +9,9 @@ make.acoustic.captures(mics, dets, sound.speed)
 \arguments{
 \item{mics}{a matrix containing the coordinates of trap locations.}
 
-\item{dets}{a data frame containing (at least): (i) \code{$toa},
+\item{dets}{a data frame containing (at least): (i) \verb{$toa},
 the precise time of arrival of the received sound, and (ii)
-\code{$trap} the trap at which the sound was recorded.}
+\verb{$trap} the trap at which the sound was recorded.}
 
 \item{sound.speed}{the speed of sound in metres per second.}
 }

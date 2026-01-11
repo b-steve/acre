@@ -52,7 +52,9 @@ demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL
 #'
 #' @examples
 show_demo_options = function(table_return = TRUE){
-  output = get_dataset_names()
+  output = c('bearing_dist_hn', 'bearing_hn', 'dist_hn', 'ihd', 'ihd_ext', 'mul_ses', 'mul_ses_ext',
+             'simple_hhn', 'hhn_cue', 'simple_hr', 'ss', 'ss_toa',
+             'ind_bearing_dist', 'ind_toa_hhn', 'ind_ss', 'ind_ss_log', 'ind_ss_sp')
 
   if(table_return){
     descriptions = matrix(c('hn' ,'bearing & dist' ,'NULL' ,'FALSE' ,'1',

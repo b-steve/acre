@@ -23,9 +23,7 @@ Imports:
     utils,
     viridis,
     TMB,
-    RANN,
-    ggplot2,
-    gganimate
+    RANN
 Suggests:
     knitr,
     xtable
