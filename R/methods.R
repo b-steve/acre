@@ -316,7 +316,6 @@ vcov.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
   types = tem$types
   pars = tem$pars
   
-  
   # 'og' below means original output from the object
   param_values_og = get_coef(object)
   cov_og = object$vcov

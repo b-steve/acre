@@ -520,7 +520,6 @@ Type acreTMB(objective_function<Type>* obj)
   DATA_IVECTOR(n_ids_each_uid);
   DATA_IVECTOR(index_traps_uid);
   
-  
   DATA_INTEGER(nrow_data_full);
   DATA_INTEGER(nrow_data_mask);
   DATA_INTEGER(nrow_dx);
@@ -530,6 +529,10 @@ Type acreTMB(objective_function<Type>* obj)
   DATA_VECTOR(survey_length);
   DATA_SCALAR(sound_speed);
   DATA_SCALAR(cue_rates);
+  
+  // Conditional likelihood 
+  // Please fucking pick up these changes you bitch
+  DATA_INTEGER(is_conditional);
   
   DATA_SCALAR(cutoff);
   
@@ -1426,7 +1429,14 @@ Type acreTMB(objective_function<Type>* obj)
     // end of lambda_theta calculation
     
     //canceled out original likelihood: nll -= dpois(Type(n_i), lambda_theta, true);
-    *pointer_nll += lambda_theta;
+    // *pointer_nll += lambda_theta;
+    // unconditional / original-style contribution
+    if(is_conditional == 0){
+      std::cout << "Fitting a [OMG PLEASE STANDARD LIKELIHOOD] model" << std::endl;
+      *pointer_nll += lambda_theta;
+    } else {
+      std::cout << "Fitting a [OMG PLEASE CONDITIONAL LIKELIHOOD] model" << std::endl;
+    }
   	//if(s == 105){
   	//	std::cout << "session "<< s <<", check point2, nll: " << *pointer_nll << std::endl;
   	//}	
@@ -1604,13 +1614,18 @@ Type acreTMB(objective_function<Type>* obj)
                   
                   //end of loop of traps
                 }
-                //for fx=f(x|n;theta)
-                //canceled out p_dot & lambda from original likelihood: 
-                //fx = D_tem[m-1] * p_dot(m - 1) / lambda_theta = D_tem[m-1];
-                //so fx was directly integrated into l_i below
                 
-                //we sum up likelihood (not log-likelihood) of each mask 
-                l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+                // For both standard and conditional likelihood, the numerator integral
+                // for each detected individual still includes D(s).
+                // Conditional likelihood differs only by the session-level normalization
+                // term involving lambda_theta.
+                // l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+                
+                if (is_conditional == 0) {
+                  l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+                } else {
+                  l_i += fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+                }
                 
                 p_D_tem++;
                 p_kappa_mask++;
@@ -1696,6 +1711,7 @@ Type acreTMB(objective_function<Type>* obj)
                   //so fx was directly integrated into l_i below
                   
                   //we sum up likelihood (not log-likelihood) of each mask 
+                  
                   l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
                 }
                 
@@ -1709,7 +1725,12 @@ Type acreTMB(objective_function<Type>* obj)
                 //end of loop of masks
               }
             }
-            *pointer_nll -= log(l_i * area_unit * servey_len * cue_rates);
+            
+            if (is_conditional == 0) {
+              *pointer_nll -= log(l_i * area_unit * servey_len * cue_rates);
+            } else {
+              *pointer_nll -= log(l_i * area_unit * servey_len * cue_rates * (1 / esa(s-1)) );
+            }
             //end of id
           }
           //end of uid
@@ -1903,8 +1924,9 @@ Type acreTMB(objective_function<Type>* obj)
 			  //}
 			  
 			  
-			  l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w * 
-				exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+			  l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w *
+				  exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * 
+				  exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
 
 			  p_D_tem++;
 			  p_mu_tem++;
@@ -2039,8 +2061,9 @@ Type acreTMB(objective_function<Type>* obj)
 				  //end of call 'i'
 				}
 
-			  l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w * 
-				exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+			  l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w *
+				  exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * 
+				  exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
 
 				//end of if(*p_local_index == 1)
 

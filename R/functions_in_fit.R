@@ -1412,14 +1412,17 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
       }
       
       if(!i %in% name.fixed.par){
-        #then, input the estimated values
         out_coef[[i]] = o_value[[i]]
+        
+        if(is.null(out_coef[[i]])){
+          out_coef[[i]] = fix.input[[i]]
+        }
+        
         names(out_coef[[i]]) = paste(name_output[[i]], 'link', sep = "_")
-        coef_link_tmb[[i]] = o_value[[i]]
+        coef_link_tmb[[i]] = out_coef[[i]]
         names(coef_link_tmb[[i]]) = name_output_tmb[[i]]
         
         if(i == "D"){
-          #for "D", take it as extended no matter whether it actually is
           tem = out_coef[[i]]
         } else {
           if(!i %in% name.extend.par){
@@ -1428,11 +1431,10 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
             tem = out_coef[[i]]
           }
         }
+        
         names(tem) = name_output[[i]]
         out_coef[[i]] = c(out_coef[[i]], tem)
         
-        
-        #for homo "D" models, there is a element in the vector named "D"
         if(i == 'D' & !i %in% name.extend.par){
           tem = unlink.fun(data.par[par.id[i], 'link'], tem)
           names(tem) = 'D'

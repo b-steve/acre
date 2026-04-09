@@ -234,6 +234,7 @@ read.acre = function(captures, traps, mask = NULL,
 #' @param gr.skip a logical value. FALSE by default. If TRUE, TMB model will skip the process of generating automatic derivative functions,
 #'                which will use less RAM, but the optimization process will consume more time.
 #' @param sv.link a list; this is mostly for development purpose, not recommended to use
+#' @param conditional a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring density parameter estimation.
 #'
 #' @return
 #' @export
@@ -241,34 +242,32 @@ read.acre = function(captures, traps, mask = NULL,
 #' @examples
 fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(), is.scale = TRUE,
-                    model.link = NULL, local = FALSE, tracing = TRUE, gr.skip = FALSE, sv.link = NULL){
+                    model.link = NULL, local = FALSE, tracing = TRUE, gr.skip = FALSE,
+                    sv.link = NULL, conditional = FALSE){
   
-  #extract the original input and pass it to the final output
   arg.input = dat$arg.input
   dat$arg.input = NULL
   mask_override = FALSE
-  #if "mask" is provided, overwrite the "mask" in "dat" directly,
-  #if "mask" is not provided but "control.mask" is, then use it to create mask
+  
+  if(!is.logical(conditional) || length(conditional) != 1L || is.na(conditional)){
+    stop("'conditional' must be a single TRUE/FALSE value.")
+  }
+  
   if(!is.null(mask)){
     dat$mask = mask
     if(!is.null(control.mask)){
       warning("Argument of 'mask' is provided, 'control.mask' will be ignored.")
     }
-    
-    #if buffer is missing, it will be added in the fit_og(), so no worries about it.
-    
     mask_override = TRUE
+    
   } else if(!is.null(control.mask)){
     stopifnot(!is.null(control.mask$buffer))
     control.mask$traps = dat$traps
-    mask = do.call('create.mask', control.mask)
+    mask = do.call("create.mask", control.mask)
     dat$mask = mask
     mask_override = TRUE
   }
   
-  
-  #this model is the key component, if it is NULL, the component of
-  #dat$par.extend will be forced to NULL no matter whether there was data provided
   if(!is.null(model)){
     if(is.null(dat$par.extend)){
       dat$par.extend = list(model = model)
@@ -278,34 +277,57 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
     dat$par.extend$scale = is.scale
     dat$par.extend$link = model.link
     
-    #when there was any 'mask' level data been provided before, and the 'mask'
-    #is overrode, then create the 'mask' leve data again to override it.
-    if(mask_override & !is.null(dat$par.extend$data$mask)){
+    if(mask_override && !is.null(dat$par.extend$data$mask)){
       convert.loc2mask$loc.cov = arg.input$loc.cov
       convert.loc2mask$mask = mask
-      
-      dat$par.extend$data$mask = do.call('location_cov_to_mask', convert.loc2mask)
+      dat$par.extend$data$mask = do.call("location_cov_to_mask", convert.loc2mask)
     }
     
   } else {
     dat$par.extend = NULL
   }
   
+  ## ---- conditional likelihood checks ----
+  if(conditional){
+    
+    if(!is.null(model) && "D" %in% names(model)){
+      stop("When conditional = TRUE, a density model for 'D' cannot be specified.")
+    }
+    
+    if(!is.null(dat$par.extend$model) && "D" %in% names(dat$par.extend$model)){
+      stop("When conditional = TRUE, 'D' cannot appear in the model specification.")
+    }
+    
+    if(is.null(fix)) fix <- list()
+    
+    if(is.null(fix$D)){
+      if(!is.null(sv) && !is.null(sv$D)){
+        fix$D <- sv$D
+      } else {
+        fix$D <- 1
+      }
+    }
+    
+    if(!is.null(bounds) && "D" %in% names(bounds)){
+      bounds$D <- NULL
+    }
+  }
   
   dat$local = local
   dat$tracing = tracing
   dat$gr.skip = gr.skip
-  
   dat$detfn = detfn
   dat$sv = sv
   dat$bounds = bounds
   dat$fix = fix
   dat$ss.opts = ss.opts
   dat$sv.link = sv.link
+  dat$conditional = conditional
   
-  output = do.call('fit_og', dat)
+  output = do.call("fit_og", dat)
   output$arg_input = arg.input
   output$call = match.call()
+  output$conditional = conditional
   
   return(output)
 }
@@ -339,11 +361,14 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #' @param tracing same as the argument with the same name in the function `fit.acre()`.
 #' @param gr.skip same as the argument with the same name in the function `fit.acre()`.
 #' @param sv.link a list; this is mostly for development purpose, not recommended to use.
+#' @param conditional a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring 
+#'                    density parameter estimation.
+#' 
 #' @param ...
 #'
 fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL, cue.rates = NULL,
                   survey.length = NULL, sound.speed = 331, local = FALSE, par.extend = NULL, tracing = TRUE, gr.skip = FALSE,
-                  sv.link = NULL, ...){
+                  sv.link = NULL, conditional = FALSE, ...){
   #keep all original input arguments
   arg.names <- names(as.list(environment()))
   arg.input <- vector('list', length(arg.names))
@@ -510,8 +535,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   #this is important because the "parameter" argument in TMB model
   #follows the order of fulllist.par
   param.og = fulllist.par[which(fulllist.par %in% param.og)]
-
-
+  
   #############################################################################################################
   #uid stuffs
 
@@ -638,7 +662,6 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                #16:sigma.b0.ss, 17:D
                #remeber in TMB, index begins from 0, so all of the index above should minus 1
 
-
                param_og = (1:nrow(data.par))[which(data.par[['par']] %in% param.og)],
 
                par_n_col = as.matrix(data.par[, c('n_col_full', 'n_col_mask')]),
@@ -670,7 +693,10 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                theta = data.dists.thetas$theta,
 
                index_local = as.numeric(data.ID_mask$local),
-               toa_ssq = data.ID_mask$toa_ssq
+               toa_ssq = data.ID_mask$toa_ssq,
+               
+               # Conditional likelihood
+               is_conditional = as.numeric(conditional)
   )
 
   #to avoid "." in .cpp file
@@ -815,6 +841,11 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   G_lst[["esa"]] = diag(dims$n.sessions)
   est_names = names(o$value)
   u_names = unique(est_names)
+  
+  missing_G <- setdiff(u_names, names(G_lst))
+  for(i in missing_G){
+    G_lst[[i]] <- diag(sum(est_names == i))
+  }
 
   for(i in u_names) {
     index_u_name = which(est_names == i)
@@ -824,8 +855,8 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   # Restore the names
   names(o$value) = est_names
   
-  # Combine all these matrix for all coefficient
-  G = diag_block_combine(G_lst)
+  # Combine all these matrix for all coefficient, making sure ordering is correct
+  G = diag_block_combine(G_lst[u_names])
   # Delta method to get standard errors
   o$cov = G %*% o$cov %*% t(G)
   o$sd = sqrt(diag(o$cov))
@@ -861,6 +892,10 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                is.scale = is.scale,
                ss.link = ss.link,
                cutoff = cutoff)
+  
+  # Adding conditional likelihood logical to the out object
+  # Should really be doing this in outFUN()
+  out$conditional = conditional
   class(out) <- "acre_tmb"
 
   return(out)
