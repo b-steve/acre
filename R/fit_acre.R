@@ -234,7 +234,7 @@ read.acre = function(captures, traps, mask = NULL,
 #' @param gr.skip a logical value. FALSE by default. If TRUE, TMB model will skip the process of generating automatic derivative functions,
 #'                which will use less RAM, but the optimization process will consume more time.
 #' @param sv.link a list; this is mostly for development purpose, not recommended to use
-#' @param conditional a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring density parameter estimation.
+#' @param CL a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring density parameter estimation.
 #'
 #' @return
 #' @export
@@ -243,14 +243,14 @@ read.acre = function(captures, traps, mask = NULL,
 fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(), is.scale = TRUE,
                     model.link = NULL, local = FALSE, tracing = TRUE, gr.skip = FALSE,
-                    sv.link = NULL, conditional = FALSE){
+                    sv.link = NULL, CL = FALSE){
   
   arg.input = dat$arg.input
   dat$arg.input = NULL
   mask_override = FALSE
   
-  if(!is.logical(conditional) || length(conditional) != 1L || is.na(conditional)){
-    stop("'conditional' must be a single TRUE/FALSE value.")
+  if(!is.logical(CL) || length(CL) != 1L || is.na(CL)){
+    stop("'CL' must be a single TRUE/FALSE value.")
   }
   
   if(!is.null(mask)){
@@ -288,14 +288,14 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
   }
   
   ## ---- conditional likelihood checks ----
-  if(conditional){
+  if(CL){
     
     if(!is.null(model) && "D" %in% names(model)){
-      stop("When conditional = TRUE, a density model for 'D' cannot be specified.")
+      stop("When CL = TRUE, a density model for 'D' cannot be specified.")
     }
     
     if(!is.null(dat$par.extend$model) && "D" %in% names(dat$par.extend$model)){
-      stop("When conditional = TRUE, 'D' cannot appear in the model specification.")
+      stop("When CL = TRUE, 'D' cannot appear in the model specification.")
     }
     
     if(is.null(fix)) fix <- list()
@@ -322,12 +322,12 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
   dat$fix = fix
   dat$ss.opts = ss.opts
   dat$sv.link = sv.link
-  dat$conditional = conditional
+  dat$CL = CL
   
   output = do.call("fit_og", dat)
   output$arg_input = arg.input
   output$call = match.call()
-  output$conditional = conditional
+  output$CL = CL
   
   return(output)
 }
@@ -361,14 +361,14 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #' @param tracing same as the argument with the same name in the function `fit.acre()`.
 #' @param gr.skip same as the argument with the same name in the function `fit.acre()`.
 #' @param sv.link a list; this is mostly for development purpose, not recommended to use.
-#' @param conditional a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring 
+#' @param CL a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring 
 #'                    density parameter estimation.
 #' 
 #' @param ...
 #'
 fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL, cue.rates = NULL,
                   survey.length = NULL, sound.speed = 331, local = FALSE, par.extend = NULL, tracing = TRUE, gr.skip = FALSE,
-                  sv.link = NULL, conditional = FALSE, ...){
+                  sv.link = NULL, CL = FALSE, ...){
   #keep all original input arguments
   arg.names <- names(as.list(environment()))
   arg.input <- vector('list', length(arg.names))
@@ -696,7 +696,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                toa_ssq = data.ID_mask$toa_ssq,
                
                # Conditional likelihood
-               is_conditional = as.numeric(conditional)
+               is_conditional = as.numeric(CL)
   )
 
   #to avoid "." in .cpp file
@@ -895,7 +895,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   
   # Adding conditional likelihood logical to the out object
   # Should really be doing this in outFUN()
-  out$conditional = conditional
+  out$CL = CL
   class(out) <- "acre_tmb"
 
   return(out)

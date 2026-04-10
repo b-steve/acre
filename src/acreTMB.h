@@ -1432,10 +1432,10 @@ Type acreTMB(objective_function<Type>* obj)
     // *pointer_nll += lambda_theta;
     // unconditional / original-style contribution
     if(is_conditional == 0){
-      std::cout << "Fitting a [OMG PLEASE STANDARD LIKELIHOOD] model" << std::endl;
+      std::cout << "Fitting a [STANDARD LIKELIHOOD] model" << std::endl;
       *pointer_nll += lambda_theta;
     } else {
-      std::cout << "Fitting a [OMG PLEASE CONDITIONAL LIKELIHOOD] model" << std::endl;
+      std::cout << "Fitting a [CONDITIONAL LIKELIHOOD] model" << std::endl;
     }
   	//if(s == 105){
   	//	std::cout << "session "<< s <<", check point2, nll: " << *pointer_nll << std::endl;
@@ -1711,8 +1711,12 @@ Type acreTMB(objective_function<Type>* obj)
                   //so fx was directly integrated into l_i below
                   
                   //we sum up likelihood (not log-likelihood) of each mask 
-                  
-                  l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+
+                  if (is_conditional == 0) {
+                    l_i += (*p_D_tem) * fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+                  } else {
+                    l_i += fw(m - 1) * exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
+                  }
                 }
                 
                 p_sigma_toa_mask++;

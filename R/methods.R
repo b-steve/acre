@@ -1103,6 +1103,7 @@ summary.acre_tmb = function(object, derived_print = FALSE, ...){
   CI = confint(object, types = 'fitted')
   CI_derived = confint(object, types = 'derived')
   is_boot = is(object, 'acre_boot')
+  CL = object$CL
   
   infotypes = get_infotypes(object)
   detfn = get_detfn(object)
@@ -1132,7 +1133,7 @@ summary.acre_tmb = function(object, derived_print = FALSE, ...){
                 CI = CI, CI_derived = CI_derived,
                 is_boot = is_boot, infotypes = infotypes, detfn = detfn,
                 n.sessions = n.sessions, pars_ext_links = pars_ext_links,
-                ss_opts = ss_opts, derived_print = derived_print)
+                ss_opts = ss_opts, derived_print = derived_print, CL = CL)
   class(output) = c("summary_acre_tmb", class(output))
   return(output)
 }
@@ -1200,6 +1201,9 @@ print.summary_acre_tmb = function(x, ...){
   cat("\n")
   cat("Confidence interval method:", CI_method, "\n")
   
+  if (x$CL) {
+    cat("Likelihood mode: ", "Conditional", "\n")
+  }
   
   cat("\n", "\n", "Parameters:", "\n")
 
