@@ -5,6 +5,7 @@ Version: 0.1.0
 Date: 2023-05-04
 Authors@R: c(
     person("Ben", "Stevenson", email = "ben.stevenson@auckland.ac.nz", role = c("aut", "cre")),
+    person("Joseph", "Reps", email = "jrep150@aucklanduni.ac.nz", role = "aut"),
     person("Lingyu", "Hao", email = "lhao446@aucklanduni.ac.nz", role = "aut"))
 Depends:
     R (>= 3.6.0),
@@ -13,15 +14,17 @@ Depends:
 Imports:
     CircStats,
     fields,
+    matrixStats,
     methods,
     mgcv,
     plyr,
+    scales,
     secr,
     stats,
     stringr,
     numDeriv,
     utils,
-    viridis,
+    viridisLite,
     TMB,
     RANN
 Suggests:
