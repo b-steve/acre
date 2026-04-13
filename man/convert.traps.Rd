@@ -24,5 +24,5 @@ object.
 }
 \details{
 The returned object is suitable for use as the \code{traps}
-argument of the function \link{make.capthist}.
+argument of the function \link[secr:make.capthist]{secr::make.capthist}.
 }

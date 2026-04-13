@@ -21,7 +21,7 @@ history object for \code{convert.capt.to.secr}.}
 \item{capthist}{Logical, if \code{TRUE}, a \code{capthist} object
 is returned. Otherwise a data frame is returned, which is
 suitable for the \code{captures} argument to the
-\link{make.capthist} function.}
+\link[secr:make.capthist]{secr::make.capthist} function.}
 
 \item{cutoff}{The signal strength threshold for detection, if
 required.}
