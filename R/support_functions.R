@@ -232,7 +232,6 @@ p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
   }
   # prod(1 - x) : P(didn't detect on trap 1 & didn't detect on trap 2 & ...)
   # 1 - prod(1 - x) : P(detect on at least 1 trap)
-  # out <- plyr::aaply(probs, 2, function(x) 1 - prod(1 - x))
   out <- 1 - apply(1 - probs, 2, prod)
   
   if (esa) {
@@ -909,7 +908,6 @@ delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new
         w = matrix(0, nrow = n_new_df, ncol = n_col_full + n_col_mask)
         if(n_col_full > 1){
           gam.model = gam.output[[par_name]][["gam_non_mask"]]
-          #browser()
           w[, 1:n_col_full] = get_DX_new_gam(gam.model, new.covariates)
         } else {
           w[, 1] = matrix(1, nrow = n_new_df, ncol = 1)
@@ -958,12 +956,6 @@ delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new
 
     G_grad = do.call('rbind', G_grad)
   }
-
-  #for test purpose
-  #print('for test use only, display the G\'(x) matrix')
-  #print(G_grad)
-  #print('end of test display')
-  #browser()
   return(G_grad %*% cov_linked %*% t(G_grad))
 
 }
@@ -1061,7 +1053,6 @@ confint_gaussian_cal = function(object, types, pars, new.covariates, q_lower, q_
     #}
 
     if(i == 'fitted' | i == 'linked'){
-      #browser()
       #"fitted" is just back transformed from "linked" confidence interval
       df_est = vector_to_df(coef.acre_tmb(object, types = 'linked', pars = pars, new.covariates = new.covariates))
       df_std = vector_to_df(stdEr.acre_tmb(object, types = 'linked', pars = pars, new.covariates = new.covariates, show_fixed_par = FALSE))
@@ -1071,7 +1062,6 @@ confint_gaussian_cal = function(object, types, pars, new.covariates, q_lower, q_
       df_est = vector_to_df(coef.acre_tmb(object, types = 'derived'))
       df_std = vector_to_df(stdEr.acre_tmb(object, types = 'derived', show_fixed_par = FALSE))
     }
-    #browser()
     colnames(df_est) = c('par', 'est')
     df_est$std = 0
     u_name = unique(df_est$par)
@@ -1083,7 +1073,6 @@ confint_gaussian_cal = function(object, types, pars, new.covariates, q_lower, q_
       if(nrow(tem_std) > 0) tem_est$std = tem_std$value
       tem[[k]] = tem_est
     }
-    #browser()
     tem = do.call('rbind', tem)
     tem$lower = tem$est + q_lower * tem$std
     tem$upper = tem$est + q_upper * tem$std
@@ -1448,9 +1437,6 @@ par_extend_create = function(loc.cov = NULL, mask = NULL, convert.loc2mask = lis
     loc.cov = convert_dist_cov_to_loc_cov(dist.cov = dist.cov, loc.cov = loc.cov, mask = mask)
 
     loc.cov = convert_time_loc_cov_to_loc_cov(time.loc.cov = time.loc.cov, loc.cov = loc.cov, session.cov = session.cov)
-
-
-    #browser()
     #if location related covariates provided, convert it to mask-level data frame
     if(!is.null(loc.cov)){
       convert.loc2mask$loc.cov = loc.cov
@@ -2164,7 +2150,6 @@ mce_from_res = function(res, coefs, M, seed_mce){
     mce.boot <- matrix(sample(converged, size = n.converged*M,
                               replace = TRUE), nrow = M,
                        ncol = n.converged)
-    #browser()
     for (i in par_names){
       par.boot <- matrix(res[mce.boot, i], nrow = M, ncol = n.converged)
       bias.mce[i] <- sd(apply(par.boot, 1, mean) - coefs[i] - bias[i])

@@ -161,7 +161,6 @@ boot.acre = function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   }
 
   #"res" contains all covariates under "link" scale
-  #browser()
   tem = res_split(res, dims$n.sessions)
   res= tem$res
   maxgrads = tem$maxgrads
@@ -183,11 +182,8 @@ boot_step = function(seed, N, fit, arguments, dims, infotypes, len_output, name_
   tem = suppressMessages(sim.capt(fit = fit, n.rand = N))
   capture_sim = tem$capt
   cue_rates_sim = tem$sim_cue_rates
-  #browser()
-
   for(n in 1:N){
     if(nrow(capture_sim[[n]]) > 0){
-      #browser()
       arguments$capt = get_capt_for_boot(capture_sim[[n]], dims, infotypes, animal.model)
       arguments$cue.rates = cue_rates_sim[[n]]
       fit_boot = suppressWarnings(try(do.call('fit_og', arguments), silent = TRUE))

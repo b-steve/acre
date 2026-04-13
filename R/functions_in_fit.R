@@ -1502,7 +1502,6 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
       out$coeflist[[tem_name]] = rep(out$coeflist[['D']], dims$n.masks[i])
     }
   } else {
-    #browser()
     tem_n_col = data.par[par.id['D'], c('n_col_full', 'n_col_mask')]
     D_est_tmb_og = tmb_output_og$est[which(names(tmb_output_og$est) == 'D')]
     tem_full = DX.full[['D']] %*% val(D_est_tmb_og)[1:tem_n_col[1, 1]]

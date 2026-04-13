@@ -335,7 +335,6 @@ vcov.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
     warning('No parameter is extended, argument "new.covariates" will be ignored.')
     new.covariates = NULL
   }
-  #browser()
   name_extned_covariate_provided = ext_par_in_new_df(name_extend, new.covariates, extend_par_covariates)
   
   #the original name is needed, in "name_og", "D.(Intercept)", "D.x1", "D.xxx" will be regarded as 'D' only
@@ -388,7 +387,6 @@ vcov.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
   
   output = vector('list', length(types))
   names(output) = types
-  #browser()
   for(type in types){
     if(type == "linked"){
       if(is.null(new.covariates)){
@@ -397,7 +395,6 @@ vcov.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
         dimnames(output[[type]]) = list(tem, tem)
       } else {
         gam.output = get_gam(object)
-        #browser()
         output[[type]] = delta_method_acre_tmb(cov_linked, param_values, new.covariates = new.covariates,
                                                name_og = name_og, name_extend = name_extend,
                                                par_ext_cov_provided = name_extned_covariate_provided, df_param = df_param,
@@ -435,7 +432,6 @@ vcov.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
         dimnames(output[[type]]) = list(name_dim, name_dim)
       } else {
         gam.output = get_gam(object)
-        #browser()
         output[[type]] = delta_method_acre_tmb(cov_linked, param_values, new.covariates = new.covariates,
                                                name_og = name_og, name_extend = name_extend,
                                                par_ext_cov_provided = name_extned_covariate_provided, df_param = df_param,
@@ -510,17 +506,11 @@ vcov.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
   #since the loop below depends on the order of pars, we need to re-order 'pars' to make its order
   #to be consistent with the default order of all parameters
   pars = fulllist.par.generator()[fulllist.par.generator() %in% pars]
-
-  #browser()
   if(any(c('linked', 'fitted') %in% types)){
     res = get_boot_res(object, pars)
     fixed_par = get_fixed_par_name(object)
     pars = pars[!pars %in% fixed_par]
   }
-  
-  #browser()
-
-
   output = vector('list', length(types))
   names(output) = types
   for(i in types){
@@ -533,7 +523,6 @@ vcov.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
       }
       
     } else if(i == 'derived'){
-      #browser()
       res_esa = get_boot_res_esa(object)
       output[[i]] = var_from_res(res_esa)
     } else {
@@ -665,9 +654,6 @@ print.std_acre_tmb = function(x, ...){
 #' @return a matrix
 #' @export
 confint.acre_tmb = function(object, types = NULL, level = 0.95, pars = NULL, new.covariates = NULL, ...){
-
-  #browser()
-  #############################################################################################
   #deal with default setting for 'types'
   tem = types_pars_sol(types, pars, new.covariates)
   types = tem$types
@@ -686,7 +672,6 @@ confint.acre_tmb = function(object, types = NULL, level = 0.95, pars = NULL, new
                                 q_upper = q_upper)
 
   df_param = get_data_param(object)
-  #browser()
   if('fitted' %in% types){
     tem = output[['fitted']]
     name_og = get_param_og(object)
