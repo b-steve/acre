@@ -1990,7 +1990,7 @@ make_buffer_printer <- function(trace_cols,
     # `flush.console()` is here to make sure printing still works if the user 
     # is working in the console. Potential for weird print formatting if not 
     # included
-    flush.console()
+    utils::flush.console()
   }
   
   # Euclid corresponds to euclidean norm, max to the max absolute difference
@@ -2061,7 +2061,7 @@ make_buffer_printer <- function(trace_cols,
                      row, fmts_aligned, SIMPLIFY = TRUE)
     # Print the row
     cat(paste(pieces, collapse=" "), "\n")
-    flush.console()
+    utils::flush.console()
     
     # Clear buffers
     st$buf_fn_par <- NULL

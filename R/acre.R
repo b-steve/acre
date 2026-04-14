@@ -2,7 +2,8 @@
 NULL
 
 #' @import Rcpp testthat
-#' @importFrom stats aggregate coef confint cor dist median pnorm qnorm quantile rgamma rnorm rpois runif sd sigma vcov
+#' @importFrom graphics abline arrows axis box contour grid hist image legend lines par plot.new plot.window points polygon text title
 #' @importFrom methods is
-#' @importFrom graphics abline axis box contour hist image legend lines par plot.new plot.window points title
+#' @importFrom stats aggregate coef complete.cases confint cor dgamma dist dnorm median pnorm predict printCoefmat qnorm quantile rgamma rnorm rpois runif setNames sd sigma vcov
+#' @importFrom utils data flush.console
 NULL
