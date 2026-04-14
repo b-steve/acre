@@ -27,11 +27,7 @@ Imports:
     viridisLite,
     TMB,
     RANN
-Suggests:
-    knitr,
-    xtable
 LinkingTo: Rcpp, TMB, RcppEigen
-VignetteBuilder: knitr
 Description: This package provides functions to fit spatial
     capture-recapture (SCR) models, primarily to acoustic
     data. Acoustic surveys are capable of collecting auxiliary
