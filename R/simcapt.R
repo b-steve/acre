@@ -421,7 +421,7 @@ sim.from.param = function(detfn, dat_pars, dat.density, random.location, dims, i
   if (keep.animal_locs) {
     animal_locs$bincapt = 0 
     for (i in 1:nrow(animal_locs)) {
-      if (sum(subset(dat_capt, ID == i)$bincapt) > 0) {
+      if (sum(subset(dat_capt, dat_capt$ID == i)$bincapt) > 0) {
         animal_locs$bincapt[i] = 1
       } 
     }

@@ -126,7 +126,7 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
     
     bincapt <- lapply(unique(capt$ID), function(id) {
       # Grab all rows for this ID
-      sub_capt <- subset(capt, ID == id) 
+      sub_capt <- subset(capt, capt$ID == id) 
       bincapt  <- numeric(n.traps)
       bincapt[sub_capt$trap] <- 1
       c(id, bincapt)

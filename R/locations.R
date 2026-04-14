@@ -157,9 +157,9 @@ dist_density <- function(fit, call_id, animal_id=NULL, session=1,
     cid <- call_id[i]
     
     # Grab the capt & bincapt for this call ID
-    sub_capt <- subset(capt, ID == cid)
+    sub_capt <- subset(capt, capt$ID == cid)
     # Make sure to remove ID column when doing calculations
-    sub_bin  <- subset(bincapt, ID == cid)[,-1] 
+    sub_bin  <- subset(bincapt, capt$ID == cid)[,-1] 
     dist_capt <- sub_capt$dist
     
     traps_used <- which(sub_bin == 1)
@@ -250,9 +250,9 @@ bearing_density <- function(fit, call_id, animal_id=NULL, session=1,
     cid <- call_id[i]
     
     # Grab the capt & bincapt for this call ID
-    sub_capt <- subset(capt, ID == cid)
+    sub_capt <- subset(capt, capt$ID == cid)
     # Make sure to remove ID column when doing calculations
-    sub_bin  <- subset(bincapt, ID == cid)[,-1] 
+    sub_bin  <- subset(bincapt, capt$ID == cid)[,-1] 
     traps_used <- which(sub_bin == 1)
     bearing_capt <- sub_capt$bearing
     
@@ -344,14 +344,14 @@ toa_density <- function(fit, call_id, animal_id=NULL, session=1,
   # A list to store each call density
   density_list <- vector("list", length(call_id))
   
-  single_trap_detection = F
+  single_trap_detection = FALSE
   for (i in seq_along(call_id)) {
     cid <- call_id[i]
-    
+    browser()
     # Grab the capt & bincapt for this call ID
-    sub_capt <- subset(capt, ID == cid)
+    sub_capt <- subset(capt, capt$ID == cid)
     # Make sure to remove ID column when doing calculations
-    sub_bin  <- subset(bincapt, ID == cid)[,-1] 
+    sub_bin  <- subset(bincapt, bincapt$ID == cid)[,-1] 
     traps_used <- which(sub_bin == 1)
     toa_capt <- sub_capt$toa
     
@@ -362,7 +362,7 @@ toa_density <- function(fit, call_id, animal_id=NULL, session=1,
     
     # Need at least 2 detections to be able to use arrival time data
     if (length(traps_used) < 2) {
-      single_trap_detection = T
+      single_trap_detection = TRUE
       mask.dens <- 1
     } else {
       dists.mask <- dists[traps_used, ]
@@ -460,9 +460,9 @@ ss_density <- function(fit, call_id, animal_id=NULL, session=1,
     cid <- call_id[i]
     
     # Grab the capt & bincapt for this call ID
-    sub_capt <- subset(capt, ID == cid)
+    sub_capt <- subset(capt, capt$ID == cid)
     # Make sure to remove ID column when doing calculations
-    sub_bin  <- subset(bincapt, ID == cid)[,-1] 
+    sub_bin  <- subset(bincapt, bincapt$ID == cid)[,-1] 
     ss.capt <- sub_capt$ss
     triggered_traps <- sub_capt$trap
     untriggered_traps <- setdiff(seq(n_traps), triggered_traps)
@@ -533,9 +533,9 @@ capt_density <- function(fit, call_id, animal_id=NULL, session=1,
     cid <- call_id[i]
     
     # Grab the capt & bincapt for this call ID
-    sub_capt <- subset(capt, ID == cid)
+    sub_capt <- subset(capt, capt$ID == cid)
     # Make sure to remove ID column when doing calculations
-    sub_bin  <- as.numeric(subset(bincapt, ID == cid)[,-1]) 
+    sub_bin  <- as.numeric(subset(bincapt, bincapt$ID == cid)[,-1]) 
     
     # Probability of detection at each mask point
     # Worth noting that `det_prob()` is set up in such a way, that we can
