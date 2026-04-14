@@ -799,9 +799,6 @@ confint.acre_boot = function(object, parm = NULL, level = 0.95, types = NULL, ne
 #'
 #' @return A named vector of AIC values or NA if conditions are not met.
 #' @export
-#'
-#' @examples
-#' AIC.acre_tmb(model1, model2, k = 2)
 AIC.acre_tmb <- function(..., k = 2) {
   # Capture all model objects
   models <- list(...)
