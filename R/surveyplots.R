@@ -458,7 +458,7 @@ plot.acre_data <- function(x, ...){
           
           # Plot distance circle around each trap
           for (i in unique(data_cir$cir_index)) {
-            cir <- subset(data_cir, cir_index == i)
+            cir <- subset(data_cir, data$cir$cir_index == i)
             polygon(cir$x, cir$y,
                     border = "red",
                     col = NA,
