@@ -333,7 +333,6 @@ toa_density <- function(fit, call_id, animal_id=NULL, session=1,
   single_trap_detection = FALSE
   for (i in seq_along(call_id)) {
     cid <- call_id[i]
-    browser()
     # Grab the capt & bincapt for this call ID
     sub_capt <- subset(capt, capt$ID == cid)
     # Make sure to remove ID column when doing calculations
