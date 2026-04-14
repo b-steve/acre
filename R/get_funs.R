@@ -491,8 +491,8 @@ get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
   for (par in ext_par_names) {
     ext_par_values_matrix <- matrix(
       ext_par_values[[par]]$Estimate,
-      nr = nrow(traps),
-      nc = nrow(mask),
+      nrow = nrow(traps),
+      ncol = nrow(mask),
       byrow = F
     )
     par_values[[par]] <- ext_par_values_matrix

@@ -373,7 +373,7 @@ toa_density <- function(fit, call_id, animal_id=NULL, session=1,
         sig2 <- sigma_toa[traps_used, ]^2
         # Recycle the ssq vector, need to do this otherwise normal recycling 
         # doesn't do what we want
-        toa.ssq <- matrix(rep(toa.ssq, times = nrow(sig2)), nr=nrow(sig2), byrow=T)
+        toa.ssq <- matrix(rep(toa.ssq, times = nrow(sig2)), nrow = nrow(sig2), byrow = TRUE)
         mask.dens <- (2*pi*sig2)^((1 - sum(sub_bin))/2)*exp(toa.ssq/(-2*sig2))
         # mask.dens <- matrixStats::colProds(mask.dens)
         mask.dens <- colSums(mask.dens)
@@ -449,7 +449,7 @@ ss_density <- function(fit, call_id, animal_id=NULL, session=1,
   for (param_name in c("sigma.ss", "b0.ss", "b1.ss")) {
     if (!is.matrix(det_pars[[param_name]])) {
       det_pars[[param_name]] <- matrix(det_pars[[param_name]], 
-                                       nr = n_traps, nc = nrow(mask))
+                                       nrow = n_traps, ncol = nrow(mask))
     }
   }
   

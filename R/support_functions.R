@@ -448,7 +448,7 @@ default.sv = function(param, info){
     return(1)
   } else if(param == "sigma.toa"){
     # Matrix where columns correspond to traps, rows correspond to call_id
-    toa_by_call_matrix <- matrix(data.full$toa, nc = max(data.full$trap), byrow = T)
+    toa_by_call_matrix <- matrix(data.full$toa, ncol = max(data.full$trap), byrow = T)
     # Take the average of the standard deviations of every call
     mean(apply(toa_by_call_matrix, 1, sd))
     return(mean(apply(toa_by_call_matrix, 1, sd)))

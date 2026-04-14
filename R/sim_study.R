@@ -163,9 +163,9 @@ sim_study = function(sim_name, n.rand, fit=NULL, n.cores=NULL, save=T, plot=T,
       est_value_linked <- cbind(Est = coef(sim_fit), 
                                 Std = stdEr(sim_fit), confint(sim_fit))
       
-      est_value_fitted <- cbind(Est = coef(sim_fit, type = "fitted"), 
-                                Std = stdEr(sim_fit, type = "fitted"), 
-                                confint(sim_fit, type = "fitted"))
+      est_value_fitted <- cbind(Est = coef(sim_fit, types = "fitted"), 
+                                Std = stdEr(sim_fit, types = "fitted"), 
+                                confint(sim_fit, types = "fitted"))
       
       return(list(fitted = est_value_fitted, linked = est_value_linked))
     }
