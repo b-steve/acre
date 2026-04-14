@@ -417,7 +417,6 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   o.mask = mask.fun(mask = mask, dims = dims, animal.model = animal.model,
                     data.traps = data.traps, data.full = data.full,
                     local = local, bucket_info = bucket_info, sound.speed = sound.speed)
-
   dims[["n.masks"]] = o.mask$n.masks
   data.full = o.mask$data.full
   bucket_info = o.mask$bucket_info
@@ -610,9 +609,8 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     #due to the order of loop in the c++ template, re-order this data set
     data.ID_mask = data.ID_mask[order(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$mask, data.ID_mask$ID), ]
   }
-
   if(!any(c('local', 'toa') %in% bucket_info)){
-    data.ID_mask = data.ID_mask[1,, drop = FALSE]
+    data.ID_mask = data.ID_mask[1,, drop = FALSE] 
   } else {
     if(!'local' %in% bucket_info){
       data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'local'), drop = FALSE]
@@ -693,7 +691,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                theta = data.dists.thetas$theta,
 
                index_local = as.numeric(data.ID_mask$local),
-               toa_ssq = data.ID_mask$toa_ssq,
+               toa_ssq = as.numeric(data.ID_mask$toa_ssq),
                
                # Conditional likelihood
                is_conditional = as.numeric(CL)
