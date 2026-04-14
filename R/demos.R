@@ -1,12 +1,3 @@
-#' Show demo
-#'
-#' @param data_name
-#' @param fit
-#' @param gradient_free
-#' @param sv_link
-#'
-#' @return
-#' @export
 demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL){
   dat = get(data_name)
 
@@ -41,16 +32,6 @@ demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL
   }
 }
 
-
-
-#' Title
-#'
-#' @param table_return
-#'
-#' @return
-#' @export
-#'
-#' @examples
 show_demo_options = function(table_return = TRUE){
   output = c('bearing_dist_hn', 'bearing_hn', 'dist_hn', 'ihd', 'ihd_ext', 'mul_ses', 'mul_ses_ext',
              'simple_hhn', 'hhn_cue', 'simple_hr', 'ss', 'ss_toa',

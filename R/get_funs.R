@@ -393,10 +393,6 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
 #'
 #' @return a list of (nmask) x (ntrap) columns, for each extended parameter.
 #'          values correspond to estimated parameter value for the given covariate values.
-#'
-#' @examples 
-#' # Calculates the parameter values for each mask_point - trap combination
-#' ext_par_matrices <- get_par_extend_matrix(fit, mask, traps)
 get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL, 
                                   warn = T) {
   # Make sure model is parameter extended

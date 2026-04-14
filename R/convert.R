@@ -1,6 +1,6 @@
 #' Create mask object
 #'
-#' Creates a mask object to use with the function read.acre
+#' Creates a mask object to use with the function read.acre().
 #'
 #' @param traps a matrix or a data frame with two columns or a list of such matrices or data frames for a multi-session model.
 #'              Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
@@ -34,57 +34,7 @@ create.mask <- function(traps, buffer, ...){
     mask
 }
 
-
-#' Create captures object
-#'
-#' Create a captures object to use with the function read.acre
-#'
-#' @section Captures argument
-#' The `captures` argument will be passed to the function `create.capt`. The main arguments provided are the session, the
-#' identification number of the detected animal or sound, and the identification number of the trap which made the detection
-#' (where the identification number is the row number of the corresponding trap in the matrix of trap locations. These columns
-#' must be exactly labelled "session", "ID" and "trap" respectively.
-#'
-#' Additional columns can specify the auxiliary information collected over the course of the survey:
-#'
-#' \itemize{
-#'  \item A column named `bearing`, containing estimated bearings (in radians) from the detector to each detected animal or sound.
-#'
-#'  \item A column named `dist`, containing the estimated distance between the detected animal or sound.
-#'
-#'  \item A column named `ss` containing the measured signal strengh of the detected sound.
-#'
-#'  \item A column named `toa` containing the measured time of arrival (in seconds) since the start of the survey (or some other
-#' reference time) of the detected sound (only possible when the detectors are microphones).
-#'
-#'  \item A column named `animal_ID` containing the identification number of animals can be provided if individuals could be distinguished by
-#'  their acoustic detection.
-#'  }
-#'
-#' @param captures a data frame with capture data. Columns named "session", "ID" and "trap" are required, with
-#'                 each row being regarded as one detection. Extra information can be provided as columns "bearing", "dist"
-#'                 ,"ss", "toa", "animal_ID". See 'Captures argument'.
-#' @param traps a matrix or a data frame with two columns or a list of such matrices or data frames for a multi-session model.
-#'              Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
-#'              In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
-#'              If the detector locations stayed the same across all sessions, only one matrix/data frame is required.
-#' @param ind.model a logical value indicates whether to include individual identification which should be recorded as "animal_ID",
-#'                  a column in the argument "captures". By default, it will be NULL, so the model will determine it automatically
-#'                  depending on whether this information is provided in "captures".
-#' @param n.sessions a numeric value denotes the number of sessions. It will only be used when the argument "traps" is not provided,
-#'                   or it is a list with one element, or it is a data frame, or it is a matrix.
-#' @param n.traps a numeric vector denotes the number of traps in each session. It will only be used when the argument "traps" is not provided.
-#'                If its length is 1, its value will be used for each session when we have multiple sessions. If its length is greater than 1,
-#'                the length of it must match the number of sessions.
-#' @param mrds.locs a list with length of n.sessions with data frames or matrices as components, each data.frame or matrix
-#'                  contains two columns record the Cartesian coordinates of each call. If a session has no detection,
-#'                  keep the corresponding component as NULL. If animal.model, then each component must be a data.frame
-#'                  with 4 columns: "animal_ID", "ID", "mrds_x" and "mrds_y".
-#'
-#' @return an object ready for model fitting.
-#' @export
-#'
-#' @examples
+## Used internally by read.acre() to create capture history objects.
 create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = NULL, n.traps = NULL,
                         mrds.locs = NULL){
 
@@ -431,19 +381,8 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
 
 
 
-#' A helper function to obtain the distances of the nearest points from a data frame
-#'
-#' @param from a matrix or a data frame with columns "x" and "y" contains the coordinates of the start points.
-#' @param to a matrix or a data frame with columns "x" and "y" contains the coordinates of the end points.
-#' @param col_name a character, contains the new column name for the distances in the output, default is
-#'                 dist_nearest.
-#'
-#' @return a data frame as the same as "from", but with an extra column with assigned column name. For each row,
-#'         it contains the distance to the nearest point in the "to" data set.
-#' @export
-#'
-#' @examples
-dist_nearest = function(from, to, col_name = 'dist_nearest'){
+## A helper function to obtain the distances of the nearest points from a data frame
+dist_nearest <- function(from, to, col_name = 'dist_nearest'){
   stopifnot(all(c('x', 'y') %in% colnames(from)))
   stopifnot(all(c('x', 'y') %in% colnames(to)))
   output = as.data.frame(from)
@@ -456,28 +395,7 @@ dist_nearest = function(from, to, col_name = 'dist_nearest'){
   return(output)
 }
 
-
-
-
-
-#' Convert traps object
-#'
-#' Converts an `acre` traps matrix to a `secr` traps
-#' object.
-#'
-#' The returned object is suitable for use as the `traps`
-#' argument of the function [make.capthist].
-#'
-#' @param ss Logical, set to `TRUE` if a signal strength
-#'     detection function is to be used.
-#' @param traps a matrix or a data frame, contains one session's detectors' coordinates
-#'
-#' @return An object of class `traps` comprising a data frame of
-#'     x- and y-coordinates, the detector type ('single', 'multi',
-#'     'proximity', 'count', 'polygon' etc.), and possibly other
-#'     attributes.
-#'
-#' @export
+## Converts an `acre` traps matrix to a `secr` traps object.
 convert.traps <- function(traps, ss = FALSE){
     if (is(traps, "list")){
         stop("The convert.traps() function will only convert single-session trap objects.")
@@ -489,301 +407,15 @@ convert.traps <- function(traps, ss = FALSE){
     secr::read.traps(data = traps.df, detector = detector)
 }
 
-#' Convert mask object
-#'
-#' Converts an `acre` mask matrix to a `secr` mask
-#' object.
-#'
-#' The returned object is suitable for use as the `mask`
-#' argument of the function [secr.fit].
-#'
-#' @inheritParams fit.acre
-#'
-#' @return An object of class `mask`.
-#'
-#' @export
-convert.mask <- function(mask){
-    if (is.list(mask)){
-        stop("The convert.mask() function will only convert single-session mask objects.")
-    }
-    secr::read.mask(data = as.data.frame(mask))
-}
-
-#' Capture history conversion.
-#'
-#' These functions convert a capture history object between the
-#' structures required for the `acre` and `secr`
-#' packages.
-#'
-#' @param capt A `secr` capture history object for
-#'     `convert.capt.to.acre`, or an `acre` capture
-#'     history object for `convert.capt.to.secr`.
-#' @param capthist Logical, if `TRUE`, a `capthist` object
-#'     is returned. Otherwise a data frame is returned, which is
-#'     suitable for the `captures` argument to the
-#'     [make.capthist] function.
-#' @param cutoff The signal strength threshold for detection, if
-#'     required.
-#' @inheritParams fit.acre
-#'
-#' @return A capture history object appropriate for analysis using
-#'     either the `acre` or the `secr` package.
-#'
-#' @name convert.capt
-NULL
-
-#' @rdname convert.capt
-#' @export
-convert.capt.to.acre <- function(capt){
-    bincapt <- capt[, 1, ]
-    nr <- nrow(bincapt)
-    nc <- ncol(bincapt)
-    out <- list(bincapt = bincapt)
-    if (!is.null(attr(capt, "signalframe"))){
-        ss.capt <- matrix(attr(capt, "signalframe")[, 1],
-                          nrow = nr, ncol = nc)
-        out$ss <- ss.capt
-    } else {
-
-    }
-    out
-}
-
-## Aliasing old convert.capt.to.admbsecr() function name.
-#' @rdname convert.capt
-#' @export
-convert.capt.to.admbsecr <- convert.capt.to.acre
-
-#' @rdname convert.capt
-#' @export
-convert.capt.to.secr <- function(capt, traps, capthist = TRUE, cutoff = NULL){
-    if (!any(names(capt) == "bincapt")){
-        if (length(capt) > 1){
-            stop("The convert.capt.to.secr() function will only convert single-session capture history objects.")
-        }
-        capt <- capt[[1]]
-    }
-    n <- nrow(capt$bincapt)
-    n.dets <- sum(capt$bincapt)
-    session <- rep(1, n.dets)
-    n.indiv.dets <- apply(capt$bincapt, 1, sum)
-    ID <- rep(1:n, times = n.indiv.dets)
-    occasion <- rep(1, n.dets)
-    trap <- c(apply(capt$bincapt, 1, function(x) which(x == 1)),
-              recursive = TRUE)
-    names(trap) <- NULL
-    out <- data.frame(session = session, ID = ID, occasion = occasion,
-                      trap = trap)
-    fit.ss <- !is.null(capt$ss)
-    if (fit.ss){
-        out <- data.frame(out, ss = t(capt$ss)[t(capt$bincapt) == 1])
-    }
-    for (i in names(capt)[!(names(capt) %in% c("bincapt", "ss"))]){
-        out[, i] <- t(capt[[i]])[t(capt$bincapt) == 1]
-    }
-    if (capthist){
-        traps <- convert.traps(traps, ss = fit.ss)
-        out <- secr::make.capthist(out, traps, fmt = "trapID", noccasions = 1,
-                             cutval = cutoff)
-    }
-    out
-}
-
-#' Create a capture history object from a PAMGuard output file
-#'
-#' Converts a PAMGuard output file to a capture history object
-#' suitable for use with the [fit.acre] function. This uses
-#' [make.acoustic.captures] to allocate call identities to
-#' detections.
-#'
-#' @param dets Detection output dataframe from PAMGuard.
-#' @param mics A matrix containing the coordinates of microphone
-#'     locations.
-#' @param time.range A vector of length two, providing a range of
-#'     times for which a subset should be taken to create the capture
-#'     history.
-#' @param sound.speed The speed of sound in metres per second.
-#' @param new.allocation Logical, if `TRUE`, an improved
-#'     call-allocation method is used. The old version is retained so
-#'     that older analyses can be replicated.
-#' @export
-convert.pamguard <- function(dets, mics, time.range = NULL,
-                             sound.speed = 330, new.allocation = TRUE){
-    mics <- as.matrix(mics)
-    toa.info <- dets$startSeconds
-    mic.id <- log2(dets$channelMap) + 1
-    ss.info <- dets$amplitude
-    n <- nrow(dets)
-    clicks <- data.frame(session = rep(1, n), ID = 1:n,
-                         occasion = rep(1, n), trap = mic.id,
-                         ss = ss.info, toa = toa.info)
-    if (!is.null(time.range)){
-        keep <- toa.info > time.range[1] & toa.info < time.range[2]
-        if (!any(keep)){
-            stop("No calls were detected within the specified time.range.")
-        }
-        clicks <- clicks[keep, ]
-    }
-    ord <- order(clicks$toa)
-    clicks <- clicks[ord, ]
-    ## Old and new way to allocate IDs below.
-    if (new.allocation){
-        captures <- clicks
-        captures[, 2] <- allocate.calls(mics, clicks, sound.speed)
-    } else {
-        captures <- make.acoustic.captures(mics, clicks, sound.speed)
-    }
-    create.capt(captures, traps = mics)
-}
-
-
-#' Create a capture history object from a Raven output file
-#'
-#' Converts a Raven output file to a capture history object
-#' suitable for use with the [fit.acre] function. This uses
-#' [make.acoustic.captures] to allocate call identities to
-#' detections.
-#'
-#' @param dets Detection output dataframe from Raven.
-#' @inheritParams convert.pamguard
-#' @export
-convert.raven <- function(dets, mics, time.range = NULL, sound.speed = 330,
-                          new.allocation = TRUE){
-    mics <- as.matrix(mics)
-    toa.info <- dets[, 4]
-    mic.id <- log2(dets[, 3]) + 1
-    ss.info <- dets[, 8]
-    n <- nrow(dets)
-    clicks <- data.frame(session = rep(1, n), ID = 1:n,
-                         occasion = rep(1, n), trap = mic.id,
-                         ss = ss.info, toa = toa.info)
-    if (!is.null(time.range)){
-        keep <- toa.info > time.range[1] & toa.info < time.range[2]
-        if (!any(keep)){
-            stop("No calls were detected within the specified time.range.")
-        }
-        clicks <- clicks[keep, ]
-    }
-    ord <- order(clicks$toa)
-    clicks <- clicks[ord, ]
-    ## Old and new way to allocate IDs below.
-    if (new.allocation){
-        captures <- clicks
-        captures[, 2] <- allocate.calls(mics, clicks, sound.speed)
-    } else {
-        captures <- make.acoustic.captures(mics, clicks, sound.speed)
-    }
-    create.capt(captures, traps = mics)
-}
-
-
-#' Assigning ID numbers to sounds
-#'
-#' Identifies recaptures and assigns ID numbers to sounds recorded for
-#' an SECR model.
-#'
-#' Detected sounds are assumed to come from the same animal if times
-#' of arrival at different microphones are closer together than the
-#' time it would take for sound to travel between these microphones.
-#'
-#' @param mics a matrix containing the coordinates of trap locations.
-#' @param dets a data frame containing (at least): (i) `$toa`,
-#'     the precise time of arrival of the received sound, and (ii)
-#'     `$trap` the trap at which the sound was recorded.
-#' @param sound.speed the speed of sound in metres per second.
-#' @return A data frame. Specifically, the `dets` dataframe, now
-#'     with a new variable, `ID`.
-#' @author David Borchers
-#'
-#' @export
-make.acoustic.captures <- function(mics, dets, sound.speed){
-    mics <- as.matrix(mics)
-    dists <- distances(mics, mics)
-    dt <- dists/sound.speed
-    K <- dim(mics)[1]
-    captures <- dets
-    ct <- rep(-Inf, K)
-    ID <- 1
-    ct[dets$trap[1]] <- dets$toa[1]
-    new <- FALSE
-    ndets <- length(dets$toa)
-    for (i in 2:ndets){
-        if (ct[dets$trap[i]] > -Inf){
-            nd <- length(which(ct > -Inf))
-            captures$ID[(i - nd):(i - 1)] <- ID
-            ct <- rep(-Inf, K)
-            ct[dets$trap[i]] <- dets$toa[i]
-            ID <- ID + 1
-            if(i == ndets) captures$ID[i] <- ID
-        }
-        else {
-            ct[dets$trap[i]] <- dets$toa[i]
-            ctset <- which(ct > -Inf)
-            dts <- dt[ctset, dets$trap[i]]
-            cts <- -(ct[ctset] - dets$toa[i])
-            if (any((cts - dts) > 0)) new <- TRUE
-            if (new) {
-                nd <- length(which(ct > -Inf)) - 1
-                captures$ID[(i - nd):(i - 1)] <- ID
-                ct <- rep(-Inf, K)
-                ct[dets$trap[i]] <- dets$toa[i]
-                ID <- ID + 1
-                new <- FALSE
-                if (i == ndets) captures$ID[i] <- ID
-            } else if(i == ndets){
-                nd <- length(which(ct > -Inf))
-                captures$ID[(i - nd + 1):i] <- ID
-            }
-        }
-    }
-    captures
-}
-
-
-
-allocate.calls <- function(mics, dets, sound.speed){
-    mics <- as.matrix(mics)
-    trap.dists <- distances(mics, mics)
-    n.dets <- nrow(dets)
-    ## Allocating pairwise plausibility of common cue sources.
-    dist.mat <- detection_dists(trap.dists, dets$trap)
-    timediff.mat <- detection_timediffs(dets$toa, dets$trap)
-    maxtime.mat <- dist.mat/sound.speed
-    match.mat <- timediff.mat <= maxtime.mat
-    ## Finding blocks of multiple cues with possible common sources.
-    incomplete.blocks <- find_incomplete_blocks(match.mat)
-    n.blocks <- max(incomplete.blocks)
-    complete.block <- logical(n.blocks)
-    final.mat <- matrix(FALSE, nrow = n.dets, ncol = n.dets)
-    ## Allocating possible common cues to sources.
-    reqss.mat <- dist.mat/timediff.mat
-    for (i in 1:max(incomplete.blocks)){
-        ## Grabbing a block.
-        block <- match.mat[incomplete.blocks == i, incomplete.blocks == i]
-        reqss <- reqss.mat[incomplete.blocks == i, incomplete.blocks == i]
-        ## Working out if there is any possible ambiguity.
-        is.complete <- all(block)
-        ## If ambiguity, resolve it.
-        if (!is.complete){
-            block <- blockify(block, reqss)
-        }
-        final.mat[incomplete.blocks == i, incomplete.blocks == i] <- block
-    }
-    find_incomplete_blocks(final.mat)
-}
-
-
-convert_one_mask = function(x, trap){
+## Some sort of helper function. Don't know what it does.
+convert_one_mask <- function(x, trap){
   stopifnot(any(is(x, 'data.frame'), is(x, 'matrix')))
-
   if(is(x, 'data.frame')){
     x = as.matrix(x)
   }
-
   stopifnot(ncol(x) == 2)
   stopifnot(is.numeric(x))
   colnames(x) = c('x', 'y')
-
   if(is.null(attr(x, "buffer"))){
     stopifnot(any(is(trap, 'data.frame'), is(trap, 'matrix')))
     trap = as.matrix(trap)
@@ -795,7 +427,6 @@ convert_one_mask = function(x, trap){
     buffer = max(d_closet_trap)
     attr(x, "buffer") = buffer
   }
-
   if(is.null(attr(x, "area"))){
     sp = as.matrix(dist(x))
     spacing = apply(sp, 1, function(x) min(x[x > 0]))
@@ -803,8 +434,6 @@ convert_one_mask = function(x, trap){
     area = spacing^2/10000
     attr(x, "area") = area
   }
-
   return(x)
-
 }
 

@@ -17,10 +17,7 @@
 #'            parameters will be taken from the fitted object.
 #'
 #' @return A data frame containing the simulated data, as well as arguments used.
-#' @export
-#'
-#' @examples simulated_data <- sim_data("bearing_hn", 5)
-sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = F, 
+sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = FALSE, 
                     proportion_missing=0) {
   
   if (!sim_name %in% get_dataset_names() && is.null(fit)) {
@@ -114,10 +111,6 @@ sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = 
 #'
 #' @return A list of length `n.rand` containing fitted coefficients from the 
 #'         simulation study.
-#' @export
-#'
-#' @examples study <- sim_study("bearing_hn", 5, save=F)
-#' @examples study_from_fit <- sim_study("example_model", fit=example.fit, 5, save=F)
 sim_study = function(sim_name, n.rand, fit=NULL, n.cores=NULL, save=T, plot=T, 
                      proportion_missing=0) {
   stopifnot(is.numeric(n.rand))
@@ -216,10 +209,6 @@ sim_study = function(sim_name, n.rand, fit=NULL, n.cores=NULL, save=T, plot=T,
 #'                    information to be removed in the name)
 #' @param n_missing Number of data to be set to NA
 #' @param is_sim True if it is simulation data
-#'
-#' @return 
-#'
-#' @examples
 set_detection_data_NA <- function(capt_data, dataset_name, n_missing) {
   if (n_missing == 0) return (capt_data)
   
@@ -252,17 +241,3 @@ set_detection_data_NA <- function(capt_data, dataset_name, n_missing) {
   return(capt_data)
 }
 
-#' Run a simulation study with missing covariate data.
-#'
-#' @param dataset_name string denoting the name of the dataset to be studied.
-#' @param n.rand numeric value indicating the number of datasets to be simulated.
-#'
-#' @return 
-#'
-#' @examples sim_study_for_missing_data("bearing_hn", 20)
-sim_study_for_missing_data <- function(dataset_name, n.rand) {
-  # for (p_missing in seq(0,1,length=11)) {
-  for (p_missing in seq(0,1,length=11)) {
-    sim_study_updated(dataset_name, n.rand, T, proportion_missing = p_missing)
-  }
-}

@@ -16,11 +16,7 @@
 #'    case of `toa` data with only a single call.
 #' @param newdata data.frame; contains any covariates that will be used 
 #'    for all extended parameters.
-#'
-#' @return 
 #' @export 
-#'
-#' @examples
 location_density <- function(fit, call_id, animal_id=NULL, session=1, 
                              mask=get_mask(fit)[[session]], warn_toa=F, 
                              newdata=NULL) {
@@ -86,10 +82,6 @@ location_density <- function(fit, call_id, animal_id=NULL, session=1,
 #' @param dens a numeric vector of densities.
 #' @param probability_breaks the probabilities at which to calculate density 
 #'    breaks.
-#'
-#' @return
-#'
-#' @examples
 get_density_breaks_from_probability <- function(dens, probability_breaks) {
   dens.sort <- sort(dens, decreasing = TRUE)
   probs.sort <- cumsum(dens.sort)/sum(dens.sort)
@@ -113,8 +105,6 @@ get_density_breaks_from_probability <- function(dens, probability_breaks) {
 #'
 #' @return a data frame with columns `x`, `y` and `z`
 #' @export
-#'
-#' @examples
 dist_density <- function(fit, call_id, animal_id=NULL, session=1, 
                          mask=get_mask(fit)[[session]]) {
   # `get_capt_by_id()` validates `call_id`, `animal_id`, `session`
@@ -209,8 +199,6 @@ dist_density <- function(fit, call_id, animal_id=NULL, session=1,
 #'
 #' @return a data frame with columns `x`, `y` and `z`
 #' @export
-#'
-#' @examples
 bearing_density <- function(fit, call_id, animal_id=NULL, session=1, 
                             mask=get_mask(fit)[[session]]) {
   # `get_capt_by_id()` validates `call_id`, `animal_id`, `session`
@@ -305,8 +293,6 @@ bearing_density <- function(fit, call_id, animal_id=NULL, session=1,
 #'
 #' @return a data frame with columns `x`, `y` and `z`
 #' @export
-#'
-#' @examples
 toa_density <- function(fit, call_id, animal_id=NULL, session=1, 
                         mask=get_mask(fit)[[session]], warn=T) {
   # `get_capt_by_id()` validates `call_id`, `animal_id`, `session`
@@ -406,8 +392,6 @@ toa_density <- function(fit, call_id, animal_id=NULL, session=1,
 #'
 #' @return a data frame with columns `x`, `y` and `ss_dens`
 #' @export
-#'
-#' @examples
 ss_density <- function(fit, call_id, animal_id=NULL, session=1, 
                        mask=get_mask(fit)[[session]], newdata=NULL) {
   # Note input validation for call_id, animal_id, session
@@ -500,8 +484,6 @@ ss_density <- function(fit, call_id, animal_id=NULL, session=1,
 #'
 #' @return a data frame with columns `x`, `y` and `x`
 #' @export
-#'
-#' @examples
 capt_density <- function(fit, call_id, animal_id=NULL, session=1, 
                          mask=get_mask(fit)[[session]]) {
   # Grab appropriate capture data
@@ -566,8 +548,6 @@ capt_density <- function(fit, call_id, animal_id=NULL, session=1,
 #' @inheritParams location_density
 #' @return a data frame with columns `x`, `y` and `Dsurface_density`
 #' @export
-#'
-#' @examples
 Dsurface_density <- function(fit, session=1, mask=get_mask(fit)[[session]]) {
   # Grab estimated parameters, along with other model fitting variables
   det_pars <- as.list(coef(fit, type="fitted"))
@@ -743,8 +723,6 @@ plot_locations <- function(fit, call_id = NULL, animal_id = NULL, session=1,
 #' @inheritParams location_density
 #'
 #' @return a string to use as plot subtitle
-#'
-#' @examples
 create_locations_plot_title <- function(call_id, animal_id, session) {
   if (is.null(animal_id)) {
     subtitle = paste0("session: ", session, ", call ID: ", call_id)

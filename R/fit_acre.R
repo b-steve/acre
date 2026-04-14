@@ -238,8 +238,6 @@ read.acre = function(captures, traps, mask = NULL,
 #'
 #' @return
 #' @export
-#'
-#' @examples
 fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(), is.scale = TRUE,
                     model.link = NULL, local = FALSE, tracing = TRUE, gr.skip = FALSE,

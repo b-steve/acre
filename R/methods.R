@@ -136,11 +136,7 @@ coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
 #'                     return the original estimation directly. The bias correct method is
 #'                     hat(coef) - (mean(boot_results) - hat(coef)).
 #' @param ... 
-#'
-#' @return
 #' @export
-#'
-#' @examples
 coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NULL, correct_bias = FALSE, ...){
   
   if(!correct_bias){
@@ -479,11 +475,7 @@ vcov.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
 #'                  from the bootstrap results. If FALSE, the method "vcov.acre_tmb()" will be called.
 #' @param show_fixed_par a logical value, the same as "vcov.acre_tmb()".
 #' @param ... 
-#'
-#' @return
 #' @export
-#'
-#' @examples
 vcov.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
   
   if(!from_boot){
@@ -549,11 +541,7 @@ vcov.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
 #'
 #' @param object 
 #' @param ... 
-#'
-#' @return
 #' @export
-#'
-#' @examples
 stdEr = function(object, ...){
   UseMethod("stdEr")
 }
@@ -600,11 +588,7 @@ stdEr.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NU
 #' @param from_boot a logical value, the same as "vcov.acre_boot()".
 #' @param show_fixed_par a logical value, the same as "vcov.acre_tmb()".
 #' @param ...
-#'
-#' @return
 #' @export
-#'
-#' @examples
 stdEr.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
 
   output_vcov = vcov.acre_boot(object = object, types = types, pars = pars, new.covariates = new.covariates,
@@ -720,13 +704,7 @@ confint.acre_tmb = function(object, parm = NULL, level = 0.95, types = NULL, new
 #'                  the confidence matrix. Default is TRUE; if FALSE, "confint.acre_tmb()" will
 #'                  be called.
 #' @param ...
-#' 
-#'
-#' @return
 #' @export
-#'
-#' @examples
-#' 
 confint.acre_boot = function(object, parm = NULL, level = 0.95, types = NULL, new.covariates = NULL,
                              correct_bias = FALSE, from_boot = TRUE, ...){
   if(!from_boot){
@@ -846,11 +824,7 @@ AIC.acre_tmb <- function(..., k = 2) {
 #' @param level a numeric value indicates the confident level, default is 0.95.
 #' @param realnames a character vector containing any parameter names.
 #' @param ... 
-#'
-#' @return
 #' @export
-#'
-#' @examples
 predict.acre_tmb = function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                             level = 0.95, realnames = NULL, ...){
   fit = object
@@ -949,11 +923,7 @@ predict.acre_tmb = function(object, type = 'response', newdata = NULL, se.fit = 
 #' @param from_boot a logical value indicates whether to extract standard error and confidence interval
 #'                  from the bootstrap results.
 #' @param ... 
-#'
-#' @return
 #' @export
-#'
-#' @examples
 predict.acre_boot = function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                              level = 0.95, realnames = NULL, correct_bias = FALSE, from_boot = TRUE, ...){
   fit = object
@@ -1048,10 +1018,7 @@ predict.acre_boot = function(object, type = 'response', newdata = NULL, se.fit =
 #' @param x 
 #' @param ... 
 #'
-#' @return
 #' @export
-#'
-#' @examples
 print.predict_acre_tmb = function(x, ...){
   for(i in names(x)){
     cat(paste0(i, ": \n"))
@@ -1074,11 +1041,7 @@ print.predict_acre_tmb = function(x, ...){
 #'               the bootstrap process "boot.acre()".
 #' @param derived_print a logical value indicates whether to show the estimations of "esa".
 #' @param ...
-#'
-#' @return
 #' @export
-#'
-#' @examples
 summary.acre_tmb = function(object, derived_print = FALSE, ...){
   coefs = coef(object, types = 'fitted')
   derived = coef(object, types = 'derived')
@@ -1127,11 +1090,7 @@ summary.acre_tmb = function(object, derived_print = FALSE, ...){
 #'
 #' @param x 
 #' @param ...
-#'
-#' @return
 #' @export
-#'
-#' @examples
 print.summary_acre_tmb = function(x, ...){
   
   derived_print = x$derived_print
@@ -1215,8 +1174,6 @@ print.summary_acre_tmb = function(x, ...){
 #'
 #' @return a numeric value, the negative log-likelihood of the model
 #' @export
-#'
-#' @examples logLik(example.fit)
 logLik.acre_tmb <- function(object, ...) {
   return(object$loglik)
 }
@@ -1224,11 +1181,7 @@ logLik.acre_tmb <- function(object, ...) {
 #' Title
 #'
 #' @param fit 
-#'
-#' @return
 #' @export
-#'
-#' @examples
 esa = function(fit){
   output = fit$esa
   return(output)
