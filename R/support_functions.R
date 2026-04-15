@@ -824,7 +824,7 @@ ext_par_in_new_df = function(par_ext, new.covariates, extend_par_covariates){
 
 
 
-delta_method_acre_tmb = function(cov_linked, param_values, link_funs = NULL, new.covariates = NULL,
+delta_method_acre = function(cov_linked, param_values, link_funs = NULL, new.covariates = NULL,
                                  name_og = NULL, name_extend = NULL, par_ext_cov_provided = NULL, df_param = NULL,
                                  gam.model.full = NULL, gam.output = NULL, back_trans = TRUE){
   #delta method, G(x) is a vector of n functions, where x is a vector of m variables
@@ -1048,19 +1048,19 @@ confint_gaussian_cal = function(object, types, pars, new.covariates, q_lower, q_
   names(output) = types
   for(i in types){
     #if(i == 'linked'){
-    #  df_est = vector_to_df(coef.acre_tmb(object, types = 'linked', pars = pars))
-    #  df_std = vector_to_df(stdEr.acre_tmb(object, types = 'linked', pars = pars))
+    #  df_est = vector_to_df(coef.acre(object, types = 'linked', pars = pars))
+    #  df_std = vector_to_df(stdEr.acre(object, types = 'linked', pars = pars))
     #}
 
     if(i == 'fitted' | i == 'linked'){
       #"fitted" is just back transformed from "linked" confidence interval
-      df_est = vector_to_df(coef.acre_tmb(object, types = 'linked', pars = pars, new.covariates = new.covariates))
-      df_std = vector_to_df(stdEr.acre_tmb(object, types = 'linked', pars = pars, new.covariates = new.covariates, show_fixed_par = FALSE))
+      df_est = vector_to_df(coef.acre(object, types = 'linked', pars = pars, new.covariates = new.covariates))
+      df_std = vector_to_df(stdEr.acre(object, types = 'linked', pars = pars, new.covariates = new.covariates, show_fixed_par = FALSE))
     }
 
     if(i == 'derived'){
-      df_est = vector_to_df(coef.acre_tmb(object, types = 'derived'))
-      df_std = vector_to_df(stdEr.acre_tmb(object, types = 'derived', show_fixed_par = FALSE))
+      df_est = vector_to_df(coef.acre(object, types = 'derived'))
+      df_std = vector_to_df(stdEr.acre(object, types = 'derived', show_fixed_par = FALSE))
     }
     colnames(df_est) = c('par', 'est')
     df_est$std = 0

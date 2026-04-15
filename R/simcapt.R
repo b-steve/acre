@@ -6,7 +6,7 @@
 #' are required. Otherwise, at least `traps`, `mask`, and
 #' `pars` are needed.
 #'
-#' @param fit an object generated from the model fitting function "fit.acre_tmb()" or
+#' @param fit an object generated from the model fitting function "fit.acre()" or
 #'            the bootstrap process "boot.acre()". If `fit` is provided, then all other
 #'             parameters will be taken from the fitted object, so no other parameters need to be provided.
 #' @inheritParams read.acre

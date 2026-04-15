@@ -892,7 +892,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   # Adding conditional likelihood logical to the out object
   # Should really be doing this in outFUN()
   out$CL = CL
-  class(out) <- "acre_tmb"
+  class(out) <- "acre"
 
   return(out)
 }

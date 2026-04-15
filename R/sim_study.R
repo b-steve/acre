@@ -12,7 +12,7 @@
 #' @param proportion_missing a numeric value used to set a proportion of the 
 #'                           covariate data generated to NA (currently only 
 #'                           bearing, distance and toa supported)
-#' @param fit an object generated from the model fitting function "fit.acre_tmb()" or
+#' @param fit an object generated from the model fitting function "fit.acre()" or
 #'            the bootstrap process "boot.acre()". If `fit` is provided, then all
 #'            parameters will be taken from the fitted object.
 #'
@@ -106,7 +106,7 @@ sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = 
 #' @param proportion_missing a numeric value used to set a proportion of the
 #'                           covariate data to NA. Will apply to all covariates 
 #'                           present.
-#' @param fit an object generated from the model fitting function "fit.acre_tmb()" or
+#' @param fit an object generated from the model fitting function "fit.acre()" or
 #'            the bootstrap process "boot.acre()". If `fit` is provided, then all
 #'            parameters will be taken from the fitted object.
 #'

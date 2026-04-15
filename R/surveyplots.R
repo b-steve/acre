@@ -1,4 +1,3 @@
-
 #' Plot the detection function
 #'
 #' @param fit an object generated from the model fitting function [fit.acre] or
@@ -598,7 +597,7 @@ plot.acre_data <- function(x, ...){
 #' @export
 #'
 #' @examples
-plot.acre_tmb = function(x, ...){
+plot.acre = function(x, ...){
   extra_args = list(...)
   type = extra_args$type
   
