@@ -27,7 +27,7 @@ sim.capt(
 )
 }
 \arguments{
-\item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
+\item{fit}{an object generated from the model fitting function "fit.acre()" or
 the bootstrap process "boot.acre()". If \code{fit} is provided, then all other
 parameters will be taken from the fitted object, so no other parameters need to be provided.}
 

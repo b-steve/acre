@@ -22,7 +22,7 @@ function.}
 \item{n.rand}{a numeric value denoting the number of data sets to be
 generated and fit. Must be > 1.}
 
-\item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
+\item{fit}{an object generated from the model fitting function "fit.acre()" or
 the bootstrap process "boot.acre()". If \code{fit} is provided, then all
 parameters will be taken from the fitted object.}
 

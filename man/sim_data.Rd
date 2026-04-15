@@ -22,7 +22,7 @@ function.}
 generated. If n.rand > 1, \code{output$capt} will be a list of
 length \code{n.rand}.}
 
-\item{fit}{an object generated from the model fitting function "fit.acre_tmb()" or
+\item{fit}{an object generated from the model fitting function "fit.acre()" or
 the bootstrap process "boot.acre()". If \code{fit} is provided, then all
 parameters will be taken from the fitted object.}
 
