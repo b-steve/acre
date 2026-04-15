@@ -363,7 +363,7 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #'                    density parameter estimation.
 #' 
 #' @param ...
-#'
+#' @keywords internal
 fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL, cue.rates = NULL,
                   survey.length = NULL, sound.speed = 331, local = FALSE, par.extend = NULL, tracing = TRUE, gr.skip = FALSE,
                   sv.link = NULL, CL = FALSE, ...){

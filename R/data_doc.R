@@ -22,6 +22,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "bearing_dist_hn"
 
 
@@ -49,6 +50,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "bearing_hn"
 
 
@@ -75,6 +77,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "dist_hn"
 
 
@@ -105,6 +108,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ihd"
 
 
@@ -138,6 +142,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ihd_ext"
 
 
@@ -169,6 +174,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "mul_ses"
 
 
@@ -206,6 +212,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "mul_ses_ext"
 
 
@@ -229,6 +236,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "simple_hhn"
 
 
@@ -256,6 +264,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "hhn_cue"
 
 
@@ -282,6 +291,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "simple_hr"
 
 
@@ -310,6 +320,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ss"
 
 #' Data to showcase a "ss_toa" demo
@@ -338,6 +349,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ss_toa"
 
 
@@ -377,6 +389,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ind_bearing_dist"
 
 
@@ -411,6 +424,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ind_toa_hhn"
 
 
@@ -453,6 +467,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ind_ss"
 
 
@@ -486,6 +501,7 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ind_ss_log"
 
 
@@ -520,4 +536,5 @@
 #'  }
 #'
 #' @source created from the simulation
+#' @keywords internal
 "ind_ss_sp"

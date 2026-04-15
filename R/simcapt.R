@@ -238,7 +238,7 @@ sim.data.prepare = function(detfn, param, par.extend, traps, mask, survey.length
     tem_dat = dat[,c('session', 'trap', 'mask')]
     input_data = par.extend$data
     if(!all(names(input_data) %in% c('session', 'trap',
-                                     #'animal_ID',
+                                     # 'animal_ID',
                                      'mask'))){
       stop("only 'session', 'trap', or 'mask' level data could be used as input.")
     }

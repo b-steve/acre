@@ -399,7 +399,7 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
     }
   }
   
-  #'fgam' is an object for compatibility with ADMB model
+  # fgam is an object for compatibility with ADMB model
   fgam = NULL
   
   #scale default is set as TRUE
@@ -443,7 +443,7 @@ par.extend.fun = function(par.extend, data.full, data.mask, animal.model, dims, 
     
     input_data = par.extend$data
     if(!all(names(input_data) %in% c('session', 'trap', 
-                                     #'animal_ID', 
+                                     # 'animal_ID', 
                                      'mask'))){
       stop("only 'session', 'trap', or 'mask' level data could be used as input.")
     }
@@ -1326,9 +1326,6 @@ gr_free_o_restore = function(fn, opt, H, parameters, param.og.4cpp, n.sessions){
   return(o)
 }
 
-
-
-
 outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas, detfn, param.og, param.og.4cpp, o, tmb_output_og, opt,
                   name.fixed.par, name.extend.par, dims, DX.full, DX.mask, fix.input, bucket_info, cue.rates, mean.cue.rates, A,
                   survey.length, sound.speed, par.extend, arg.input, fgam, gam_output, lst_mean_std, is.scale, ss.link, cutoff){
@@ -1513,8 +1510,8 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
     
     for(i in 1:dims$n.sessions){
       tem_name = paste0('D_mask[', i, ']')
-      #'D' is only session not trap extendable, we could take the first observation in each session
-      #only from 'data.full', which is tem_full below
+      # D is only session not trap extendable, we could take the first observation in each session
+      # only from 'data.full', which is tem_full below
       out$coeflist[[tem_name]] = tem_full[which(data.full$session ==i)[1]] +
         tem_mask[which(data.mask$session == i)]
       out$coeflist[[tem_name]] = unlink.fun(data.par[par.id['D'], 'link'],
@@ -1918,6 +1915,7 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
 #' - `mgc` and `step` are on the **TMB parameterization** scale.
 #'
 #' @seealso [TMB::MakeADFun()], [stats::nlminb()]
+#' @keywords internal
 make_buffer_printer <- function(trace_cols,
                                 only_improvements = TRUE,
                                 step = c("euclid","max","none"),
@@ -2127,8 +2125,8 @@ make_buffer_printer <- function(trace_cols,
 #' @return A function with the same signature and return value as `fn`, which
 #'   also triggers the tap side-effect after each evaluation.
 #'
-#'
 #' @seealso [with_gr_tap()], [make_buffer_printer()], [stats::nlminb()]
+#' @keywords internal
 with_fn_tap <- function(fn, tap, par_names, G_matrix_list) {
   # Make sure we evaluate the arguments as they are currently. 
   force(fn)
@@ -2185,6 +2183,7 @@ with_fn_tap <- function(fn, tap, par_names, G_matrix_list) {
 #'   if `gr` was `NULL`.
 #'
 #' @seealso [with_fn_tap()], [make_buffer_printer()], [stats::nlminb()]
+#' @keywords internal
 with_gr_tap <- function(gr, tap, par_names, G_matrix_list) {
   # Make sure we evaluate the arguments as they are currently. 
   if (is.null(gr)) return(NULL)

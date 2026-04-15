@@ -82,6 +82,7 @@ location_density <- function(fit, call_id, animal_id=NULL, session=1,
 #' @param dens a numeric vector of densities.
 #' @param probability_breaks the probabilities at which to calculate density 
 #'    breaks.
+#' @keywords internal
 get_density_breaks_from_probability <- function(dens, probability_breaks) {
   dens.sort <- sort(dens, decreasing = TRUE)
   probs.sort <- cumsum(dens.sort)/sum(dens.sort)
@@ -95,16 +96,6 @@ get_density_breaks_from_probability <- function(dens, probability_breaks) {
   return(levels)
 }
 
-
-#' Calculate the distance density
-#' 
-#' Calculates the distance density of calls from a model fit using 
-#' [fit.acre].
-#'
-#' @inheritParams location_density
-#'
-#' @return a data frame with columns `x`, `y` and `z`
-#' @export
 dist_density <- function(fit, call_id, animal_id=NULL, session=1, 
                          mask=get_mask(fit)[[session]]) {
   # `get_capt_by_id()` validates `call_id`, `animal_id`, `session`
@@ -189,16 +180,6 @@ dist_density <- function(fit, call_id, animal_id=NULL, session=1,
   return(do.call(rbind, density_list))
 }
 
-
-#' Calculate the bearing density
-#' 
-#' Calculates the bearing density of calls from a model fit using 
-#' [fit.acre].
-#'
-#' @inheritParams location_density
-#'
-#' @return a data frame with columns `x`, `y` and `z`
-#' @export
 bearing_density <- function(fit, call_id, animal_id=NULL, session=1, 
                             mask=get_mask(fit)[[session]]) {
   # `get_capt_by_id()` validates `call_id`, `animal_id`, `session`
@@ -284,15 +265,6 @@ bearing_density <- function(fit, call_id, animal_id=NULL, session=1,
   return(do.call(rbind, density_list))
 }
 
-#' Calculate the time of arrival density
-#' 
-#' Calculates the time of arrival density of calls from a model fit using 
-#' [fit.acre].
-#' 
-#' @inheritParams location_density
-#'
-#' @return a data frame with columns `x`, `y` and `z`
-#' @export
 toa_density <- function(fit, call_id, animal_id=NULL, session=1, 
                         mask=get_mask(fit)[[session]], warn=T) {
   # `get_capt_by_id()` validates `call_id`, `animal_id`, `session`
@@ -382,15 +354,6 @@ toa_density <- function(fit, call_id, animal_id=NULL, session=1,
   return(do.call(rbind, density_list))
 }
 
-#' Calculate the signal strength density
-#' 
-#' Calculates the signal strength density of calls from a model fit using 
-#' [fit.acre].
-#'
-#' @inheritParams location_density
-#'
-#' @return a data frame with columns `x`, `y` and `ss_dens`
-#' @export
 ss_density <- function(fit, call_id, animal_id=NULL, session=1, 
                        mask=get_mask(fit)[[session]], newdata=NULL) {
   # Note input validation for call_id, animal_id, session
@@ -474,15 +437,6 @@ ss_density <- function(fit, call_id, animal_id=NULL, session=1,
   return(do.call(rbind, density_list))
 }
 
-#' Calculate the capture history density
-#' 
-#' Calculates the capture history density of calls from a model fit using 
-#' [fit.acre].
-#'
-#' @inheritParams location_density
-#'
-#' @return a data frame with columns `x`, `y` and `x`
-#' @export
 capt_density <- function(fit, call_id, animal_id=NULL, session=1, 
                          mask=get_mask(fit)[[session]]) {
   # Grab appropriate capture data
@@ -536,17 +490,6 @@ capt_density <- function(fit, call_id, animal_id=NULL, session=1,
   return(do.call(rbind, density_list))
 }
 
-#' Calculate the detection surface density
-#' 
-#' Calculates the detection surface density for a model fit using 
-#' [fit.acre].
-#' 
-#' See: https://research-repository.st-andrews.ac.uk/bitstream/handle/10023/18233/BenStevensonPhDThesis.pdf
-#' (Equation 1.4)
-#'
-#' @inheritParams location_density
-#' @return a data frame with columns `x`, `y` and `Dsurface_density`
-#' @export
 Dsurface_density <- function(fit, session=1, mask=get_mask(fit)[[session]]) {
   # Grab estimated parameters, along with other model fitting variables
   det_pars <- as.list(coef(fit, type="fitted"))
@@ -717,11 +660,7 @@ plot_locations <- function(fit, call_id = NULL, animal_id = NULL, session=1,
   }
 }
 
-#' Create a plot subtitle for [plot_location_density]
-#'
-#' @inheritParams location_density
-#'
-#' @return a string to use as plot subtitle
+## Create a plot subtitle for [plot_location_density].
 create_locations_plot_title <- function(call_id, animal_id, session) {
   if (is.null(animal_id)) {
     subtitle = paste0("session: ", session, ", call ID: ", call_id)

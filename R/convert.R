@@ -34,7 +34,53 @@ create.mask <- function(traps, buffer, ...){
     mask
 }
 
-## Used internally by read.acre() to create capture history objects.
+#' Create captures object
+#'
+#' Create a captures object to use with the function read.acre
+#'
+#' @section Captures argument
+#' The `captures` argument will be passed to the function `create.capt`. The main arguments provided are the session, the
+#' identification number of the detected animal or sound, and the identification number of the trap which made the detection
+#' (where the identification number is the row number of the corresponding trap in the matrix of trap locations. These columns
+#' must be exactly labelled "session", "ID" and "trap" respectively.
+#'
+#' Additional columns can specify the auxiliary information collected over the course of the survey:
+#'
+#' \itemize{
+#'  \item A column named `bearing`, containing estimated bearings (in radians) from the detector to each detected animal or sound.
+#'
+#'  \item A column named `dist`, containing the estimated distance between the detected animal or sound.
+#'
+#'  \item A column named `ss` containing the measured signal strengh of the detected sound.
+#'
+#'  \item A column named `toa` containing the measured time of arrival (in seconds) since the start of the survey (or some other
+#' reference time) of the detected sound (only possible when the detectors are microphones).
+#'
+#'  \item A column named `animal_ID` containing the identification number of animals can be provided if individuals could be distinguished by
+#'  their acoustic detection.
+#'  }
+#'
+#' @param captures a data frame with capture data. Columns named "session", "ID" and "trap" are required, with
+#'                 each row being regarded as one detection. Extra information can be provided as columns "bearing", "dist"
+#'                 ,"ss", "toa", "animal_ID". See 'Captures argument'.
+#' @param traps a matrix or a data frame with two columns or a list of such matrices or data frames for a multi-session model.
+#'              Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
+#'              In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
+#'              If the detector locations stayed the same across all sessions, only one matrix/data frame is required.
+#' @param ind.model a logical value indicates whether to include individual identification which should be recorded as "animal_ID",
+#'                  a column in the argument "captures". By default, it will be NULL, so the model will determine it automatically
+#'                  depending on whether this information is provided in "captures".
+#' @param n.sessions a numeric value denotes the number of sessions. It will only be used when the argument "traps" is not provided,
+#'                   or it is a list with one element, or it is a data frame, or it is a matrix.
+#' @param n.traps a numeric vector denotes the number of traps in each session. It will only be used when the argument "traps" is not provided.
+#'                If its length is 1, its value will be used for each session when we have multiple sessions. If its length is greater than 1,
+#'                the length of it must match the number of sessions.
+#' @param mrds.locs a list with length of n.sessions with data frames or matrices as components, each data.frame or matrix
+#'                  contains two columns record the Cartesian coordinates of each call. If a session has no detection,
+#'                  keep the corresponding component as NULL. If animal.model, then each component must be a data.frame
+#'                  with 4 columns: "animal_ID", "ID", "mrds_x" and "mrds_y".
+#' @return A capture history object for model fitting.
+#' @keywords internal
 create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = NULL, n.traps = NULL,
                         mrds.locs = NULL){
 
@@ -379,9 +425,16 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
 
 }
 
-
-
-## A helper function to obtain the distances of the nearest points from a data frame
+#' A helper function to obtain the distances of the nearest points from a data frame
+#'
+#' @param from a matrix or a data frame with columns "x" and "y" contains the coordinates of the start points.
+#' @param to a matrix or a data frame with columns "x" and "y" contains the coordinates of the end points.
+#' @param col_name a character, contains the new column name for the distances in the output, default is
+#'                 dist_nearest.
+#'
+#' @return a data frame as the same as "from", but with an extra column with assigned column name. For each row,
+#'         it contains the distance to the nearest point in the "to" data set.
+#' @keywords internal
 dist_nearest <- function(from, to, col_name = 'dist_nearest'){
   stopifnot(all(c('x', 'y') %in% colnames(from)))
   stopifnot(all(c('x', 'y') %in% colnames(to)))
@@ -395,7 +448,23 @@ dist_nearest <- function(from, to, col_name = 'dist_nearest'){
   return(output)
 }
 
-## Converts an `acre` traps matrix to a `secr` traps object.
+#' Convert traps object
+#'
+#' Converts an `acre` traps matrix to a `secr` traps
+#' object.
+#'
+#' The returned object is suitable for use as the `traps`
+#' argument of the function [make.capthist].
+#'
+#' @param ss Logical, set to `TRUE` if a signal strength
+#'     detection function is to be used.
+#' @param traps a matrix or a data frame, contains one session's detectors' coordinates
+#'
+#' @return An object of class `traps` comprising a data frame of
+#'     x- and y-coordinates, the detector type ('single', 'multi',
+#'     'proximity', 'count', 'polygon' etc.), and possibly other
+#'     attributes.
+#' @keywords internal
 convert.traps <- function(traps, ss = FALSE){
     if (is(traps, "list")){
         stop("The convert.traps() function will only convert single-session trap objects.")

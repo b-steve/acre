@@ -13,7 +13,8 @@
 #' @param ylab a string as the sub-title of y-axis.
 #' @param col a string or a numeric vector indicates the color of the plotted line.
 #' @param add a logical value indicates whether to add the lines into the existing plot.
-#' @param ... 
+#' @param ...
+#' @keywords internal
 show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NULL, ylim = NULL,
                        main = NULL, xlab = NULL, ylab = NULL, col = NULL, add = FALSE, ...){
 
@@ -179,6 +180,7 @@ show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NUL
 #' @param ... 
 #' @inheritParams show.detfn
 #' @inheritParams read.acre
+#' @keywords internal
 show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.cov = NULL, xlim = NULL, ylim = NULL,
                         x.pixels = 50, y.pixels = 50, zlim = NULL, scale = 1, plot.contours = FALSE,
                         add = FALSE, convert.loc2mask= NULL, arg.col = 100, trap.plot = NULL, ...){
@@ -248,7 +250,7 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
 }
 
 
-#' Title
+#' Plotting acre data
 #'
 #' @param x
 #' @param ... 
@@ -587,7 +589,7 @@ plot.acre_data <- function(x, ...){
 }
 
 
-#' Title
+#' Plotting acre model objects
 #'
 #' @param x 
 #' @param ... 

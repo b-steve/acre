@@ -17,6 +17,7 @@
 #'            parameters will be taken from the fitted object.
 #'
 #' @return A data frame containing the simulated data, as well as arguments used.
+#' @export
 sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = FALSE, 
                     proportion_missing=0) {
   
@@ -111,6 +112,7 @@ sim_data = function(sim_name, n.rand, fit=NULL, seed = 810, suppress_messages = 
 #'
 #' @return A list of length `n.rand` containing fitted coefficients from the 
 #'         simulation study.
+#' @export
 sim_study = function(sim_name, n.rand, fit=NULL, n.cores=NULL, save=T, plot=T, 
                      proportion_missing=0) {
   stopifnot(is.numeric(n.rand))
@@ -202,13 +204,7 @@ sim_study = function(sim_name, n.rand, fit=NULL, n.cores=NULL, save=T, plot=T,
 }
 
 
-#' Sets the first n additional detection data information to NA
-#'
-#' @param data Data set to be adjusted
-#' @param dataset_name Name of the data set (must include the additional 
-#'                    information to be removed in the name)
-#' @param n_missing Number of data to be set to NA
-#' @param is_sim True if it is simulation data
+## Sets the first n additional detection data information to NA
 set_detection_data_NA <- function(capt_data, dataset_name, n_missing) {
   if (n_missing == 0) return (capt_data)
   

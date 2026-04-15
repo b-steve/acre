@@ -2406,14 +2406,6 @@ convert_time_loc_cov_to_loc_cov = function(time.loc.cov, loc.cov, session.cov){
   return(loc.cov)
 }
 
-#' Get all dataset names.
-#' 
-#' Retrieves all the dataset names included in the [acre] package
-#'
-#' @return A character vector containing dataset names.
-#' @export
-#'
-#' @examples dataset_names <- get_dataset_names()
 get_dataset_names = function() {
   return(data(package="acre")$results[, "Item"])
 }
