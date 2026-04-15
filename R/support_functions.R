@@ -2027,7 +2027,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
     par_info = get_data_param(fit)
     par_info = subset(par_info, par_info$par == 'D')
     gam.model = get_gam(fit, 'D')
-    if(is(fit, 'acre_boot')){
+    if(is(fit, 'acreboot')){
       values_link = as.vector(coef(fit, types = 'linked', pars = 'D', correct_bias = control_boot$correct_bias))
     } else {
       values_link = as.vector(coef(fit, types = 'linked', pars = 'D'))
@@ -2044,7 +2044,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
     if(se_fit){
       DX = tem$DX
 
-      if(is(fit, 'acre_boot')) {
+      if(is(fit, 'acreboot')) {
         if(log_scale){
           type = 'linked'
         } else {

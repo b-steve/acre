@@ -137,7 +137,7 @@ coef.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, .
 #'                     hat(coef) - (mean(boot_results) - hat(coef)).
 #' @param ... 
 #' @export
-coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NULL, correct_bias = FALSE, ...){
+coef.acreboot = function(object, types = NULL, pars = NULL, new.covariates = NULL, correct_bias = FALSE, ...){
   
   if(!correct_bias){
     output = coef.acre(object = object, types = types, pars = pars, new.covariates = new.covariates)
@@ -463,7 +463,7 @@ vcov.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, s
 #' @param show_fixed_par a logical value, the same as "vcov.acre()".
 #' @param ... 
 #' @export
-vcov.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
+vcov.acreboot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
   
   if(!from_boot){
     output = vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates, show_fixed_par = show_fixed_par)
@@ -572,13 +572,13 @@ stdEr.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 #' @param types a character vector, the same as "coef.acre()".
 #' @param pars a character vector, the same as "coef.acre()".
 #' @param new.covariates a data frame, the same as "coef.acre()".
-#' @param from_boot a logical value, the same as "vcov.acre_boot()".
+#' @param from_boot a logical value, the same as "vcov.acreboot()".
 #' @param show_fixed_par a logical value, the same as "vcov.acre()".
 #' @param ...
 #' @export
-stdEr.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
+stdEr.acreboot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
 
-  output_vcov = vcov.acre_boot(object = object, types = types, pars = pars, new.covariates = new.covariates,
+  output_vcov = vcov.acreboot(object = object, types = types, pars = pars, new.covariates = new.covariates,
                                from_boot = from_boot, show_fixed_par = show_fixed_par)
   
   if(is(output_vcov, 'list')){
@@ -683,7 +683,7 @@ confint.acre = function(object, parm = NULL, level = 0.95, types = NULL, new.cov
 #'                  be called.
 #' @param ...
 #' @export
-confint.acre_boot = function(object, parm = NULL, level = 0.95, types = NULL, new.covariates = NULL,
+confint.acreboot = function(object, parm = NULL, level = 0.95, types = NULL, new.covariates = NULL,
                              correct_bias = FALSE, from_boot = TRUE, ...){
   if(!from_boot){
     if(correct_bias) message(paste0("The argument 'correct_bias' will be ignored as the confidence",
@@ -897,12 +897,12 @@ predict.acre = function(object, type = 'response', newdata = NULL, se.fit = TRUE
 #' @param realnames a character vector, the same as "predict.acre()".
 #' @param correct_bias a logical value indicates whether to apply the bias correction method to the
 #'                     point estimations and the confidence intervals. The method is described in the
-#'                     functions "coef.acre_boot()" and "confint.acre_boot()".
+#'                     functions "coef.acreboot()" and "confint.acreboot()".
 #' @param from_boot a logical value indicates whether to extract standard error and confidence interval
 #'                  from the bootstrap results.
 #' @param ... 
 #' @export
-predict.acre_boot = function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
+predict.acreboot = function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                              level = 0.95, realnames = NULL, correct_bias = FALSE, from_boot = TRUE, ...){
   fit = object
   if(!from_boot){
@@ -1018,7 +1018,7 @@ summary.acre = function(object, derived_print = FALSE, ...){
   derived_se = stdEr(object, types = 'derived', show_fixed_par = FALSE)
   CI = confint(object, types = 'fitted')
   CI_derived = confint(object, types = 'derived')
-  is_boot = is(object, 'acre_boot')
+  is_boot = is(object, 'acreboot')
   CL = object$CL
   
   infotypes = get_infotypes(object)

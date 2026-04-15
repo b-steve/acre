@@ -166,7 +166,7 @@ boot.acre = function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   out <- fit.og
   boot <- list(boots = res, maxgrads = maxgrads, res_esa = res_esa, extra.boots = extra.res)
   out$boot <- boot
-  class(out) <- c("acre_boot", class(fit))
+  class(out) <- c("acreboot", class(fit))
   return(out)
 }
 
