@@ -1,3 +1,12 @@
+#' `acre`: Acoustic spatial capture-recapture models
+#'
+#' The `acre` package provides functions to fit spatial
+#' capture-recapture models, with a particular focus on analysing data
+#' from acoustic surveys.
+#'
+#' @keywords internal
+"_PACKAGE"
+
 #' @useDynLib acre
 NULL
 
