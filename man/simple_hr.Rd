@@ -30,4 +30,4 @@ simple_hr
 \description{
 For the demonstration of the model with hazard rate detection function.
 }
-\keyword{datasets}
+\keyword{internal}

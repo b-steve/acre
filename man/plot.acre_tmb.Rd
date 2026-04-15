@@ -2,7 +2,7 @@
 % Please edit documentation in R/surveyplots.R
 \name{plot.acre_tmb}
 \alias{plot.acre_tmb}
-\title{Title}
+\title{Plotting acre model objects}
 \usage{
 \method{plot}{acre_tmb}(x, ...)
 }
@@ -12,5 +12,5 @@
 \item{...}{}
 }
 \description{
-Title
+Plotting acre model objects
 }

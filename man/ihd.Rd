@@ -35,4 +35,4 @@ ihd
 For the demonstration of the model with inhomogeneous density surface,
 and half normal as detection function
 }
-\keyword{datasets}
+\keyword{internal}

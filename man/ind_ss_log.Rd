@@ -37,4 +37,4 @@ ind_ss_log
 For the demonstration of the model with signal strength as extra information and detection function with the link function of log.
 The survey is carried with 3 sessions, and each records in the capture history contains identity of the detected individual.
 }
-\keyword{datasets}
+\keyword{internal}

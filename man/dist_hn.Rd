@@ -32,4 +32,4 @@ dist_hn
 For the demonstration of the model with distance as extra information,
 and half normal as detection function
 }
-\keyword{datasets}
+\keyword{internal}

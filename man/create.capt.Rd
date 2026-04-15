@@ -40,8 +40,9 @@ keep the corresponding component as NULL. If animal.model, then each component m
 with 4 columns: "animal_ID", "ID", "mrds_x" and "mrds_y".}
 }
 \value{
-an object ready for model fitting.
+A capture history object for model fitting.
 }
 \description{
 Create a captures object to use with the function read.acre
 }
+\keyword{internal}

@@ -17,6 +17,3 @@ A named vector of AIC values or NA if conditions are not met.
 \description{
 Calculate AIC for acre_tmb Models
 }
-\examples{
-AIC.acre_tmb(model1, model2, k = 2)
-}

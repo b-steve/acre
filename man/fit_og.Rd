@@ -21,6 +21,7 @@ fit_og(
   tracing = TRUE,
   gr.skip = FALSE,
   sv.link = NULL,
+  CL = FALSE,
   ...
 )
 }
@@ -68,9 +69,40 @@ link: the same as argument \code{model.link}  in the function \code{fit.acre()}.
 
 \item{sv.link}{a list; this is mostly for development purpose, not recommended to use.}
 
-\item{...}{animal_ID' or 'ID', so we modify them to make sure design matrices are in right order
-data.ID_mask' contains the same combination of 'animal_ID' and 'ID', but they may be in different order,}
+\item{CL}{a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring
+density parameter estimation.}
 }
 \description{
 Original fit function from ascr
 }
+\keyword{'ID',}
+\keyword{'animal_ID'}
+\keyword{and}
+\keyword{animal_ID'}
+\keyword{are}
+\keyword{be}
+\keyword{but}
+\keyword{combination}
+\keyword{contains}
+\keyword{data.ID_mask'}
+\keyword{design}
+\keyword{different}
+\keyword{in}
+\keyword{internal}
+\keyword{make}
+\keyword{matrices}
+\keyword{may}
+\keyword{modify}
+\keyword{of}
+\keyword{or}
+\keyword{order}
+\keyword{order,}
+\keyword{right}
+\keyword{same}
+\keyword{so}
+\keyword{sure}
+\keyword{the}
+\keyword{them}
+\keyword{they}
+\keyword{to}
+\keyword{we}

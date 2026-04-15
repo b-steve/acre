@@ -29,4 +29,4 @@ simple_hhn
 \description{
 For the demonstration of the model with hazard half normal detection function.
 }
-\keyword{datasets}
+\keyword{internal}

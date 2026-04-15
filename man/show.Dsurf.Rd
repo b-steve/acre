@@ -80,3 +80,4 @@ based on data provided in \code{loc.cov} and \code{time.loc.cov}. See
 \description{
 Plots density surface estimated by a model fitted with the function \link{fit.acre}
 }
+\keyword{internal}

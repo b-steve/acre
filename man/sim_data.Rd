@@ -9,7 +9,7 @@ sim_data(
   n.rand,
   fit = NULL,
   seed = 810,
-  suppress_messages = F,
+  suppress_messages = FALSE,
   proportion_missing = 0
 )
 }
@@ -40,7 +40,4 @@ A data frame containing the simulated data, as well as arguments used.
 }
 \description{
 Simulate acre-formatted SCR data.
-}
-\examples{
-simulated_data <- sim_data("bearing_hn", 5)
 }

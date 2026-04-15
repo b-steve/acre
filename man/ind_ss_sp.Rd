@@ -38,4 +38,4 @@ For the demonstration of the model with signal strength as extra information and
 the link function of spherical. The survey is carried with 3 sessions, and each records in the
 capture history contains identity of the detected individual.
 }
-\keyword{datasets}
+\keyword{internal}

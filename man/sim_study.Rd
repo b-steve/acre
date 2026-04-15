@@ -46,7 +46,3 @@ simulation study.
 \description{
 Runs a simulation study
 }
-\examples{
-study <- sim_study("bearing_hn", 5, save=F)
-study_from_fit <- sim_study("example_model", fit=example.fit, 5, save=F)
-}

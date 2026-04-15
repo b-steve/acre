@@ -42,3 +42,4 @@ The wrapper is \strong{idempotent}: if it detects the function was already wrapp
 \seealso{
 \code{\link[=with_fn_tap]{with_fn_tap()}}, \code{\link[=make_buffer_printer]{make_buffer_printer()}}, \code{\link[stats:nlminb]{stats::nlminb()}}
 }
+\keyword{internal}

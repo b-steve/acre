@@ -17,5 +17,5 @@ If the detector locations stayed the same across several sessions, only one matr
 \item{...}{}
 }
 \description{
-Creates a mask object to use with the function read.acre
+Creates a mask object to use with the function read.acre().
 }

@@ -45,4 +45,4 @@ and half normal as detection function. The coefficients of "alpha", which is use
 is modeled with additional covariates. The survey is carried with 3 sessions, and each records in the capture history
 contains identity of the detected individual.
 }
-\keyword{datasets}
+\keyword{internal}

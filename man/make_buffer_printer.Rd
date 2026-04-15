@@ -76,3 +76,4 @@ opt <- stats::nlminb(obj$par, obj$fn, obj$gr,
 \seealso{
 \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}, \code{\link[stats:nlminb]{stats::nlminb()}}
 }
+\keyword{internal}

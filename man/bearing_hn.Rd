@@ -32,4 +32,4 @@ bearing_hn
 For the demonstration of the model with bearing as extra information,
 and half normal as detection function
 }
-\keyword{datasets}
+\keyword{internal}

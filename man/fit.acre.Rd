@@ -20,7 +20,8 @@ fit.acre(
   local = FALSE,
   tracing = TRUE,
   gr.skip = FALSE,
-  sv.link = NULL
+  sv.link = NULL,
+  CL = FALSE
 )
 }
 \arguments{
@@ -70,6 +71,8 @@ For any details, could refer to the help document in the function \code{read.acr
 which will use less RAM, but the optimization process will consume more time.}
 
 \item{sv.link}{a list; this is mostly for development purpose, not recommended to use}
+
+\item{CL}{a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring density parameter estimation.}
 }
 \description{
 Fits an acoustic SCR model.

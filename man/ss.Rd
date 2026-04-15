@@ -34,4 +34,4 @@ ss
 For the demonstration of the model with signal strength detection function, and signal strength
 as additional information.
 }
-\keyword{datasets}
+\keyword{internal}

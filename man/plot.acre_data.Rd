@@ -2,7 +2,7 @@
 % Please edit documentation in R/surveyplots.R
 \name{plot.acre_data}
 \alias{plot.acre_data}
-\title{Title}
+\title{Plotting acre data}
 \usage{
 \method{plot}{acre_data}(x, ...)
 }
@@ -10,5 +10,5 @@
 \item{...}{}
 }
 \description{
-Title
+Plotting acre data
 }

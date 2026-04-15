@@ -8,8 +8,6 @@
 }
 \arguments{
 \item{x}{}
-
-\item{...}{}
 }
 \description{
 Title

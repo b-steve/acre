@@ -17,6 +17,3 @@ a numeric value, the negative log-likelihood of the model
 \description{
 Extract (negative) log-likelihood for a fitted acre object
 }
-\examples{
-logLik(example.fit)
-}

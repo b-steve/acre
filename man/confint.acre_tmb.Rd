@@ -6,9 +6,9 @@
 \usage{
 \method{confint}{acre_tmb}(
   object,
-  types = NULL,
+  parm = NULL,
   level = 0.95,
-  pars = NULL,
+  types = NULL,
   new.covariates = NULL,
   ...
 )
@@ -16,11 +16,11 @@
 \arguments{
 \item{object}{a fitted model from "fit.acre()".}
 
-\item{types}{a character vector, the same as "coef.acre_tmb()".}
+\item{parm}{a character vector, the same as "coef.acre_tmb()".}
 
 \item{level}{a numeric value indicates the confident level, default is 0.95.}
 
-\item{pars}{a character vector, the same as "coef.acre_tmb()".}
+\item{types}{a character vector, the same as "coef.acre_tmb()".}
 
 \item{new.covariates}{a data frame, the same as "coef.acre_tmb()".}
 

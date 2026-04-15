@@ -21,3 +21,4 @@ it contains the distance to the nearest point in the "to" data set.
 \description{
 A helper function to obtain the distances of the nearest points from a data frame
 }
+\keyword{internal}

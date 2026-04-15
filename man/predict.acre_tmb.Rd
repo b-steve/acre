@@ -5,7 +5,7 @@
 \title{Title}
 \usage{
 \method{predict}{acre_tmb}(
-  fit,
+  object,
   type = "response",
   newdata = NULL,
   se.fit = TRUE,
@@ -16,7 +16,7 @@
 )
 }
 \arguments{
-\item{fit}{a fitted model from "fit.acre()".}
+\item{object}{a fitted model from "fit.acre()".}
 
 \item{type}{a character vector, could be either "response" or "link". The "response" correspondence to
 the type of "fitted" in the function "coef.acre_tmb()" and the "link" correspondence to

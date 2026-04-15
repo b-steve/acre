@@ -44,4 +44,4 @@ For the demonstration of the model with inhomogeneous density surface, signal st
 and detection function. One of the coefficients of detection function, "b0.ss", is modeled by additional covariates.
 The survey is carried with 3 sessions, and each records in the capture history contains identity of the detected individual.
 }
-\keyword{datasets}
+\keyword{internal}

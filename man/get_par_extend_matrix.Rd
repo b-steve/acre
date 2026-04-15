@@ -46,7 +46,4 @@ Note that because the parameter estimates are calculated for the entire mask,
 over every trap, newdata argument will be recycled (or truncated), to the
 correct dimensions.
 }
-\examples{
-# Calculates the parameter values for each mask_point - trap combination
-ext_par_matrices <- get_par_extend_matrix(fit, mask, traps)
-}
+\keyword{internal}
