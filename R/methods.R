@@ -34,6 +34,12 @@ coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
   #extract some key information for the object
   param_values_og = get_coef(object)
   name_og = get_param_og(object)
+  
+  if (object$CL) {
+    name_og <- setdiff(name_og, "D")
+    pars <- setdiff(pars, "D")
+  }
+  
   name_extend = get_par_extend_name(object)
   df_param = get_data_param(object)
   esa = esa(object)
@@ -108,7 +114,7 @@ coef.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
         values_fitted = values_link
         names(values_fitted) = i
       }
-
+      
       values_fitted = unlink.fun(link = link, value = values_fitted)
       output = c(output, values_fitted)
     }
@@ -147,7 +153,7 @@ coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
     output = coef.acre_tmb(object = object, types = types, pars = pars, new.covariates = new.covariates)
     return(output)
   }
-
+  
   
   #some preparation
   #deal with default setting for 'types'
@@ -155,7 +161,7 @@ coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
   types = tem$types
   pars = tem$pars
   name_og = get_param_og(object)
-
+  
   #check which parameter will be displayed
   if(is.null(pars)){
     pars = name_og
@@ -176,7 +182,7 @@ coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
   }
   
   
-
+  
   df_param = get_data_param(object)
   res = get_boot_res(object, pars)
   coefs = coef.acre_tmb(object, types = 'linked', pars)
@@ -208,7 +214,7 @@ coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
               #if(nrow(new.covariates) != 1) stop('Argument "new.covariates" can only accept 1 row.')
               gam = get_gam(object, j)
               values_link_evaluated = get_extended_par_value(gam, par_info$n_col_full, par_info$n_col_mask,
-                                                     values_link, new.covariates)
+                                                             values_link, new.covariates)
               
               names(values_link_evaluated) = rep(paste(j, 'link', sep = '_'), length(values_link_evaluated))
             }
@@ -230,7 +236,7 @@ coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
     } else {
       #when types is 'fitted', use the 'coefs_linked_bias_corrected' and new.covariates to
       #calculate the estimations.
-
+      
       for(j in pars){
         values_link = coefs_linked_bias_corrected[original_name == j]
         
@@ -259,7 +265,7 @@ coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
         }
         
         values_fitted = unlink.fun(link = link, value = values_fitted)
-
+        
         output[[i]] = c(output[[i]], values_fitted)
       }
       #end of if(i == 'fitted')
@@ -267,10 +273,10 @@ coef.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
     
     #end of for i in types
   }
-
+  
   names(output) = NULL
   output = do.call('c', output)
-
+  
   
   class(output) = "coef_acre_tmb"
   return(output)
@@ -384,7 +390,10 @@ vcov.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
   link_funs = link_funs[index_par]
   param_values = param_values[index_par]
   fixed_par = get_fixed_par_name(object)
-  
+  # Suppress "D" if conditional likelihood fitted 
+  if (object$CL) {
+    fixed_par <- setdiff(fixed_par, "D")
+  }
   
   output = vector('list', length(types))
   names(output) = types
@@ -425,7 +434,7 @@ vcov.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NUL
       if(show_fixed_par){
         output[[type]] = vcov_fixed_par_add(output[[type]], fixed_par, type)
       }
-
+      
     } else if(type == 'derived'){
       output[[type]] = cov_derived
     } else if(type == 'fitted'){
@@ -510,7 +519,7 @@ vcov.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
   #since the loop below depends on the order of pars, we need to re-order 'pars' to make its order
   #to be consistent with the default order of all parameters
   pars = fulllist.par.generator()[fulllist.par.generator() %in% pars]
-
+  
   #browser()
   if(any(c('linked', 'fitted') %in% types)){
     res = get_boot_res(object, pars)
@@ -519,8 +528,8 @@ vcov.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
   }
   
   #browser()
-
-
+  
+  
   output = vector('list', length(types))
   names(output) = types
   for(i in types){
@@ -549,10 +558,10 @@ vcov.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NU
   
   #when only one types, directly output it without a list structure
   if(length(types) == 1) output = output[[types]]
- 
+  
   return(output)
-
-    
+  
+  
 }
 
 
@@ -617,7 +626,7 @@ stdEr.acre_tmb = function(object, types = NULL, pars = NULL, new.covariates = NU
 #'
 #' @examples
 stdEr.acre_boot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
-
+  
   output_vcov = vcov.acre_boot(object = object, types = types, pars = pars, new.covariates = new.covariates,
                                from_boot = from_boot, show_fixed_par = show_fixed_par)
   
@@ -665,14 +674,14 @@ print.std_acre_tmb = function(x, ...){
 #' @return a matrix
 #' @export
 confint.acre_tmb = function(object, types = NULL, level = 0.95, pars = NULL, new.covariates = NULL, ...){
-
+  
   #browser()
   #############################################################################################
   #deal with default setting for 'types'
   tem = types_pars_sol(types, pars, new.covariates)
   types = tem$types
   pars = tem$pars
-
+  
   
   stopifnot(all(level < 1 & level > 0))
   p_upper = 0.5 + 0.5 * level
@@ -680,11 +689,11 @@ confint.acre_tmb = function(object, types = NULL, level = 0.95, pars = NULL, new
   col_name = paste(c(p_lower, p_upper) * 100, "%", sep = " ")
   q_upper = qnorm(p_upper)
   q_lower = qnorm(p_lower)
-
+  
   output = confint_gaussian_cal(object = object, types = types, pars = pars,
                                 new.covariates = new.covariates, q_lower = q_lower,
                                 q_upper = q_upper)
-
+  
   df_param = get_data_param(object)
   #browser()
   if('fitted' %in% types){
@@ -746,7 +755,7 @@ confint.acre_boot = function(object, types = NULL, level = 0.95, pars = NULL, ne
                              correct_bias = FALSE, from_boot = TRUE, ...){
   if(!from_boot){
     if(correct_bias) message(paste0("The argument 'correct_bias' will be ignored as the confidence",
-      " interval is not from bootstrap results."))
+                                    " interval is not from bootstrap results."))
     
     output = confint.acre_tmb(object = object, types = types, level = level, pars = pars,
                               new.covariates = new.covariates)
@@ -769,14 +778,14 @@ confint.acre_boot = function(object, types = NULL, level = 0.95, pars = NULL, ne
   
   #make sure pars are in the right order
   pars = fulllist.par.generator()[fulllist.par.generator() %in% pars]
-
+  
   
   #obtain the bootstrap result
   res = get_boot_res(object, pars)
   coef_link = coef.acre_tmb(object, types = 'linked', pars)
   
   res = res_mod_for_CI(res, coef_link, correct_bias)
-
+  
   
   #prepare for output
   output = vector('list', length(types))
@@ -799,7 +808,7 @@ confint.acre_boot = function(object, types = NULL, level = 0.95, pars = NULL, ne
   }
   
   output = do.call('rbind', output)
-
+  
   return(output)
 }
 
@@ -890,6 +899,10 @@ predict.acre_tmb = function(fit, type = 'response', newdata = NULL, se.fit = TRU
     if(any(!realnames %in% name_og)) stop("Argument 'realnames' only accept parameters' name in this model.")
   }
   
+  if (fit$CL) {
+    realnames = setdiff(realnames, "D")
+  }
+  
   #make sure pars are in the right order
   realnames = fulllist.par.generator()[fulllist.par.generator() %in% realnames]
   
@@ -918,7 +931,7 @@ predict.acre_tmb = function(fit, type = 'response', newdata = NULL, se.fit = TRU
     
     if(n_row != 0) {
       output[[i]] = data.frame(Estimate = numeric(n_row))
-
+      
       output[[i]]$Estimate = as.vector(coef(fit, types = type, new.covariates = newdata, pars = i))
       
       if(se.fit){
@@ -938,10 +951,10 @@ predict.acre_tmb = function(fit, type = 'response', newdata = NULL, se.fit = TRU
           output[[i]]$Upper = numeric(n_row)
           output[[i]][, c('Lower', 'Upper')] = confint(fit, types = type, level = level, new.covariates = newdata, pars = i)
         }
-
+        
       }
     }
-
+    
   }
   
   class(output) = 'predict_acre_tmb'
@@ -972,7 +985,7 @@ predict.acre_tmb = function(fit, type = 'response', newdata = NULL, se.fit = TRU
 #'
 #' @examples
 predict.acre_boot = function(fit, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
-                            level = 0.95, realnames = NULL, correct_bias = FALSE, from_boot = TRUE, ...){
+                             level = 0.95, realnames = NULL, correct_bias = FALSE, from_boot = TRUE, ...){
   if(!from_boot){
     if(correct_bias) message(paste0("The argument 'correct_bias' will be ignored as the confidence",
                                     " interval is not from bootstrap results."))
@@ -1025,7 +1038,7 @@ predict.acre_boot = function(fit, type = 'response', newdata = NULL, se.fit = TR
     
     if(n_row != 0){
       output[[i]] = data.frame(Estimate = numeric(n_row))
-
+      
       output[[i]]$Estimate = as.vector(coef(fit, types = type, new.covariates = newdata, pars = i, correct_bias = correct_bias))
       
       if(se.fit){
@@ -1037,7 +1050,7 @@ predict.acre_boot = function(fit, type = 'response', newdata = NULL, se.fit = TR
         }
         
       }
-
+      
       if(confidence){
         if(i %in% par_fixed_name){
           output[[i]]$Lower = output[[i]]$Estimate
@@ -1103,7 +1116,11 @@ summary.acre_tmb = function(object, derived_print = FALSE, ...){
   CI = confint(object, types = 'fitted')
   CI_derived = confint(object, types = 'derived')
   is_boot = is(object, 'acre_boot')
+  # Conditional likelihood adjustment to output (remove "D")
   CL = object$CL
+  if (object$CL) {
+    coefs <- coefs[!grepl("^D", names(coefs))]
+  }
   
   infotypes = get_infotypes(object)
   detfn = get_detfn(object)
@@ -1191,7 +1208,7 @@ print.summary_acre_tmb = function(x, ...){
   cat("Detection function:", detfn, "\n")
   cat("Number of sessions:", x$n.sessions, "\n")
   cat("Information types: ")
-
+  
   if(length(infotypes) != 0){
     cat(infotypes, sep = ", ")
   } else {
@@ -1202,11 +1219,11 @@ print.summary_acre_tmb = function(x, ...){
   cat("Confidence interval method:", CI_method, "\n")
   
   if (x$CL) {
-    cat("Likelihood mode: ", "Conditional", "\n")
+    cat("Likelihood mode:", "Conditional", "\n")
   }
   
   cat("\n", "\n", "Parameters:", "\n")
-
+  
   printCoefmat(mat, cs.ind = c(1, 3, 4), tst.ind = NULL)
   
   if(!is.null(pars_ext_links)){

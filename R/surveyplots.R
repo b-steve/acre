@@ -188,14 +188,17 @@ show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NUL
 #'
 #' @examples
 show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.cov = NULL, xlim = NULL, ylim = NULL,
-                        x.pixels = 50, y.pixels = 50, zlim = NULL, scale = 1, plot.contours = FALSE,
-                        add = FALSE, convert.loc2mask= NULL, arg.col = 100, trap.plot = NULL, ...){
+                       x.pixels = 50, y.pixels = 50, zlim = NULL, scale = 1, plot.contours = FALSE,
+                       add = FALSE, convert.loc2mask= NULL, arg.col = 100, trap.plot = NULL, ...){
+  if (isTRUE(fit$CL)) {
+    stop("Density surfaces are not available for conditional-likelihood fits.")
+  }
   
   pred = predict_D_for_plot(fit, session_select = ifelse(is.null(session), 1, session), 
                             new_data = new.data, D_cov = D.cov, xlim = xlim, ylim = ylim,
                             x_pixels = x.pixels, y_pixels = y.pixels, se_fit = show.cv,
                             convert.loc2mask= convert.loc2mask)
-
+  
   mask = as.matrix(pred[, c('x', 'y')])
   if(!show.cv){
     D.mask = pred[,'est']
@@ -210,12 +213,12 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
     ylim <- range(mask[, 'y'])
   }
   
-
+  
   unique.x <- sort(unique(mask[, 1]))
   unique.y <- sort(unique(mask[, 2]))
   z <- squarify(mask, D.mask)
   
-
+  
   if(!show.cv){
     z <- scale*z
   }
@@ -225,18 +228,18 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
   }
   z[z > zlim[2]] <- zlim[2]
   levels <- pretty(zlim, 10)
-
+  
   # pal <- colorRampPalette(c("lightblue", "orange"))
-
+  
   if (!add){
     fields::imagePlot(x = unique.x, y = unique.y, z = z, zlim = zlim, 
                       col = faded_virdis(arg.col, min_alpha = 1),
-                       asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y", legend.width = 2,
-                       main = "Density surface", legend.line = 4, legend.lab = expression("Density per ha"),
-                       legend.shrink = 1, legend.mar = 7)
+                      asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y", legend.width = 2,
+                      main = "Density surface", legend.line = 4, legend.lab = expression("Density per ha"),
+                      legend.shrink = 1, legend.mar = 7)
   } else {
     image(x = unique.x, y = unique.y, z = z, zlim = zlim, 
-                       col = faded_virdis(arg.col, min_alpha = 0.65), add = TRUE, legend.width = 2.5)
+          col = faded_virdis(arg.col, min_alpha = 0.65), add = TRUE, legend.width = 2.5)
   }
   
   if(!is.null(session)){
@@ -249,9 +252,9 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
   
   if (plot.contours){
     suppressWarnings(contour(x = unique.x, y = unique.y, z = z, levels = levels,
-            drawlabels = TRUE, add = TRUE, asp = 1))
+                             drawlabels = TRUE, add = TRUE, asp = 1))
   }
-
+  
   invisible(pred)
 }
 
@@ -328,7 +331,7 @@ plot.acre_data <- function(x, ...){
     if("ss" %in% c_names) is.ss = TRUE else is.ss = FALSE
     if("toa" %in% c_names) is.toa = TRUE else is.toa = FALSE
     if("animal_ID" %in% c_names) animal.model = TRUE else animal.model = FALSE
-
+    
     # When animal ID or call ID equals to zero, it means all detection
     if(any(!is.null(extra_args$animal_id), !is.null(extra_args$call_id)) & session == 0){
       session = 1
@@ -350,7 +353,7 @@ plot.acre_data <- function(x, ...){
     } else {
       c_id = extra_args$call_id
     } 
-
+    
     t_list = get_trap_from_data(x)
     m_list = get_mask_from_data(x)
     ##################################################################################
@@ -380,117 +383,117 @@ plot.acre_data <- function(x, ...){
       }
       
       if(length(keys) > 0){
-      
-      u_keys = unique(keys)
-      
-      # Because argument of x,ylim should work for each session, we cannot override "xlim" or "ylim",
-      # so we create 2 tem variables xlim_plot and ylim_plot for each session
-      if(is.null(xlim)){
-        xlim_plot = range(masks$x)
-      } else {
-        xlim_plot = xlim
-      }
-      
-      if(is.null(ylim)){
-        ylim_plot = range(masks$y)
-      } else {
-        ylim_plot = ylim
-      }
-      
-      # Plot calls one by one
-      for(k in u_keys){
-        i_k = which(keys == k)
-        one_call = capt_session[i_k,,drop = FALSE]
         
-        # Base plot (mask)
-        plot(NA, xlim = xlim_plot, ylim = ylim_plot, asp = 1, 
-             xlab = "x", ylab = "y")
+        u_keys = unique(keys)
         
-        # Add title
-        if(animal.model){
-          plot_title = paste0("session: ",s, ", animal ID: ", one_call$animal_ID[1],
-                              ", call ID: ", one_call$ID[1])
+        # Because argument of x,ylim should work for each session, we cannot override "xlim" or "ylim",
+        # so we create 2 tem variables xlim_plot and ylim_plot for each session
+        if(is.null(xlim)){
+          xlim_plot = range(masks$x)
         } else {
-          plot_title = paste0("session: ",s, ", call ID: ", one_call$ID[1])
+          xlim_plot = xlim
         }
         
-        title(main = plot_title)
+        if(is.null(ylim)){
+          ylim_plot = range(masks$y)
+        } else {
+          ylim_plot = ylim
+        }
         
-        # Add traps
-        points(x = traps[,1], y = traps[,2], cex = 1.2, col = "red", 
-               lwd = 1.5, pch = 4)
-        
-        # Circle active traps
-        activated_traps = traps[one_call$trap,]
-        points(x = activated_traps[,1], y = activated_traps[,2], 
-               cex = 2, col = "red", lwd = 1.5, pch = 1)
-        
-        if(is.bearing){
-          if(is.dist){
-            arrow_len = one_call$dist
+        # Plot calls one by one
+        for(k in u_keys){
+          i_k = which(keys == k)
+          one_call = capt_session[i_k,,drop = FALSE]
+          
+          # Base plot (mask)
+          plot(NA, xlim = xlim_plot, ylim = ylim_plot, asp = 1, 
+               xlab = "x", ylab = "y")
+          
+          # Add title
+          if(animal.model){
+            plot_title = paste0("session: ",s, ", animal ID: ", one_call$animal_ID[1],
+                                ", call ID: ", one_call$ID[1])
           } else {
-            if(is.null(extra_args$arrow_len)) arrow_len = 0.382 * buffer else arrow_len = extra_args$arrow_len
+            plot_title = paste0("session: ",s, ", call ID: ", one_call$ID[1])
           }
-          sinb <- sin(one_call$bearing)*arrow_len
-          cosb <- cos(one_call$bearing)*arrow_len
           
-          arrows.df <- data.frame(
-            x = activated_traps[, 1],
-            y = activated_traps[, 2],
-            xend = activated_traps[, 1] + sinb,
-            yend = activated_traps[, 2] + cosb
-          )
+          title(main = plot_title)
           
-          # Remove any NA bearing captures
-          arrows.df <- arrows.df[complete.cases(arrows.df), ]
+          # Add traps
+          points(x = traps[,1], y = traps[,2], cex = 1.2, col = "red", 
+                 lwd = 1.5, pch = 4)
           
-          arrows(arrows.df$x, arrows.df$y, arrows.df$xend, arrows.df$yend, col="red", lwd = 1.5, length = 0.07)
-          # plot_one_call = plot_one_call + 
-          #   geom_segment(data = activated_traps, mapping = aes(x = activated_traps$x, y = activated_traps$y,
-          #                                                    xend = activated_traps$x + sin(one_call$bearing) * arrow_len,
-          #                                                    yend = activated_traps$y + cos(one_call$bearing) * arrow_len),
-          #                arrow = arrow(length = unit(0.02, "npc")), colour = "blue")
+          # Circle active traps
+          activated_traps = traps[one_call$trap,]
+          points(x = activated_traps[,1], y = activated_traps[,2], 
+                 cex = 2, col = "red", lwd = 1.5, pch = 1)
           
-        } else if(is.dist){
-          if(is.null(extra_args$circle_acc)) npoints = 50 else npoints = extra_args$circle_acc
-          # Generate circle points
-          data_cir = circle_fun(centre = activated_traps, r = one_call$dist, npoints = npoints)
+          if(is.bearing){
+            if(is.dist){
+              arrow_len = one_call$dist
+            } else {
+              if(is.null(extra_args$arrow_len)) arrow_len = 0.382 * buffer else arrow_len = extra_args$arrow_len
+            }
+            sinb <- sin(one_call$bearing)*arrow_len
+            cosb <- cos(one_call$bearing)*arrow_len
+            
+            arrows.df <- data.frame(
+              x = activated_traps[, 1],
+              y = activated_traps[, 2],
+              xend = activated_traps[, 1] + sinb,
+              yend = activated_traps[, 2] + cosb
+            )
+            
+            # Remove any NA bearing captures
+            arrows.df <- arrows.df[complete.cases(arrows.df), ]
+            
+            arrows(arrows.df$x, arrows.df$y, arrows.df$xend, arrows.df$yend, col="red", lwd = 1.5, length = 0.07)
+            # plot_one_call = plot_one_call + 
+            #   geom_segment(data = activated_traps, mapping = aes(x = activated_traps$x, y = activated_traps$y,
+            #                                                    xend = activated_traps$x + sin(one_call$bearing) * arrow_len,
+            #                                                    yend = activated_traps$y + cos(one_call$bearing) * arrow_len),
+            #                arrow = arrow(length = unit(0.02, "npc")), colour = "blue")
+            
+          } else if(is.dist){
+            if(is.null(extra_args$circle_acc)) npoints = 50 else npoints = extra_args$circle_acc
+            # Generate circle points
+            data_cir = circle_fun(centre = activated_traps, r = one_call$dist, npoints = npoints)
+            
+            # Plot distance circle around each trap
+            for (i in unique(data_cir$cir_index)) {
+              cir <- subset(data_cir, cir_index == i)
+              polygon(cir$x, cir$y,
+                      border = "red",
+                      col = NA,
+                      lwd = 0.5,
+                      lty = "dashed")
+            }
+          } 
           
-          # Plot distance circle around each trap
-          for (i in unique(data_cir$cir_index)) {
-            cir <- subset(data_cir, cir_index == i)
-            polygon(cir$x, cir$y,
-                    border = "red",
-                    col = NA,
-                    lwd = 0.5,
-                    lty = "dashed")
+          if (is.toa) {
+            toa_order <- rank(one_call$toa, ties.method = "min")
+            # Annotate traps
+            text(activated_traps[, "x"] + 1, activated_traps[, "y"] - 1, labels = toa_order,
+                 col = "black", cex = 0.6, adj = c(0, 1))
           }
-        } 
-        
-        if (is.toa) {
-          toa_order <- rank(one_call$toa, ties.method = "min")
-          # Annotate traps
-          text(activated_traps[, "x"] + 1, activated_traps[, "y"] - 1, labels = toa_order,
-               col = "black", cex = 0.6, adj = c(0, 1))
+          
+          if (ask) {
+            # Make sure to only ask if we are plotting more than one plot, 
+            # and it is not the last plot in the list
+            if (length(u_keys) > 1 && !(k == u_keys[[length(u_keys)]] & s == session[length(session)])) {
+              prompt_user_for_next_plot()
+            }
+          }
         }
-        
-        if (ask) {
-          # Make sure to only ask if we are plotting more than one plot, 
-          # and it is not the last plot in the list
-          if (length(u_keys) > 1 && !(k == u_keys[[length(u_keys)]] & s == session[length(session)])) {
-            prompt_user_for_next_plot()
-          }
-        }
-      }
       }
       # End of session s 
     }
-  # End of type "capt"
+    # End of type "capt"
   }
   
-
+  
   ################################################################################################
-
+  
   if(type == 'covariates'){
     if(is.null(session)){
       session = 1
@@ -506,7 +509,7 @@ plot.acre_data <- function(x, ...){
     
     masks_mat = as.matrix(masks[, c('x', 'y'), drop = FALSE])
     D_cov_for_model = x$par.extend$data$mask
-
+    
     
     if(is.null(D_cov_for_model)){
       stop('There is no location related covariates, nothing to plot.')
@@ -523,12 +526,12 @@ plot.acre_data <- function(x, ...){
     D_cov_for_model = merge(D_cov_for_model, masks, by = 'mask', all = FALSE)
     D_cov_for_model = D_cov_for_model[order(D_cov_for_model$mask),]
     D_cov_for_model = D_cov_for_model[, -which(colnames(D_cov_for_model) == 'mask')]
-
+    
     cov_list = colnames(D_cov_for_model)
     cov_list = cov_list[-which(cov_list == 'x' | cov_list == 'y')]
-
+    
     if (!is.null(extra_args$cov_names)){
-        cov_list = cov_list[which(cov_list %in% extra_args$cov_names)]
+      cov_list = cov_list[which(cov_list %in% extra_args$cov_names)]
     }
     
     unique.x <- sort(unique(masks[, 'x']))
@@ -537,9 +540,9 @@ plot.acre_data <- function(x, ...){
     if(is.null(extra_args$arg.col)) arg.col = 100 else arg.col = extra_args$arg.col
     
     if(is.null(extra_args$plot.contours)){
-        plot.contours = FALSE
+      plot.contours = FALSE
     } else {
-        plot.contours = extra_args$plot.contours
+      plot.contours = extra_args$plot.contours
     }
     
     for(i in cov_list){
@@ -549,9 +552,9 @@ plot.acre_data <- function(x, ...){
         zlim <- range(z, na.rm = TRUE)
         
         fields::imagePlot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = faded_virdis(arg.col, min_alpha = 1),
-                           asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y",
-                           main = paste0("Plot of covariate ", i, ", for session ", session),
-                           legend.width = 2, legend.shrink = 1, legend.mar = 7)
+                          asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y",
+                          main = paste0("Plot of covariate ", i, ", for session ", session),
+                          legend.width = 2, legend.shrink = 1, legend.mar = 7)
         
         if(plot.contours){
           levels <- pretty(zlim, 10)
@@ -591,7 +594,7 @@ plot.acre_data <- function(x, ...){
     #end of type == 'covariates'
   }
   
-    
+  
 }
 
 
@@ -624,7 +627,7 @@ plot.acre_tmb = function(x, ...){
     args_pass = list(fit = x, ...)
     args_pass$type = NULL
     do.call('show.Dsurf', args_pass)
-
+    
   } else if(type == 'locations'){
     args_pass = list(fit = x, ...)
     args_pass$type = NULL
@@ -661,7 +664,7 @@ plot_dev <- function(fit, session = 1,
        ylim = range(mask[,1]),
        xlab = "x", ylab = "y",
        ...
-       )
+  )
   grid(col = "grey85", lty = 1, lwd = 0.7)
   
   if (!is.null(traps)) {
@@ -795,7 +798,7 @@ plot_toa_order <- function(fit, call_id, animal_id=NULL, session=1) {
   # Figure out the order of arrival
   traps <- get_trap(fit)[[session]][capt$trap, ,drop = FALSE]
   toa_order <- rank(toa, ties.method = "min")
-
+  
   # Annotate traps
   text(traps[, 1] + 1, traps[, 2] - 1, labels = toa_order,
        col = "black", cex = 0.6, adj = c(0, 1))

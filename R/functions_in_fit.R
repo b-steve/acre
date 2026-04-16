@@ -855,7 +855,7 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
       stop("Component 'ss.link' in 'ss.opts' must be \"identity\", \"log\", or \"spherical\".")
     }
     
-
+    
     
     data.ss = subset(data.full, !is.na(data.full$ID))
     data.no.det.session = subset(data.full, is.na(data.full$ID))
@@ -886,7 +886,7 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
       new.n.animals = agg_sort(data.ss, 'animal_ID', 'session', function(x) length(unique(x)))
       new.n.IDs = agg_sort(data.ss, c('animal_ID', 'ID'), 'session', function(x) length(unique(x)))
       new.n.animal.call = agg_sort(data.ss, 'ID', c('session', 'animal_ID'), function(x) length(unique(x)))
-
+      
       dims$n.animals[new.n.animals$session] = new.n.animals$x
       dims$n.animal.call = new.n.animal.call$x
     } else {
@@ -941,7 +941,7 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
                      "'sv' or 'fix' will be ignored"))
     }
   }
-
+  
   return(list(data.full = data.full, dims = dims, data.ID_mask = data.ID_mask,
               ss.opts = ss.opts, bucket_info = bucket_info))
 }
@@ -964,7 +964,7 @@ CR_SL = function(cue.rates, survey.length, bucket_info, dims){
     } else {
       survey.length <- rep(survey.length, n.sessions)
     }
-
+    
   }
   
   if (!is.null(cue.rates)){
@@ -1027,7 +1027,7 @@ param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn
         warning('signal strenth is provided, therefore the specified "detfn" is ignored')
       }
       detfn = 'ss'
-
+      
       
     } else {
       if(detfn == 'ss'){
@@ -1044,7 +1044,7 @@ param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn
   
   #then, decide the original names of the parameters will be input into TMB
   param.og = detfn.params(detfn)
-
+  
   
   if('bearing' %in% bucket_info){
     param.og = c(param.og, 'kappa')
@@ -1275,10 +1275,10 @@ param.detfn.fun = function(animal.model, sv, fix, bounds, name.extend.par, detfn
     bounds.input[[i]][1, 1] = link.fun(link = link, value = bounds[[i]][1])
     bounds.input[[i]][2, 1] = link.fun(link = link, value = bounds[[i]][2])
   }
-
   
   
-
+  
+  
   
   
   return(list(design.matrices.full = design.matrices.full,
@@ -1331,7 +1331,8 @@ gr_free_o_restore = function(fn, opt, H, parameters, param.og.4cpp, n.sessions){
 
 outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas, detfn, param.og, param.og.4cpp, o, tmb_output_og, opt,
                   name.fixed.par, name.extend.par, dims, DX.full, DX.mask, fix.input, bucket_info, cue.rates, mean.cue.rates, A,
-                  survey.length, sound.speed, par.extend, arg.input, fgam, gam_output, lst_mean_std, is.scale, ss.link, cutoff){
+                  survey.length, sound.speed, par.extend, arg.input, fgam, gam_output, lst_mean_std, is.scale, ss.link, cutoff,
+                  CL, esa_partial_derivatives){
   ###################################################################################################################
   #sort out output for the function
   out = vector('list', 36)
@@ -1444,7 +1445,7 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
         coef_link_tmb[[i]] = fix.input[[i]]
         names(coef_link_tmb[[i]]) = name_output_tmb[[i]]
       }
-    } else {
+    } else if (i == 'esa') {
       name_output[[i]] = paste('esa', 1:dims$n.sessions, sep = ".")
       out_coef[[i]] = o_value[[i]]
       names(out_coef[[i]]) = name_output[[i]]
@@ -1568,7 +1569,7 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
         se_tmb[[i]] = NA
         names(se_tmb[[i]]) = name_output_tmb[[i]]
       }
-    } else {
+    } else if(i == 'esa') {
       out_se[[i]] = o_sd[[i]]
       names(out_se[[i]]) = name_output[[i]]
     }
@@ -1854,6 +1855,10 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
   }
   out$all.covariates = as.data.frame(out$all.covariates)
   
+  ###########################################################################################################
+  # The 35th/36th component: Conditional likelihood and partial derivatives
+  out$CL = CL
+  out$esa_partial_derivatives = esa_partial_derivatives
   
   ############################################################################################################
   return(out)

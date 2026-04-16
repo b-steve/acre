@@ -1,5 +1,8 @@
 get_D_tmb = function(fit){
-
+  if (isTRUE(fit$CL)) {
+    stop("Density estimates are not available for conditional-likelihood fits.")
+  }
+  
   #estimated population density for each mask is recorded in fit$D.mask
   #extract the values from it and make it into a usable format data frame
   #with session and mask indices
@@ -163,7 +166,7 @@ get_par_extend_covariate = function(fit){
   ext_name = get_par_extend_name(fit)
   #if there is no parameter be extended, just return NULL
   if(is.null(ext_name)) return(ext_name)
-
+  
   output = get_par_extend(fit)[['model']]
   for(i in names(output)){
     output[[i]] = all.vars(output[[i]])
@@ -280,7 +283,7 @@ get_gam = function(fit, param = NULL, which.level = NULL){
       }
     }
   }
-
+  
   return(output)
 }
 
@@ -293,7 +296,7 @@ get_DX_new_gam = function(mod, newdata){
     if(is(mod$var.summary[[i]], 'factor')) newdata[[i]] = as.character(newdata[[i]])
     if(is(mod$var.summary[[i]], 'numeric')) newdata[[i]] = as.numeric(newdata[[i]])
   }
-
+  
   #construct the "old data", make sure it has all levels for all categorical variables
   olddata = vector('list', length(var_names))
   names(olddata) = var_names
@@ -313,15 +316,15 @@ get_DX_new_gam = function(mod, newdata){
                   ', please check the relevant data.'))
     }
   }
-
+  
   #adjust the length, make sure all element in this list have the same length
   len = max(sapply(olddata, 'length'))
-
+  
   for(i in var_names) olddata[[i]] = rep(olddata[[i]], length = len)
-
-
+  
+  
   olddata = as.data.frame(olddata)
-
+  
   dat = rbind(olddata, newdata)
   dat$gam.resp = 1
   output = mgcv::gam(mod$formula, data = dat, fit = FALSE)$X
@@ -337,7 +340,7 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
   } else {
     DX_full_new = matrix(1, ncol = 1, nrow = nrow(new.covariates))
   }
-
+  
   if(n_col_mask > 0){
     gam.model = gam$gam_mask
     DX_mask_new = get_DX_new_gam(gam.model, new.covariates)
@@ -346,14 +349,14 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
   } else {
     DX_mask_new = NULL
   }
-
+  
   DX_new = cbind(DX_full_new, DX_mask_new)
   if(!matrix_par_value){
     output = as.vector(DX_new %*% as.matrix(par_value_linked, ncol = 1))
   } else {
     output = par_value_linked %*% t(DX_new)
   }
-
+  
   if(DX_output){
     return(list(output = output, DX = DX_new))
   } else {
@@ -412,12 +415,12 @@ get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
     if (!all(all_covariates %in% names(newdata))) {
       if (warn) {
         warning(paste("Missing covariate in 'newdata' argument:", 
-                   all_covariates[-which(all_covariates %in% names(newdata))]),
+                      all_covariates[-which(all_covariates %in% names(newdata))]),
                 "\nCovariate values from model fitting will be used")
       }
     }
   }
-
+  
   ext_par_data <- get_par_extend_data(fit)
   n_mask_ext <- nrow(mask)
   n_trap_ext <- nrow(traps)
@@ -513,14 +516,14 @@ get_default_covariates = function(fit){
   dat_name = names(dat)
   o = vector('list', length(dat_name))
   names(o) = dat_name
-
+  
   for(i in dat_name){
     tem = dat[[i]]
     tem = tem[, which(!colnames(tem) %in% c('session','ID','trap','mask')), drop = FALSE]
     tem = as.data.frame(apply(tem, 2, mean_diy, simplify = FALSE))
     o[[i]] = tem
   }
-
+  
   output = o[[dat_name[1]]]
   if(length(dat_name) > 1){
     for(i in 2:length(dat_name)) output = cbind(output, o[[dat_name[i]]])
@@ -544,10 +547,10 @@ get_sv_for_boot = function(fit){
   } else {
     output = as.list(coef(fit, 'fitted'))
   }
-
+  
   df_parm = get_data_param(fit)
   fixed_par = names(fit$args$fix)
-
+  
   #avoid extreme start values if it is not fixed
   for(i in names(output)){
     if(!i %in% fixed_par){
@@ -556,7 +559,7 @@ get_sv_for_boot = function(fit){
       if(link == 'log') output[[i]] = max(0.05, output[[i]])
     }
   }
-
+  
   return(output)
 }
 
@@ -572,10 +575,10 @@ get_capt_for_boot = function(captures, dims, infotypes, animal.model){
   #convert ID and animal_ID to natural number to make the later process to build head data easier
   captures = convert_natural_number(captures, animal.model)
   captures$bincapt = 1
-
+  
   #prepare a head data which contains all combinations of session-animal_ID[animal.model]-ID-trap
-
-
+  
+  
   tem_data_head = vector('list', n.sessions)
   for(s in 1:n.sessions){
     capt_session = subset(captures, captures$session == s)
@@ -588,42 +591,42 @@ get_capt_for_boot = function(captures, dims, infotypes, animal.model){
           tem[[a]] = data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]),
                                 trap = rep(seq(n.traps[s]), n.ID), animal_ID = a)
         }
-
+        
         tem_data_head[[s]] = do.call('rbind', tem)
-
+        
       } else {
         n.ID = max(capt_session$ID)
         tem_data_head[[s]] = data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]),
                                         trap = rep(seq(n.traps[s]), n.ID))
-
+        
       }
-
+      
     } else {
       tem_data_head[[s]] = data.frame(session = s, ID = NA, trap = 1:n.traps[s])
       if(animal.model) tem_data_head[[s]]$animal_ID = NA
     }
-
+    
   }
-
+  
   data_head = do.call('rbind', tem_data_head)
-
+  
   if(animal.model){
     o = merge(data_head, captures, by = c('session', 'ID', 'trap', 'animal_ID'), all.x = TRUE)
   } else {
     o = merge(data_head, captures, by = c('session', 'ID', 'trap'), all.x = TRUE)
   }
-
+  
   o = sort.data(o, 'data.full')
   for(i in c('bincapt', infotypes)) o[,i] = ifelse(is.na(o[,i]) & !is.na(o[,'ID']), 0, o[,i])
-
+  
   if(!animal.model){
     n.IDs = numeric(n.sessions)
     for(s in 1:n.sessions){
       tem = subset(captures, captures$session == s)
       if(nrow(tem) > 0) n.IDs[s] = max(tem$ID)
     }
-
-
+    
+    
     #prepare the structure of the output
     if(n.sessions == 1){
       output = vector('list', length(infotypes) + 1)
@@ -651,24 +654,24 @@ get_capt_for_boot = function(captures, dims, infotypes, animal.model){
   } else {
     output = o
   }
-
-
+  
+  
   return(output)
-
+  
 }
 
 #obtain capture history from the acre_data object
 get_capt_for_plot = function(dat){
   all.types <- c("bearing", "dist", "ss", "toa")
-
+  
   capt = dat$capt
-
+  
   #according to current data conversion function, if capt is a data frame, it means
   #the data is individual identification embedded data, or "animal_ID" is included.
   if(is(capt, 'data.frame')){
     #firstly convert animal_ID and ID to natural successive numbers
     data.capt = convert_natural_number(capt, TRUE, "both")
-
+    
   } else {
     if("bincapt" %in% names(capt)){
       n.sessions = 1
@@ -683,7 +686,7 @@ get_capt_for_plot = function(dat){
       extra_info <- all.types[all.types %in% names(capt[[1]])]
       is.mrds = "mrds" %in% names(capt[[1]])
     }
-
+    
     tem.data.capt = vector('list', n.sessions)
     for(i in 1:n.sessions){
       if(n.sessions == 1){
@@ -691,35 +694,35 @@ get_capt_for_plot = function(dat){
       } else {
         tem = capt[[i]]
       }
-
+      
       number.row = n.IDs[i] * n.traps[i]
       tem.df = data.frame(session = rep(i, number.row), ID = numeric(number.row))
       for(j in c("trap", "bincapt", extra_info)) tem.df[[j]] = numeric(number.row)
       if(is.mrds) tem.df[,c('mrds_x', 'mrds_y')] = 0
-
+      
       if(number.row > 0){
         tem.df$ID = rep(1:nrow(tem$bincapt), n.traps[i])
         tem.df$trap = rep(1:n.traps[i], each = n.IDs[i])
         for(k in c('bincapt', extra_info)) tem.df[[k]] = as.vector(tem[[k]])
-
+        
         if(is.mrds){
           tem$mrds = as.data.frame(tem$mrds, stringsAsFactors = FALSE)
           colnames(tem$mrds) = c('mrds_x', 'mrds_y')
           tem$mrds$ID = 1:nrow(tem$mrds)
           tem.df = merge(tem.df, tem$mrds, by = "ID")
         }
-
+        
       }
       tem.data.capt[[i]] = tem.df
     }
     data.capt = do.call("rbind", tem.data.capt)
     data.capt = convert_natural_number(data.capt, FALSE, "ID")
   }
-
+  
   data.capt = sort.data(data.capt, "data.full")
   data.capt = subset(data.capt, data.capt$bincapt == 1)
   data.capt = data.capt[, -which(colnames(data.capt) == 'bincapt')]
-
+  
   return(data.capt)
 }
 
@@ -730,7 +733,7 @@ get_boot_res = function(fit, pars){
     name_og = ori_name(colnames(output))
     output = output[, which(name_og %in% pars), drop = FALSE]
   }
-
+  
   return(output)
 }
 
@@ -738,7 +741,7 @@ get_boot_res = function(fit, pars){
 get_boot_res_esa = function(fit){
   output = fit$boot$res_esa
   colnames(output) = gsub("_", "\\.", colnames(output))
-
+  
   return(output)
 }
 
@@ -747,7 +750,7 @@ get_boot_res_esa = function(fit){
 get_bias <- function(res, coefs){
   f = function(x) mean(x, na.rm = T)
   bias = apply(res, 2, f) - coefs
-
+  
   return(bias)
 }
 
@@ -789,20 +792,20 @@ get_coef_names <- function(pars, pars_extended, data.full, data.mask) {
 #currently is not used
 get_coef_base_type = function(coefs, type){
   coef_name = names(coefs)
-
+  
   if(type == 'linked'){
     output = coefs[grepl('_link$', coef_name)]
   } else if(type == 'fitted'){
     is.link = grepl('_link$', coef_name)
     is.derived = grepl('^esa', coef_name)
     output = coefs[!(is.link | is.derived)]
-
+    
   } else {
     output = coefs[grepl('^esa', coef_name)]
   }
-
+  
   return(output)
-
+  
 }
 
 

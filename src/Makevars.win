@@ -1,0 +1,2 @@
+PKG_CXXFLAGS += -Wa,-mbig-obj
+PKG_CFLAGS += -Wa,-mbig-obj
