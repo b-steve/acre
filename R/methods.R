@@ -871,7 +871,7 @@ predict.acre = function(object, type = 'response', newdata = NULL, se.fit = TRUE
         } else {
           output[[i]]$Lower = numeric(n_row)
           output[[i]]$Upper = numeric(n_row)
-          output[[i]][, c('Lower', 'Upper')] = confint(fit, types = type, level = level, new.covariates = newdata, pars = i)
+          output[[i]][, c('Lower', 'Upper')] = confint(fit, parm = i, types = type, level = level, new.covariates = newdata)
         }
 
       }
@@ -977,7 +977,7 @@ predict.acreboot = function(object, type = 'response', newdata = NULL, se.fit = 
         } else {
           output[[i]]$Lower = numeric(n_row)
           output[[i]]$Upper = numeric(n_row)
-          output[[i]][, c('Lower', 'Upper')] = confint(fit, types = type, new.covariates = newdata, pars = i, correct_bias = correct_bias,
+          output[[i]][, c('Lower', 'Upper')] = confint(fit, parm = i, types = type, new.covariates = newdata, correct_bias = correct_bias,
                                                        from_boot = from_boot)
         }
       }
