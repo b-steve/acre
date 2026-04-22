@@ -369,11 +369,12 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
 #' (b) The covariate values provided in newdata
 #' 
 #' Each row corresponds to a trap, and each column a mask point.
-#' EXAMPLE: let a model have have `sigma` mask-level extended by brand 
-#' (2 traps, 1 "sony" and 1 "panasonic"), and also be mask level extended, say 
-#' with covariate "noise". Then element [1, 1] of the returned `sigma` element,
-#' corresponds to the coefficient of `sigma` with "sony" brand, and noise at
-#' mask point 1. [2, 1] to that of "panasonic" brand, and noise at mask point 1.
+#' EXAMPLE: let a model have `sigma` mask-level extended by brand (2
+#' traps, 1 "sony" and 1 "panasonic"), and also be mask level
+#' extended, say with covariate "noise". Then element `[1, 1]` of the
+#' returned `sigma` element, corresponds to the coefficient of `sigma`
+#' with "sony" brand, and noise at mask point 1. `[2, 1]` to that of
+#' "panasonic" brand, and noise at mask point 1.
 #' 
 #' Note that because the parameter estimates are calculated for the entire mask,
 #' over every trap, newdata argument will be recycled (or truncated), to the 

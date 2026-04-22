@@ -574,7 +574,7 @@ stdEr.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 #' @param new.covariates a data frame, the same as "coef.acre()".
 #' @param from_boot a logical value, the same as "vcov.acreboot()".
 #' @param show_fixed_par a logical value, the same as "vcov.acre()".
-#' @param ...
+#' @param ... 
 #' @export
 stdEr.acreboot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
 
@@ -681,7 +681,7 @@ confint.acre = function(object, parm = NULL, level = 0.95, types = NULL, new.cov
 #' @param from_boot a logical value indicates whether to use the bootstrap results to construct 
 #'                  the confidence matrix. Default is TRUE; if FALSE, "confint.acre()" will
 #'                  be called.
-#' @param ...
+#' @param ... 
 #' @export
 confint.acreboot = function(object, parm = NULL, level = 0.95, types = NULL, new.covariates = NULL,
                              correct_bias = FALSE, from_boot = TRUE, ...){
@@ -1009,7 +1009,7 @@ print.predict_acre = function(x, ...){
 #' @param object an object generated from the model fitting function "fit.acre()" or
 #'               the bootstrap process "boot.acre()".
 #' @param derived_print a logical value indicates whether to show the estimations of "esa".
-#' @param ...
+#' @param ... 
 #' @export
 summary.acre = function(object, derived_print = FALSE, ...){
   coefs = coef(object, types = 'fitted')

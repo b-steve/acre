@@ -2,7 +2,7 @@
 #'
 #' Simulates SCR capture histories and associated additional
 #' information in the correct format for use with the function
-#' [fit.ascr]. If `fit` is provided then no other arguments
+#' [fit.acre]. If `fit` is provided then no other arguments
 #' are required. Otherwise, at least `traps`, `mask`, and
 #' `pars` are needed.
 #'

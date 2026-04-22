@@ -124,10 +124,10 @@
 #' @export
 #'
 read.acre = function(captures, traps, mask = NULL,
-                    control.mask = list(), control.capt = list(), loc.cov = NULL, time.loc.cov = NULL,
-                    convert.loc2mask = list(), session.cov = NULL, trap.cov = NULL, dist.cov = NULL,
-                    cue.rates = NULL, survey.length = NULL, sound.speed = 331, convert.dist.unit = 1,
-                    convert.time.unit = 1, ...){
+                     control.mask = list(), loc.cov = NULL, time.loc.cov = NULL,
+                     convert.loc2mask = list(), session.cov = NULL, trap.cov = NULL, dist.cov = NULL,
+                     cue.rates = NULL, survey.length = NULL, sound.speed = 331, convert.dist.unit = 1,
+                     convert.time.unit = 1, ...){
   #keep all original input arguments
   arg.names <- names(as.list(environment()))
   arg.input <- vector('list', length(arg.names))

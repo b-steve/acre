@@ -12,7 +12,7 @@
 #' @param ylab a string as the sub-title of y-axis.
 #' @param col a string or a numeric vector indicates the color of the plotted line.
 #' @param add a logical value indicates whether to add the lines into the existing plot.
-#' @param ...
+#' @param ... otlp
 #' @keywords internal
 show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NULL, ylim = NULL,
                        main = NULL, xlab = NULL, ylab = NULL, col = NULL, add = FALSE, ...){
@@ -251,7 +251,7 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
 
 #' Plotting acre data
 #'
-#' @param x
+#' @param x 
 #' @param ... 
 #'
 #' @return
