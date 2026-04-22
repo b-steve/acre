@@ -37,6 +37,8 @@ bootstrap results are used as the confidence interval.}
 \item{from_boot}{a logical value indicates whether to use the bootstrap results to construct
 the confidence matrix. Default is TRUE; if FALSE, "confint.acre()" will
 be called.}
+
+\item{...}{}
 }
 \description{
 Title

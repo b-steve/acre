@@ -26,6 +26,8 @@
 \item{from_boot}{a logical value, the same as "vcov.acreboot()".}
 
 \item{show_fixed_par}{a logical value, the same as "vcov.acre()".}
+
+\item{...}{}
 }
 \description{
 Title

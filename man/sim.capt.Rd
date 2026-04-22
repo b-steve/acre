@@ -121,7 +121,7 @@ second. Defaults to 330, approximate speed of sound in air.}
 \description{
 Simulates SCR capture histories and associated additional
 information in the correct format for use with the function
-\link{fit.ascr}. If \code{fit} is provided then no other arguments
+\link{fit.acre}. If \code{fit} is provided then no other arguments
 are required. Otherwise, at least \code{traps}, \code{mask}, and
 \code{pars} are needed.
 }

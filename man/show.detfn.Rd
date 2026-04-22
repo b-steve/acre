@@ -40,6 +40,8 @@ use its intercept as the value for this parameter}
 \item{col}{a string or a numeric vector indicates the color of the plotted line.}
 
 \item{add}{a logical value indicates whether to add the lines into the existing plot.}
+
+\item{...}{otlp}
 }
 \description{
 Plot the detection function

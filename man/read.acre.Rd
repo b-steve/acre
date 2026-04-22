@@ -9,7 +9,6 @@ read.acre(
   traps,
   mask = NULL,
   control.mask = list(),
-  control.capt = list(),
   loc.cov = NULL,
   time.loc.cov = NULL,
   convert.loc2mask = list(),

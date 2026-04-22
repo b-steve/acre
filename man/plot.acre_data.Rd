@@ -7,6 +7,8 @@
 \method{plot}{acre_data}(x, ...)
 }
 \arguments{
+\item{x}{}
+
 \item{...}{}
 }
 \description{

@@ -36,11 +36,12 @@ values correspond to estimated parameter value for either
 }
 \details{
 Each row corresponds to a trap, and each column a mask point.
-EXAMPLE: let a model have have \code{sigma} mask-level extended by brand
-(2 traps, 1 "sony" and 1 "panasonic"), and also be mask level extended, say
-with covariate "noise". Then element \link{1, 1} of the returned \code{sigma} element,
-corresponds to the coefficient of \code{sigma} with "sony" brand, and noise at
-mask point 1. \link{2, 1} to that of "panasonic" brand, and noise at mask point 1.
+EXAMPLE: let a model have \code{sigma} mask-level extended by brand (2
+traps, 1 "sony" and 1 "panasonic"), and also be mask level
+extended, say with covariate "noise". Then element \verb{[1, 1]} of the
+returned \code{sigma} element, corresponds to the coefficient of \code{sigma}
+with "sony" brand, and noise at mask point 1. \verb{[2, 1]} to that of
+"panasonic" brand, and noise at mask point 1.
 
 Note that because the parameter estimates are calculated for the entire mask,
 over every trap, newdata argument will be recycled (or truncated), to the
