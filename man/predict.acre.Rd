@@ -33,8 +33,6 @@ will not be shown.}
 \item{level}{a numeric value indicates the confident level, default is 0.95.}
 
 \item{realnames}{a character vector containing any parameter names.}
-
-\item{...}{}
 }
 \description{
 Title

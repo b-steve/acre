@@ -23,8 +23,6 @@
 \item{new.covariates}{a data frame, the same as "coef.acre()".}
 
 \item{show_fixed_par}{a logical value, the same as "vcov.acre()".}
-
-\item{...}{}
 }
 \value{
 a named numeric vector

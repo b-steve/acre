@@ -22,6 +22,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Ben Stevenson \email{ben.stevenson@auckland.ac.nz}
   \item Joseph Reps \email{jrep150@aucklanduni.ac.nz}
   \item Lingyu Hao \email{lhao446@aucklanduni.ac.nz}
 }

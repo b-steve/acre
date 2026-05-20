@@ -27,8 +27,6 @@
 from the bootstrap results. If FALSE, the method "vcov.acre()" will be called.}
 
 \item{show_fixed_par}{a logical value, the same as "vcov.acre()".}
-
-\item{...}{}
 }
 \description{
 Title

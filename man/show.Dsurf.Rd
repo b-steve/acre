@@ -45,15 +45,9 @@ providing the x- and y-coordinates of the new mask
 points. Additional columns must provide the covariates used to
 fit the model.}
 
-\item{D.cov}{}
-
 \item{xlim}{a numeric vector with two elements as the range of x-axis.}
 
 \item{ylim}{a numeric vector with two elements as the range of y-axis.}
-
-\item{x.pixels}{}
-
-\item{y.pixels}{}
 
 \item{zlim}{A numeric vector of length 2, giving the range of the density contours}
 
@@ -67,15 +61,13 @@ results in densities plotted as animals per square kilometre.}
 \item{add}{a logical value indicates whether to add the lines into the existing plot}
 
 \item{convert.loc2mask}{A list to control the spatial interpolation
-method used to compute covariate values for mask locations
-based on data provided in \code{loc.cov} and \code{time.loc.cov}. See
-\code{Details}.}
+method used to compute covariate values for mask locations based
+on data provided in \code{loc.cov} and \code{time.loc.cov}. See the section
+on spatial covariates below.}
 
 \item{arg.col}{A numeric value, indicating the number of levels to stretch the color over}
 
-\item{trap.plot}{}
-
-\item{...}{}
+\item{...}{otlp}
 }
 \description{
 Plots density surface estimated by a model fitted with the function \link{fit.acre}

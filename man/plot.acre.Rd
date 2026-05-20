@@ -6,11 +6,6 @@
 \usage{
 \method{plot}{acre}(x, ...)
 }
-\arguments{
-\item{x}{}
-
-\item{...}{}
-}
 \description{
 Plotting acre model objects
 }

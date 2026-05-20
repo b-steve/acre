@@ -38,8 +38,6 @@ functions "coef.acreboot()" and "confint.acreboot()".}
 
 \item{from_boot}{a logical value indicates whether to extract standard error and confidence interval
 from the bootstrap results.}
-
-\item{...}{}
 }
 \description{
 Title

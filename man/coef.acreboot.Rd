@@ -25,8 +25,6 @@
 \item{correct_bias}{logical. if TRUE, apply a bias correction method to the bootstrap results; otherwise,
 return the original estimation directly. The bias correct method is
 hat(coef) - (mean(boot_results) - hat(coef)).}
-
-\item{...}{}
 }
 \description{
 Title

@@ -24,8 +24,6 @@
 
 \item{show_fixed_par}{a logical value. To control whether to include the fixed parameters in the covariance matrix.
 It is TRUE by default.}
-
-\item{...}{}
 }
 \value{
 a list with matrices as its elements if multiple 'types'. a matrix if only one 'types'.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_acre.R
 \name{read.acre}
 \alias{read.acre}
-\title{Combining all data for model fitting}
+\title{Combining all data for plotting and model fitting}
 \usage{
 read.acre(
   captures,
@@ -17,10 +17,7 @@ read.acre(
   dist.cov = NULL,
   cue.rates = NULL,
   survey.length = NULL,
-  sound.speed = 331,
-  convert.dist.unit = 1,
-  convert.time.unit = 1,
-  ...
+  sound.speed = 330
 )
 }
 \arguments{
@@ -29,25 +26,28 @@ are available below.}
 
 \item{traps}{A matrix or a data frame with two columns, or a list
 of such matrices or data frames for a multi-session model. Each
-row provides the x- and y-coordinates of a detector location,
-in metres. For multi-session models, each component of the list
+row provides the x- and y-coordinates of a detector location, in
+metres. For multi-session models, each component of the list
 provides detector locations for one session.}
 
-\item{mask}{Optional. A mask object. If \code{NULL}, a mask object will
-be created automatically based on the \code{traps} and
-\code{control.mask} arguments.}
+\item{mask}{Optional. A mask object, for example created using
+\code{\link[=create.mask]{create.mask()}}. If \code{NULL}, a mask object will be created
+automatically based on the \code{traps} and \code{control.mask} arguments.}
 
-\item{control.mask}{A list specifying additional arguments for
-\code{\link[=create.capt]{create.capt()}}, other than \code{traps} that are used to create a
-mask object.}
+\item{control.mask}{A list specifying arguments for
+\code{\link[=create.mask]{create.mask()}}, other than \code{traps}, that are used to create a
+mask object. The \code{buffer} should be provided, and, optionally,
+the \code{spacing}.}
 
-\item{loc.cov}{A data frame or a list of data frames containing
-spatial covariates. Data frames must contain columns \code{x} and
-\code{y} for x- and y-coordinates, and additional columns for
+\item{loc.cov}{A data frame, or a list of data frames, containing
+spatial covariates. Data frames must contain columns \code{x} and \code{y}
+for x- and y-coordinates, in metres, and additional columns for
 spatial covariates measured at these locations. Missing \code{NA}
-values are allowed.}
+values are allowed. Spatial interpolation is performed to produce
+covariate values at the mask point locations; see the section on
+spatial covariates below.}
 
-\item{time.loc.cov}{A list or list of data frames containing
+\item{time.loc.cov}{A list, or list of data frames, containing
 spatial covariates that change over time. The data frames must
 contain columns \code{x}, \code{y} and \code{time}, and additional columns for
 the spatiotemporal covariates.  When these spatiotemporal
@@ -55,99 +55,175 @@ covariates are provided, the column \code{time} must also appear in
 \code{session.cov}.}
 
 \item{convert.loc2mask}{A list to control the spatial interpolation
-method used to compute covariate values for mask locations
-based on data provided in \code{loc.cov} and \code{time.loc.cov}. See
-\code{Details}.}
+method used to compute covariate values for mask locations based
+on data provided in \code{loc.cov} and \code{time.loc.cov}. See the section
+on spatial covariates below.}
 
 \item{session.cov}{A data frame containing session covariates. It
-must contain a column \code{session} and additional columns for the
+must contain a column \code{session}, and additional columns for the
 session-level covariates.  If spatiotemporal covariates are
 included using \code{time.loc.cov}, then a column \code{time} must be
 included, indicating when the session took place.}
 
 \item{trap.cov}{A data frame containing trap covariates. It must
-contain a column \code{trap} and additional columns for the
-trap-level covariates. The column \code{session} must be included
-for multisession data.}
+contain a column \code{trap} and additional columns for the trap-level
+covariates. The column \code{session} must be included for
+multisession data.}
 
 \item{dist.cov}{A list containing locations of features from which
 distances are calculated, and can be used as spatial
-covariates. Each component must be named after a feature, with
-a data frame containing columns \code{x} and \code{y}, recording the the
+covariates. Each component must be named after a feature, with a
+data frame containing columns \code{x} and \code{y}, recording the the
 location of a feature.}
 
 \item{cue.rates}{A numeric vector containing the recorded cue rates
-in a series of time periods with identical length. A vector of
-call rates collected independently of the main acoustic
-survey. This must be measured in calls per unit time, where the
-time units are equivalent to those used by
-\code{survey.length}. For example, if the survey was 30 minutes
-long, the cue rates must be provided in cues per minute if
-\code{survey.length = 30}, but in cues per hour if
-\code{survey.length = 0.5}.}
+of individuals, collected separately to the SCR survey. See the
+section on cue rate data, below.}
 
 \item{survey.length}{A numeric vector or a scalar, containing the
-length of each session. If it is a scalar and there are
-multiple sessions, the value will be assigned to all sessions.}
+length of each session. If it is a scalar and there are multiple
+sessions, the value will be assigned to all sessions.}
 
 \item{sound.speed}{A scalar, the speed of sound in metres per
-second. Defaults to 330, approximate speed of sound in air.}
-
-\item{convert.dist.unit}{a numeric value for the conversion between
-the unit for the data and \code{metre}. If the distance unit in data
-is \code{km}, then assign 1000 here.}
-
-\item{convert.time.unit}{a numeric value for the conversion between
-the unit for the data and \code{second}. If the time unit for the
-data is \code{millisecond}, then assign 0.001 here.}
-
-\item{...}{}
+second. This argument is only used when time-of-arrival data are
+included in the \code{captures} data frame. Defaults to 330, the
+approximate speed of sound in air.}
 }
 \description{
 Combines detection data, detector locations, and covariate data
-into a single object. The resulting object can be used for model
-fitting with \code{\link[=fit.acre]{fit.acre()}}.
+into a single object. Performs spatial interpolation for spatial
+covariates. The resulting object can be used to plot detection and
+covariate data with \code{\link[=plot.acre_data]{plot.acre_data()}}, and to fit models with
+\code{\link[=fit.acre]{fit.acre()}}.
 }
 \section{Captures argument}{
 
 
-The \code{captures} argument will be passed to the function
-\code{create.capt}. The main columns required are the session, the
-identification number of the detected animal or sound, and the
-identification number of the trap which made the detection (where
-the identification number is the row number of the corresponding
-trap in the matrix of trap locations). These columns must be
-exactly labelled \code{session}, \code{ID} and \code{trap} respectively.
-
-Additional columns can specify the auxiliary information collected
-over the course of the survey:
-
+The captures argument must be a data frame, where each row
+corresponds to a single detection of a call by a single
+detector. The following columns are required:
 \itemize{
-
-\item A column named \code{bearing}, containing estimated bearings (in
-radians) from the detector to each detected animal or sound.
-
-\item A column named \code{dist}, containing the estimated distance (in
-metres) between the detected animal or sound.
-
-\item A column named \code{ss} containing the measured signal strengh
-of the detected sound.
-
-\item A column named \code{toa} containing the measured time of arrival
-(in seconds) since the start of the survey (or some other
-reference time) of the detected sound (only possible when the
-detectors are microphones).
-
+\item \code{session}: a session identifier.
+\item \code{ID}: a call identifier.
+\item \code{trap}: a detector identifier.
 }
 
-A column named \code{animal_ID} containing the identification number of animals
-can be provided if individuals could be distinguished by their acoustic
-detection.
+Additional columns can specify auxiliary data collected about the
+calls. Missing values of \code{NA} are allowed, so that an auxiliary
+data type might only be available for a subet of calls.
+\itemize{
+\item \code{bearing}: the estimated bearing (in radians) from the detector
+to the detected call.
+\item \code{dist}: the estimated distance (in metres) from the detector to
+the detected call.
+\item \code{ss}: the received signal strength of the detected call.
+\item \code{toa}: the time of arrival of the detected call at the detector,
+measured in seconds since the start of the survey.
+\item \code{animal_ID}: an animal identifier, if animals can be recognised
+from their calls.
 }
 
-\section{Controlling spatial interpolation}{
+When bearings, distances, signal strengths, or times of arrival are
+provided, they are automatically used by \code{\link[=fit.acre]{fit.acre()}} during model
+fitting via the method described by Borchers et al (2015), which
+can considerably improve precision of density estimates.
 
-
-(Still to write.)
+If \code{animal_ID} is provided, then calling animal density and call
+production rates are separately estimated from the SCR data via the
+method described by Stevenson et al (2021). Note that animals are
+assumed to remain stationary throughout the survey.
 }
 
+\section{Spatial covariates}{
+
+
+When spatial covariates are used to model spatial variation in
+density, they must be available for every mask point location
+during model-fitting. However, the resolution of the spatial data
+available from its primary source is likely to differ from the
+resolution of the mask. Spatial interpolation is therefore
+required to generate covariate values at the mask points.
+
+If required, \code{read.acre()} will automatically carry out this
+spatial interpolation. The user simply needs to provide whatever
+spatial data are available from its original source via the
+arguments \code{loc.cov}, \code{time.loc.cov}, or both. Measurements do not
+need to be available at points falling in a regular grid or
+anything like that; covariates measured at a higgledy-piggledy
+collection of coordinates are fine. Our spatial interpolation
+method works by selecting the closest measurements available and
+taking a weighted average, using a distance-based weighting
+function so that closer measurements have greater influence.
+
+Be warned that estimated density surfaces are only as good as the
+interpolated covariate values. If the covariate data provided via
+\code{loc.cov} and \code{time.loc.cov} have low spatial resolution, then the
+interpolated covariates may not closely approximate reality,
+leading to poor inference. Users should inspect plots of
+interpolated covariates using \code{plot()} to assess their
+suitability. See \code{\link[=plot.acre_data]{plot.acre_data()}}.
+
+If a user does not want to use our spatial interpolation method,
+they can take full control of the procedure using these steps:
+\itemize{
+\item Create a mask themselves using \code{\link[=create.mask]{create.mask()}}.
+\item Carry out spatial interpolation themselves, generating covariate
+values at the mask points.
+\item Provide the spatially interpolated data as the \code{loc.cov} and
+\code{time.loc.cov} arguments.
+}
+}
+
+\section{Cue rate data}{
+
+
+If animal identifiers are not included in the \code{captures} argument,
+then call density (calls produced per unit area per unit time)
+rather than population density (individuals per unit area) is
+estimated by \code{\link[=fit.acre]{fit.acre()}}.
+
+If cue rates are separately collected and provided via the
+\code{cue.rates} argument, then population density can also be estimated
+by \code{\link[=fit.acre]{fit.acre()}}. See Stevenson et al (2015) for further
+details.
+
+The \code{cue.rates} argument should be a vector, where each element is
+the observed cue rate of an individual animal. The cue rates must
+be provided in calls per unit time, where the time units are
+equivalent to those used by \code{survey.length}. For example, if the
+survey was 30 minutes long, the cue rates must be provided in cues
+per minute if \code{survey.length = 30}, but in cues per hour if
+\code{survey.length = 0.5}.
+}
+
+\examples{
+\dontrun{
+## Getting some data.
+example <- get("simple_hhn")
+## A simple modelthat
+simple.hhn.fit <- read.acre(capt = example$capt, traps = example$traps, control.mask = list(buffer = 30))
+
+## A simple model with a hazard-rate detection function.
+example_hr <- get("simple_hr")
+simple.hr.fit <- read.acre(capt = example_hr$capt, traps = example_hr$traps, control.mask = list(buffer = 30),
+                           detfn = "hr")
+}
+}
+\references{
+Borchers, D. L., Stevenson, B. C., Kidney, D., Thomas,
+L., and Marques, T. A. (2015) A unifying model for
+capture-recapture and distance sampling surveys of wildlife
+populations. \emph{Journal of the American Statistical Association},
+\emph{110}(509), 195--204.
+
+Stevenson, B. C., Borchers, D. L., Altwegg, R., Swift,
+R. J., Gillespie, D. M., and Measey, G. J. (2015) A general
+framework for animal density estimation from acoustic detections
+across a fixed microphone array. \emph{Methods in Ecology and
+Evolution}, \emph{6}(1), 38--48.
+
+Stevenson, B. C., van Dam-Bates, P., Young, C. K. Y.,
+and Measey, J. (2021) A spatial capture-recapture model to
+estimate call rate and population density from passive acoustic
+surveys. *Methods in Ecology and Evolution, \emph{12}(3), 432--442.
+}

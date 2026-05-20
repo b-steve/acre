@@ -6,9 +6,6 @@
 \usage{
 esa(fit)
 }
-\arguments{
-\item{fit}{}
-}
 \description{
 Title
 }

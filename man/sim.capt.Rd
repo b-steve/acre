@@ -45,38 +45,41 @@ this element. For example, model = list(D = ~x1+x2, sigma = ~x3+x4)}
 
 \item{traps}{A matrix or a data frame with two columns, or a list
 of such matrices or data frames for a multi-session model. Each
-row provides the x- and y-coordinates of a detector location,
-in metres. For multi-session models, each component of the list
+row provides the x- and y-coordinates of a detector location, in
+metres. For multi-session models, each component of the list
 provides detector locations for one session.}
 
-\item{control.mask}{A list specifying additional arguments for
-\code{\link[=create.capt]{create.capt()}}, other than \code{traps} that are used to create a
-mask object.}
+\item{control.mask}{A list specifying arguments for
+\code{\link[=create.mask]{create.mask()}}, other than \code{traps}, that are used to create a
+mask object. The \code{buffer} should be provided, and, optionally,
+the \code{spacing}.}
 
 \item{session.cov}{A data frame containing session covariates. It
-must contain a column \code{session} and additional columns for the
+must contain a column \code{session}, and additional columns for the
 session-level covariates.  If spatiotemporal covariates are
 included using \code{time.loc.cov}, then a column \code{time} must be
 included, indicating when the session took place.}
 
 \item{trap.cov}{A data frame containing trap covariates. It must
-contain a column \code{trap} and additional columns for the
-trap-level covariates. The column \code{session} must be included
-for multisession data.}
+contain a column \code{trap} and additional columns for the trap-level
+covariates. The column \code{session} must be included for
+multisession data.}
 
-\item{loc.cov}{A data frame or a list of data frames containing
-spatial covariates. Data frames must contain columns \code{x} and
-\code{y} for x- and y-coordinates, and additional columns for
+\item{loc.cov}{A data frame, or a list of data frames, containing
+spatial covariates. Data frames must contain columns \code{x} and \code{y}
+for x- and y-coordinates, in metres, and additional columns for
 spatial covariates measured at these locations. Missing \code{NA}
-values are allowed.}
+values are allowed. Spatial interpolation is performed to produce
+covariate values at the mask point locations; see the section on
+spatial covariates below.}
 
 \item{dist.cov}{A list containing locations of features from which
 distances are calculated, and can be used as spatial
-covariates. Each component must be named after a feature, with
-a data frame containing columns \code{x} and \code{y}, recording the the
+covariates. Each component must be named after a feature, with a
+data frame containing columns \code{x} and \code{y}, recording the the
 location of a feature.}
 
-\item{time.loc.cov}{A list or list of data frames containing
+\item{time.loc.cov}{A list, or list of data frames, containing
 spatial covariates that change over time. The data frames must
 contain columns \code{x}, \code{y} and \code{time}, and additional columns for
 the spatiotemporal covariates.  When these spatiotemporal
@@ -84,13 +87,13 @@ covariates are provided, the column \code{time} must also appear in
 \code{session.cov}.}
 
 \item{convert.loc2mask}{A list to control the spatial interpolation
-method used to compute covariate values for mask locations
-based on data provided in \code{loc.cov} and \code{time.loc.cov}. See
-\code{Details}.}
+method used to compute covariate values for mask locations based
+on data provided in \code{loc.cov} and \code{time.loc.cov}. See the section
+on spatial covariates below.}
 
 \item{survey.length}{A numeric vector or a scalar, containing the
-length of each session. If it is a scalar and there are
-multiple sessions, the value will be assigned to all sessions.}
+length of each session. If it is a scalar and there are multiple
+sessions, the value will be assigned to all sessions.}
 
 \item{ss.opts}{a list. It could contain 3 elements related to signal strength model.
 cutoff - the threshold of signal strength could be detected,
@@ -100,23 +103,15 @@ by default, it is \code{identity}.
 directional - a logical value, indicate whether to apply signal strength directional model.}
 
 \item{cue.rates}{A numeric vector containing the recorded cue rates
-in a series of time periods with identical length. A vector of
-call rates collected independently of the main acoustic
-survey. This must be measured in calls per unit time, where the
-time units are equivalent to those used by
-\code{survey.length}. For example, if the survey was 30 minutes
-long, the cue rates must be provided in cues per minute if
-\code{survey.length = 30}, but in cues per hour if
-\code{survey.length = 0.5}.}
+of individuals, collected separately to the SCR survey. See the
+section on cue rate data, below.}
 
 \item{n.sessions}{An integer for the number of sessions.}
 
-\item{n.rand}{}
-
-\item{random.location}{}
-
 \item{sound.speed}{A scalar, the speed of sound in metres per
-second. Defaults to 330, approximate speed of sound in air.}
+second. This argument is only used when time-of-arrival data are
+included in the \code{captures} data frame. Defaults to 330, the
+approximate speed of sound in air.}
 }
 \description{
 Simulates SCR capture histories and associated additional

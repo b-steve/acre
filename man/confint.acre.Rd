@@ -23,8 +23,6 @@
 \item{types}{a character vector, the same as "coef.acre()".}
 
 \item{new.covariates}{a data frame, the same as "coef.acre()".}
-
-\item{...}{}
 }
 \value{
 a matrix
