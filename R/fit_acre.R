@@ -297,14 +297,23 @@ read.acre = function(captures, traps, mask = NULL,
 fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(), is.scale = TRUE,
                     model.link = NULL, local = FALSE, tracing = TRUE, gr.skip = FALSE,
-                    sv.link = NULL, CL = FALSE, two.stage = FALSE){
+                    sv.link = NULL, two.stage = FALSE, CL = two.stage){
   
   arg.input = dat$arg.input
   dat$arg.input = NULL
   mask_override = FALSE
   
+  if(!is.logical(two.stage) || length(two.stage) != 1L || is.na(two.stage)){
+    stop("'two.stage' must be a single TRUE/FALSE value.")
+  }
+  
   if(!is.logical(CL) || length(CL) != 1L || is.na(CL)){
     stop("'CL' must be a single TRUE/FALSE value.")
+  }
+  
+  if(isTRUE(two.stage) && isFALSE(CL)) {
+    warning("'two.stage' requires CL = TRUE; setting CL = TRUE.")
+    CL <- TRUE
   }
   
   if(!is.null(mask)){
