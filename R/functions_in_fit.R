@@ -1328,7 +1328,8 @@ gr_free_o_restore = function(fn, opt, H, parameters, param.og.4cpp, n.sessions){
 
 outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas, detfn, param.og, param.og.4cpp, o, tmb_output_og, opt,
                   name.fixed.par, name.extend.par, dims, DX.full, DX.mask, fix.input, bucket_info, cue.rates, mean.cue.rates, A,
-                  survey.length, sound.speed, par.extend, arg.input, fgam, gam_output, lst_mean_std, is.scale, ss.link, cutoff){
+                  survey.length, sound.speed, par.extend, arg.input, fgam, gam_output, lst_mean_std, is.scale, ss.link, cutoff,
+                  CL, esa_partial_derivatives){
   ###################################################################################################################
   #sort out output for the function
   out = vector('list', 36)
@@ -1441,7 +1442,7 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
         coef_link_tmb[[i]] = fix.input[[i]]
         names(coef_link_tmb[[i]]) = name_output_tmb[[i]]
       }
-    } else {
+    } else if (i == 'esa') {
       name_output[[i]] = paste('esa', 1:dims$n.sessions, sep = ".")
       out_coef[[i]] = o_value[[i]]
       names(out_coef[[i]]) = name_output[[i]]
@@ -1564,7 +1565,7 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
         se_tmb[[i]] = NA
         names(se_tmb[[i]]) = name_output_tmb[[i]]
       }
-    } else {
+    } else if(i == 'esa') {
       out_se[[i]] = o_sd[[i]]
       names(out_se[[i]]) = name_output[[i]]
     }
@@ -1850,6 +1851,10 @@ outFUN = function(data.par, data.full, data.traps, data.mask, data.dists.thetas,
   }
   out$all.covariates = as.data.frame(out$all.covariates)
   
+  ###########################################################################################################
+  # The 35th/36th component: Conditional likelihood and partial derivatives
+  out$CL = CL
+  out$esa_partial_derivatives = esa_partial_derivatives
   
   ############################################################################################################
   return(out)

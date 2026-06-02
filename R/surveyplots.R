@@ -184,6 +184,10 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
                         x.pixels = 50, y.pixels = 50, zlim = NULL, scale = 1, plot.contours = FALSE,
                         add = FALSE, convert.loc2mask= NULL, arg.col = 100, trap.plot = NULL, ...){
   
+  if (isTRUE(fit$CL)) {
+    stop("Density surfaces are not available for conditional-likelihood fits.")
+  }
+  
   pred = predict_D_for_plot(fit, session_select = ifelse(is.null(session), 1, session), 
                             new_data = new.data, D_cov = D.cov, xlim = xlim, ylim = ylim,
                             x_pixels = x.pixels, y_pixels = y.pixels, se_fit = show.cv,

@@ -7,8 +7,10 @@ demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL
   bounds = dat$bounds
   detfn = dat$detfn
   ss_opts = dat$ss.opts
-
-  dat[c('model', 'sv', 'fix', 'bounds', 'detfn', 'ss.opts')] = NULL
+  dat$control.mask = dat$control_create_mask
+  
+  dat[c('model', 'sv', 'fix', 'bounds', 'detfn', 'ss.opts', 
+        'control.capt', 'control_create_mask')] = NULL
 
   dat_model = list()
 

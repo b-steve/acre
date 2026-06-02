@@ -1,5 +1,9 @@
 get_D_tmb = function(fit){
 
+  if (isTRUE(fit$CL)) {
+    stop("Density estimates are not available for conditional-likelihood fits.")
+  }
+  
   #estimated population density for each mask is recorded in fit$D.mask
   #extract the values from it and make it into a usable format data frame
   #with session and mask indices

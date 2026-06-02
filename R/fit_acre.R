@@ -287,15 +287,17 @@ read.acre = function(captures, traps, mask = NULL,
 #' @param tracing a logical value. TRUE by default, an indicator of showing the tracing information. (seems not work as expected.)
 #' @param gr.skip a logical value. FALSE by default. If TRUE, TMB model will skip the process of generating automatic derivative functions,
 #'                which will use less RAM, but the optimization process will consume more time.
-#' @param sv.link a list; this is mostly for development purpose, not recommended to use
+#' @param sv.link a list; this is mostly for development purpose, not recommended to use.
 #' @param CL a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring density parameter estimation.
-#'
+#' @param two.stage a logical value. FALSE by default. If TRUE, after fitting a model, the partial derivatives, 
+#'                  of the ESA for each session, w.r.t. the other parameters, is calculated and returned.
+#' 
 #' @return
 #' @export
 fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(), is.scale = TRUE,
                     model.link = NULL, local = FALSE, tracing = TRUE, gr.skip = FALSE,
-                    sv.link = NULL, CL = FALSE){
+                    sv.link = NULL, CL = FALSE, two.stage = FALSE){
   
   arg.input = dat$arg.input
   dat$arg.input = NULL
@@ -339,7 +341,7 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
     dat$par.extend = NULL
   }
   
-  ## ---- conditional likelihood checks ----
+  # Conditional likelihood checks
   if(CL){
     
     if(!is.null(model) && "D" %in% names(model)){
@@ -375,6 +377,7 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
   dat$ss.opts = ss.opts
   dat$sv.link = sv.link
   dat$CL = CL
+  dat$two.stage = two.stage
   
   output = do.call("fit_og", dat)
   output$arg_input = arg.input
@@ -413,14 +416,14 @@ fit.acre = function(dat, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, f
 #' @param tracing same as the argument with the same name in the function `fit.acre()`.
 #' @param gr.skip same as the argument with the same name in the function `fit.acre()`.
 #' @param sv.link a list; this is mostly for development purpose, not recommended to use.
-#' @param CL a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring 
-#'                    density parameter estimation.
+#' @param CL same as the argument with the same name in the function `fit.acre()`.
+#' @param two.stage same as the argument with the same name in the function `fit.acre()`.
 #' 
 #' @param ...
 #' @keywords internal
 fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL, cue.rates = NULL,
                   survey.length = NULL, sound.speed = 331, local = FALSE, par.extend = NULL, tracing = TRUE, gr.skip = FALSE,
-                  sv.link = NULL, CL = FALSE, ...){
+                  sv.link = NULL, CL = FALSE, two.stage = FALSE, ...){
   #keep all original input arguments
   arg.names <- names(as.list(environment()))
   arg.input <- vector('list', length(arg.names))
@@ -746,7 +749,9 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                toa_ssq = as.numeric(data.ID_mask$toa_ssq),
                
                # Conditional likelihood
-               is_conditional = as.numeric(CL)
+               is_conditional = as.numeric(CL),
+               # Two stage (calculate logESA partial derivatives)
+               is_two_stage = 0
   )
 
   #to avoid "." in .cpp file
@@ -885,6 +890,20 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     o = gr_free_o_restore(fn_base, opt, H, parameters, param.og.4cpp, dims$n.sessions)
   }
   
+  # If partial derivatives are being returned (i.e. two.stage == T)
+  esa_partial_derivatives <- NULL
+  if (isTRUE(two.stage)) {
+    data$is_two_stage <- as.numeric(TRUE)
+    cat("Calculating partial derivatives...\n")
+    pd_object <- TMB::MakeADFun(data = data, parameters = parameters, map = map,
+                                silent = TRUE, DLL="acre", ADreport = TRUE)
+    partial_derivative_matrix <- pd_object$gr(opt$par)
+    # Extracting the names using pd_object$fn() means that in the future, new
+    # ADREPORT()'s won't mess things up (i.e. if we extracted positionally instead)
+    log_esa_pd_rows <- which(names(pd_object$fn()) == "log_esa")
+    esa_partial_derivatives <- partial_derivative_matrix[log_esa_pd_rows,]
+  }
+  
   tmb_output_og = list(est = o$value, vcov = o$cov)
   
   # Restore the estimated parameters' estimation and variance matrix to original scale
@@ -941,11 +960,10 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                lst_mean_std = lst_mean_std,
                is.scale = is.scale,
                ss.link = ss.link,
-               cutoff = cutoff)
-  
-  # Adding conditional likelihood logical to the out object
-  # Should really be doing this in outFUN()
-  out$CL = CL
+               cutoff = cutoff,
+               CL = CL,
+               esa_partial_derivatives = esa_partial_derivatives)
+
   class(out) <- "acre"
 
   return(out)

@@ -531,8 +531,8 @@ Type acreTMB(objective_function<Type>* obj)
   DATA_SCALAR(cue_rates);
   
   // Conditional likelihood 
-  // Please fucking pick up these changes you bitch
   DATA_INTEGER(is_conditional);
+  DATA_INTEGER(is_two_stage);
   
   DATA_SCALAR(cutoff);
   
@@ -1430,13 +1430,12 @@ Type acreTMB(objective_function<Type>* obj)
     
     //canceled out original likelihood: nll -= dpois(Type(n_i), lambda_theta, true);
     // *pointer_nll += lambda_theta;
+    
     // unconditional / original-style contribution
     if(is_conditional == 0){
-      std::cout << "Fitting a [STANDARD LIKELIHOOD] model" << std::endl;
       *pointer_nll += lambda_theta;
-    } else {
-      std::cout << "Fitting a [CONDITIONAL LIKELIHOOD] model" << std::endl;
     }
+
   	//if(s == 105){
   	//	std::cout << "session "<< s <<", check point2, nll: " << *pointer_nll << std::endl;
   	//}	
@@ -2114,8 +2113,15 @@ Type acreTMB(objective_function<Type>* obj)
     //end for session s
   }
   
-  
   ADREPORT(esa);
+  
+  if (is_two_stage) {
+    // Report the log_esa for each session
+    vector<Type> log_esa(n_sessions);
+    for(int s = 0; s < n_sessions; s++) log_esa(s) = log(esa(s));
+    ADREPORT(log_esa);
+  }
+  
   return nll;
 }
 

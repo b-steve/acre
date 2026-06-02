@@ -34,6 +34,12 @@ coef.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, .
   #extract some key information for the object
   param_values_og = get_coef(object)
   name_og = get_param_og(object)
+  
+  if (object$CL) {
+    name_og <- setdiff(name_og, "D")
+    pars <- setdiff(pars, "D")
+  }
+  
   name_extend = get_par_extend_name(object)
   df_param = get_data_param(object)
   esa = esa(object)
@@ -367,6 +373,10 @@ vcov.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, s
   param_values = param_values[index_par]
   fixed_par = get_fixed_par_name(object)
   
+  # Suppress "D" if conditional likelihood fitted 
+  if (object$CL) {
+    fixed_par <- setdiff(fixed_par, "D")
+  }
   
   output = vector('list', length(types))
   names(output) = types
@@ -825,6 +835,10 @@ predict.acre = function(object, type = 'response', newdata = NULL, se.fit = TRUE
     if(any(!realnames %in% name_og)) stop("Argument 'realnames' only accept parameters' name in this model.")
   }
   
+  if (fit$CL) {
+    realnames = setdiff(realnames, "D")
+  }
+  
   #make sure pars are in the right order
   realnames = fulllist.par.generator()[fulllist.par.generator() %in% realnames]
   
@@ -1019,7 +1033,11 @@ summary.acre = function(object, derived_print = FALSE, ...){
   CI = confint(object, types = 'fitted')
   CI_derived = confint(object, types = 'derived')
   is_boot = is(object, 'acreboot')
+  # Conditional likelihood adjustment to output (remove "D")
   CL = object$CL
+  if (object$CL) {
+    coefs <- coefs[!grepl("^D", names(coefs))]
+  }
   
   infotypes = get_infotypes(object)
   detfn = get_detfn(object)
@@ -1109,7 +1127,7 @@ print.summary_acre = function(x, ...){
   cat("Confidence interval method:", CI_method, "\n")
   
   if (x$CL) {
-    cat("Likelihood mode: ", "Conditional", "\n")
+    cat("Likelihood mode:", "Conditional", "\n")
   }
   
   cat("\n", "\n", "Parameters:", "\n")
