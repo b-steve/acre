@@ -15,10 +15,18 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/b-steve/acre/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/acre.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/acre.html">Getting started</a></li>
+    <li><a class="dropdown-item" href="../articles/data-preparation.html">Data preparation</a></li>
+    <li><a class="dropdown-item" href="../articles/model-fitting.html">Model fitting</a></li>
+    <li><a class="dropdown-item" href="../articles/bootstrap-uncertainty.html">Bootstrap uncertainty</a></li>
+    <li><a class="dropdown-item" href="../articles/simulation-study.html">Simulation studies</a></li>
+  </ul></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/b-steve/acre" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
 
@@ -31,9 +39,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a></h2>
 
-
+      <div class="section-desc"><p>Functions for reading, formatting, and preparing acoustic SCR data.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -42,45 +50,10 @@
 
       <dl><dt>
 
-          <code><a href="AIC.acre.html">AIC(<i>&lt;acre&gt;</i>)</a></code>
+          <code><a href="read.acre.html">read.acre()</a></code>
 
         </dt>
-        <dd>Calculate AIC for acre Models</dd>
-
-        <dt>
-
-          <code><a href="boot.acre.html">boot.acre()</a></code>
-
-        </dt>
-        <dd>Bootstrapping a fitted <code>acre</code> model</dd>
-
-        <dt>
-
-          <code><a href="coef.acre.html">coef(<i>&lt;acre&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Extract coefficients from the output of acre model</dd>
-
-        <dt>
-
-          <code><a href="coef.acreboot.html">coef(<i>&lt;acreboot&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Title</dd>
-
-        <dt>
-
-          <code><a href="confint.acre.html">confint(<i>&lt;acre&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Extract confidence interval for acre.tmb models</dd>
-
-        <dt>
-
-          <code><a href="confint.acreboot.html">confint(<i>&lt;acreboot&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Title</dd>
+        <dd>Combining all data for plotting and model fitting</dd>
 
         <dt>
 
@@ -91,12 +64,21 @@
 
         <dt>
 
-          <code><a href="esa.html">esa()</a></code>
+          <code><a href="location_density.html">location_density()</a></code>
 
         </dt>
-        <dd>Title</dd>
+        <dd>Calculate location density</dd>
+      </dl></div><div class="section level2">
+      <h2 id="model-fitting">Model fitting<a class="anchor" aria-label="anchor" href="#model-fitting"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Fit acoustic SCR models and compute core model quantities.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="fit.acre.html">fit.acre()</a></code>
 
@@ -105,10 +87,61 @@
 
         <dt>
 
-          <code><a href="location_density.html">location_density()</a></code>
+          <code><a href="esa.html">esa()</a></code>
 
         </dt>
-        <dd>Calculate location density</dd>
+        <dd>Title</dd>
+      </dl></div><div class="section level2">
+      <h2 id="model-summaries">Model summaries<a class="anchor" aria-label="anchor" href="#model-summaries"></a></h2>
+
+      <div class="section-desc"><p>Extract fitted values, parameter estimates, uncertainty, and model diagnostics.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="summary.acre.html">summary(<i>&lt;acre&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Summarise <code>acre</code> Model Fits</dd>
+
+        <dt>
+
+          <code><a href="coef.acre.html">coef(<i>&lt;acre&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract coefficients from the output of acre model</dd>
+
+        <dt>
+
+          <code><a href="stdEr.html">stdEr()</a></code>
+
+        </dt>
+        <dd>Title</dd>
+
+        <dt>
+
+          <code><a href="stdEr.acre.html">stdEr(<i>&lt;acre&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract standard errors of the estimated parameters from acre models</dd>
+
+        <dt>
+
+          <code><a href="vcov.acre.html">vcov(<i>&lt;acre&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract variance covariance matrix of the estimated parameters from acre models</dd>
+
+        <dt>
+
+          <code><a href="confint.acre.html">confint(<i>&lt;acre&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract confidence interval for acre.tmb models</dd>
 
         <dt>
 
@@ -118,6 +151,80 @@
         <dd>Extract (negative) log-likelihood for a fitted acre object</dd>
 
         <dt>
+
+          <code><a href="AIC.acre.html">AIC(<i>&lt;acre&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Calculate AIC for acre Models</dd>
+
+        <dt>
+
+          <code><a href="predict.acre.html">predict(<i>&lt;acre&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Title</dd>
+      </dl></div><div class="section level2">
+      <h2 id="bootstrap-methods">Bootstrap methods<a class="anchor" aria-label="anchor" href="#bootstrap-methods"></a></h2>
+
+      <div class="section-desc"><p>Bootstrap fitted acre models and summarize bootstrap output.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="boot.acre.html">boot.acre()</a></code>
+
+        </dt>
+        <dd>Bootstrapping a fitted <code>acre</code> model</dd>
+
+        <dt>
+
+          <code><a href="coef.acreboot.html">coef(<i>&lt;acreboot&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Title</dd>
+
+        <dt>
+
+          <code><a href="stdEr.acreboot.html">stdEr(<i>&lt;acreboot&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Title</dd>
+
+        <dt>
+
+          <code><a href="vcov.acreboot.html">vcov(<i>&lt;acreboot&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Title</dd>
+
+        <dt>
+
+          <code><a href="confint.acreboot.html">confint(<i>&lt;acreboot&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Title</dd>
+
+        <dt>
+
+          <code><a href="predict.acreboot.html">predict(<i>&lt;acreboot&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Title</dd>
+      </dl></div><div class="section level2">
+      <h2 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a></h2>
+
+      <div class="section-desc"><p>Plot acre data, masks, fitted models, and diagnostic outputs.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="plot.acre.html">plot(<i>&lt;acre&gt;</i>)</a></code>
 
@@ -130,29 +237,17 @@
 
         </dt>
         <dd>Plotting acre data</dd>
+      </dl></div><div class="section level2">
+      <h2 id="simulation">Simulation<a class="anchor" aria-label="anchor" href="#simulation"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Simulate acoustic SCR data and run simulation studies.</p></div>
 
-          <code><a href="predict.acre.html">predict(<i>&lt;acre&gt;</i>)</a></code>
+      <dl></dl></div><div class="section level2">
 
-        </dt>
-        <dd>Title</dd>
 
-        <dt>
 
-          <code><a href="predict.acreboot.html">predict(<i>&lt;acreboot&gt;</i>)</a></code>
 
-        </dt>
-        <dd>Title</dd>
-
-        <dt>
-
-          <code><a href="read.acre.html">read.acre()</a></code>
-
-        </dt>
-        <dd>Combining all data for plotting and model fitting</dd>
-
-        <dt>
+      <dl><dt>
 
           <code><a href="sim.capt.html">sim.capt()</a></code>
 
@@ -172,50 +267,9 @@
 
         </dt>
         <dd>Runs a simulation study</dd>
-
-        <dt>
-
-          <code><a href="stdEr.html">stdEr()</a></code>
-
-        </dt>
-        <dd>Title</dd>
-
-        <dt>
-
-          <code><a href="stdEr.acre.html">stdEr(<i>&lt;acre&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Extract standard errors of the estimated parameters from acre models</dd>
-
-        <dt>
-
-          <code><a href="stdEr.acreboot.html">stdEr(<i>&lt;acreboot&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Title</dd>
-
-        <dt>
-
-          <code><a href="summary.acre.html">summary(<i>&lt;acre&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Summarise <code>acre</code> Model Fits</dd>
-
-        <dt>
-
-          <code><a href="vcov.acre.html">vcov(<i>&lt;acre&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Extract variance covariance matrix of the estimated parameters from acre models</dd>
-
-        <dt>
-
-          <code><a href="vcov.acreboot.html">vcov(<i>&lt;acreboot&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Title</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
