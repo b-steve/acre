@@ -1,4 +1,89 @@
 url: https://b-steve.github.io/acre/
+
+destination: docs
+
 template:
   bootstrap: 5
 
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [github]
+  components:
+    intro:
+      text: Get started
+      href: articles/acre.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Articles
+      menu:
+      - text: Getting started
+        href: articles/acre.html
+      - text: Data preparation
+        href: articles/data-preparation.html
+      - text: Model fitting
+        href: articles/model-fitting.html
+      - text: Bootstrap uncertainty
+        href: articles/bootstrap-uncertainty.html
+      - text: Simulation studies
+        href: articles/simulation-study.html
+    news:
+      text: Changelog
+      href: news/index.html
+    github:
+      icon: fa-github
+      aria-label: GitHub
+      href: https://github.com/b-steve/acre
+      
+reference:
+  - title: Data preparation
+    desc: Functions for reading, formatting, and preparing acoustic SCR data.
+    contents:
+      - read.acre
+      - create.mask
+      - location_density
+
+  - title: Model fitting
+    desc: Fit acoustic SCR models and compute core model quantities.
+    contents:
+      - fit.acre
+      - esa
+
+  - title: Model summaries
+    desc: Extract fitted values, parameter estimates, uncertainty, and model diagnostics.
+    contents:
+      - summary.acre
+      - coef.acre
+      - stdEr
+      - stdEr.acre
+      - vcov.acre
+      - confint.acre
+      - logLik.acre
+      - AIC.acre
+      - predict.acre
+
+  - title: Bootstrap methods
+    desc: Bootstrap fitted acre models and summarize bootstrap output.
+    contents:
+      - boot.acre
+      - coef.acreboot
+      - stdEr.acreboot
+      - vcov.acreboot
+      - confint.acreboot
+      - predict.acreboot
+
+  - title: Plotting
+    desc: Plot acre data, masks, fitted models, and diagnostic outputs.
+    contents:
+      - plot.acre
+      - plot.acre_data
+
+  - title: Simulation
+    desc: Simulate acoustic SCR data and run simulation studies.
+    contents:
+      - sim.capt
+      - sim_data
+      - sim_study
+>>>>>>> 8c2cd4f (Updated pkgdown yaml)
