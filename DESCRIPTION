@@ -37,7 +37,7 @@ Description: This package provides functions to fit spatial
     estimated distances. The acre package fits a class of SCR model
     that allows use of such information.
 License: GPL (>= 3)
-URL: https://github.com/b-steve/acre
+URL: https://github.com/b-steve/acre, https://b-steve.github.io/acre/
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
