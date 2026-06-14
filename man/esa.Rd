@@ -2,10 +2,14 @@
 % Please edit documentation in R/methods.R
 \name{esa}
 \alias{esa}
-\title{Title}
+\title{Estimated effective sampling areas}
 \usage{
 esa(fit)
 }
+\arguments{
+\item{fit}{A fitted model from \code{\link[=fit.acre]{fit.acre()}}}
+}
 \description{
-Title
+Extracts an estimate and standard error of each session's effective
+sampling area.
 }

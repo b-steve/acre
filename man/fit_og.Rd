@@ -22,6 +22,7 @@ fit_og(
   gr.skip = FALSE,
   sv.link = NULL,
   CL = FALSE,
+  two.stage = FALSE,
   ...
 )
 }
@@ -69,8 +70,9 @@ link: the same as argument \code{model.link}  in the function \code{fit.acre()}.
 
 \item{sv.link}{a list; this is mostly for development purpose, not recommended to use.}
 
-\item{CL}{a logical value. FALSE by default. If TRUE, fit a conditional likelihood model, ignoring
-density parameter estimation.}
+\item{CL}{same as the argument with the same name in the function \code{fit.acre()}.}
+
+\item{two.stage}{same as the argument with the same name in the function \code{fit.acre()}.}
 }
 \description{
 Original fit function from ascr

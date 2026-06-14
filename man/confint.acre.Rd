@@ -23,6 +23,8 @@
 \item{types}{a character vector, the same as "coef.acre()".}
 
 \item{new.covariates}{a data frame, the same as "coef.acre()".}
+
+\item{...}{For S3 compatibility.}
 }
 \value{
 a matrix

@@ -23,6 +23,8 @@ derived - The estimations of 'esa' for each session.}
 \item{pars}{a character vector containing any parameter names.}
 
 \item{new.covariates}{a data frame containing the values of covariates of any extended parameter.}
+
+\item{...}{For S3 compatibility.}
 }
 \value{
 a named numeric vector

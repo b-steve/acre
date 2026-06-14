@@ -14,6 +14,7 @@ from acoustic surveys.
 Useful links:
 \itemize{
   \item \url{https://github.com/b-steve/acre}
+  \item \url{https://b-steve.github.io/acre/}
 }
 
 }

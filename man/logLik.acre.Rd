@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{object}{a fitted model from "fit.acre()".}
+
+\item{...}{For S3 compatibility.}
 }
 \value{
 a numeric value, the negative log-likelihood of the model

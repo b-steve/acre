@@ -100,7 +100,7 @@ covariate data with \code{\link[=plot.acre_data]{plot.acre_data()}}, and to fit 
 
 
 The captures argument must be a data frame, where each row
-corresponds to a single detection of a call by a single
+corresponds to a single detection, usually of a call, by a single
 detector. The following columns are required:
 \itemize{
 \item \code{session}: a session identifier.

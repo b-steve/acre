@@ -6,6 +6,9 @@
 \usage{
 \method{plot}{acre_data}(x, ...)
 }
+\arguments{
+\item{...}{For S3 compatibility.}
+}
 \description{
 Plotting acre data
 }

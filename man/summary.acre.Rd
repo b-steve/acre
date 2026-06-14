@@ -11,6 +11,8 @@
 the bootstrap process "boot.acre()".}
 
 \item{derived_print}{a logical value indicates whether to show the estimations of "esa".}
+
+\item{...}{For S3 compatibility.}
 }
 \description{
 Summarise \code{acre} Model Fits
