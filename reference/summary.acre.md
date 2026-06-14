@@ -19,3 +19,7 @@ summary(object, derived_print = FALSE, ...)
 - derived_print:
 
   a logical value indicates whether to show the estimations of "esa".
+
+- ...:
+
+  For S3 compatibility.

@@ -122,8 +122,8 @@ read.acre(
 ## Captures argument
 
 The captures argument must be a data frame, where each row corresponds
-to a single detection of a call by a single detector. The following
-columns are required:
+to a single detection, usually of a call, by a single detector. The
+following columns are required:
 
 - `session`: a session identifier.
 

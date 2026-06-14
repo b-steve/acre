@@ -52,3 +52,7 @@ predict(
 - realnames:
 
   a character vector containing any parameter names.
+
+- ...:
+
+  For S3 compatibility.

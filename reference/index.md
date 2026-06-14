@@ -17,7 +17,8 @@ Fit acoustic SCR models and compute core model quantities.
 
 - [`fit.acre()`](https://b-steve.github.io/acre/reference/fit.acre.md) :
   Fitting acoustic SCR models
-- [`esa()`](https://b-steve.github.io/acre/reference/esa.md) : Title
+- [`esa()`](https://b-steve.github.io/acre/reference/esa.md) : Estimated
+  effective sampling areas
 
 ## Model summaries
 

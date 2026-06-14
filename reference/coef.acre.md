@@ -42,6 +42,10 @@ coef(object, types = NULL, pars = NULL, new.covariates = NULL, ...)
   a data frame containing the values of covariates of any extended
   parameter.
 
+- ...:
+
+  For S3 compatibility.
+
 ## Value
 
 a named numeric vector

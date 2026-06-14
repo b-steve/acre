@@ -60,3 +60,7 @@ predict(
 
   a logical value indicates whether to extract standard error and
   confidence interval from the bootstrap results.
+
+- ...:
+
+  For S3 compatibility.

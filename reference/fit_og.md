@@ -23,6 +23,7 @@ fit_og(
   gr.skip = FALSE,
   sv.link = NULL,
   CL = FALSE,
+  two.stage = FALSE,
   ...
 )
 ```
@@ -126,5 +127,10 @@ fit_og(
 
 - CL:
 
-  a logical value. FALSE by default. If TRUE, fit a conditional
-  likelihood model, ignoring density parameter estimation.
+  same as the argument with the same name in the function
+  [`fit.acre()`](https://b-steve.github.io/acre/reference/fit.acre.md).
+
+- two.stage:
+
+  same as the argument with the same name in the function
+  [`fit.acre()`](https://b-steve.github.io/acre/reference/fit.acre.md).

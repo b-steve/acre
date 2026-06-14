@@ -56,3 +56,7 @@ confint(
   a logical value indicates whether to use the bootstrap results to
   construct the confidence matrix. Default is TRUE; if FALSE,
   "confint.acre()" will be called.
+
+- ...:
+
+  For S3 compatibility.

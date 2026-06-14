@@ -40,6 +40,10 @@ vcov(
   a logical value. To control whether to include the fixed parameters in
   the covariance matrix. It is TRUE by default.
 
+- ...:
+
+  For S3 compatibility.
+
 ## Value
 
 a list with matrices as its elements if multiple 'types'. a matrix if

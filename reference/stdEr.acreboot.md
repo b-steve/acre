@@ -42,3 +42,7 @@ stdEr(
 - show_fixed_par:
 
   a logical value, the same as "vcov.acre()".
+
+- ...:
+
+  For S3 compatibility.

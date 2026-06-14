@@ -8,3 +8,9 @@ Plotting acre data
 # S3 method for class 'acre_data'
 plot(x, ...)
 ```
+
+## Arguments
+
+- ...:
+
+  For S3 compatibility.

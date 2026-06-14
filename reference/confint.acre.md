@@ -38,6 +38,10 @@ confint(
 
   a data frame, the same as "coef.acre()".
 
+- ...:
+
+  For S3 compatibility.
+
 ## Value
 
 a matrix

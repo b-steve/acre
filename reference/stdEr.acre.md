@@ -38,6 +38,10 @@ stdEr(
 
   a logical value, the same as "vcov.acre()".
 
+- ...:
+
+  For S3 compatibility.
+
 ## Value
 
 a named numeric vector
