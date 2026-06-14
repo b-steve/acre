@@ -256,7 +256,7 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
 #' Plotting acre data
 #'
 #' @param x 
-#' @param ... 
+#' @param ... For S3 compatibility.
 #'
 #' @return
 #' @export
@@ -595,7 +595,7 @@ plot.acre_data <- function(x, ...){
 #' Plotting acre model objects
 #'
 #' @param x 
-#' @param ... 
+#' @param ... For S3 compatibility.
 #' 
 #' @return
 #' @export

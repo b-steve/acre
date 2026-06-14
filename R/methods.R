@@ -14,7 +14,7 @@
 #'                       
 #' @param pars a character vector containing any parameter names.
 #' @param new.covariates a data frame containing the values of covariates of any extended parameter.
-#' @param ... 
+#' @param ... For S3 compatibility.
 #'
 #' @return a named numeric vector
 #' @export
@@ -141,7 +141,7 @@ coef.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, .
 #' @param correct_bias logical. if TRUE, apply a bias correction method to the bootstrap results; otherwise,
 #'                     return the original estimation directly. The bias correct method is
 #'                     hat(coef) - (mean(boot_results) - hat(coef)).
-#' @param ... 
+#' @param ... For S3 compatibility.
 #' @export
 coef.acreboot = function(object, types = NULL, pars = NULL, new.covariates = NULL, correct_bias = FALSE, ...){
   
@@ -294,7 +294,7 @@ print.coef_acre = function(x, ...){
 #' @param new.covariates a data frame, the same as "coef.acre()".
 #' @param show_fixed_par a logical value. To control whether to include the fixed parameters in the covariance matrix.
 #'                       It is TRUE by default.
-#' @param ... 
+#' @param ... For S3 compatibility.
 #'
 #' @return a list with matrices as its elements if multiple 'types'. a matrix if only one 'types'.
 #' @export
@@ -471,7 +471,7 @@ vcov.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, s
 #' @param from_boot a logical value, TRUE by default, to control whether the covariance matrix is calculated
 #'                  from the bootstrap results. If FALSE, the method "vcov.acre()" will be called.
 #' @param show_fixed_par a logical value, the same as "vcov.acre()".
-#' @param ... 
+#' @param ... For S3 compatibility.
 #' @export
 vcov.acreboot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
   
@@ -555,7 +555,7 @@ stdEr = function(object, ...){
 #' @param pars a character vector, the same as "coef.acre()".
 #' @param new.covariates a data frame, the same as "coef.acre()".
 #' @param show_fixed_par a logical value, the same as "vcov.acre()".
-#' @param ... 
+#' @param ... For S3 compatibility.
 #'
 #' @return a named numeric vector
 #' @export
@@ -584,7 +584,7 @@ stdEr.acre = function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 #' @param new.covariates a data frame, the same as "coef.acre()".
 #' @param from_boot a logical value, the same as "vcov.acreboot()".
 #' @param show_fixed_par a logical value, the same as "vcov.acre()".
-#' @param ... 
+#' @param ... For S3 compatibility.
 #' @export
 stdEr.acreboot = function(object, types = NULL, pars = NULL, new.covariates = NULL, from_boot = TRUE, show_fixed_par = TRUE, ...){
 
@@ -621,7 +621,7 @@ print.std_acre = function(x, ...){
 #' @param level a numeric value indicates the confident level, default is 0.95.
 #' @param types a character vector, the same as "coef.acre()".
 #' @param new.covariates a data frame, the same as "coef.acre()".
-#' @param ... 
+#' @param ... For S3 compatibility.
 #'
 #' @return a matrix
 #' @export
@@ -691,7 +691,7 @@ confint.acre = function(object, parm = NULL, level = 0.95, types = NULL, new.cov
 #' @param from_boot a logical value indicates whether to use the bootstrap results to construct 
 #'                  the confidence matrix. Default is TRUE; if FALSE, "confint.acre()" will
 #'                  be called.
-#' @param ... 
+#' @param ... For S3 compatibility.
 #' @export
 confint.acreboot = function(object, parm = NULL, level = 0.95, types = NULL, new.covariates = NULL,
                              correct_bias = FALSE, from_boot = TRUE, ...){
@@ -811,7 +811,7 @@ AIC.acre <- function(..., k = 2) {
 #' @param confidence a logical value indicates whether to show confidence interval.
 #' @param level a numeric value indicates the confident level, default is 0.95.
 #' @param realnames a character vector containing any parameter names.
-#' @param ... 
+#' @param ... For S3 compatibility.
 #' @export
 predict.acre = function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                             level = 0.95, realnames = NULL, ...){
@@ -914,7 +914,7 @@ predict.acre = function(object, type = 'response', newdata = NULL, se.fit = TRUE
 #'                     functions "coef.acreboot()" and "confint.acreboot()".
 #' @param from_boot a logical value indicates whether to extract standard error and confidence interval
 #'                  from the bootstrap results.
-#' @param ... 
+#' @param ... For S3 compatibility.
 #' @export
 predict.acreboot = function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                              level = 0.95, realnames = NULL, correct_bias = FALSE, from_boot = TRUE, ...){
@@ -1023,7 +1023,7 @@ print.predict_acre = function(x, ...){
 #' @param object an object generated from the model fitting function "fit.acre()" or
 #'               the bootstrap process "boot.acre()".
 #' @param derived_print a logical value indicates whether to show the estimations of "esa".
-#' @param ... 
+#' @param ... For S3 compatibility.
 #' @export
 summary.acre = function(object, derived_print = FALSE, ...){
   coefs = coef(object, types = 'fitted')
@@ -1152,7 +1152,7 @@ print.summary_acre = function(x, ...){
 #' Extract (negative) log-likelihood for a fitted acre object
 #'
 #' @param object a fitted model from "fit.acre()".
-#' @param ... 
+#' @param ... For S3 compatibility.
 #'
 #' @return a numeric value, the negative log-likelihood of the model
 #' @export
@@ -1160,13 +1160,15 @@ logLik.acre <- function(object, ...) {
   return(object$loglik)
 }
 
-#' Title
+#' Estimated effective sampling areas
 #'
-#' @param fit 
+#' Extracts an estimate and standard error of each session's effective
+#' sampling area.
+#' 
+#' @param fit A fitted model from [fit.acre()]
 #' @export
 esa = function(fit){
-  output = fit$esa
-  return(output)
+  fit$esa
 }
 
 
