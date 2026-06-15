@@ -328,8 +328,6 @@ read.acre = function(captures, traps, mask = NULL,
 #' @param is.scale a logical value. Indicate whether to standardize
 #'   the numerical covariates for the extended parameters, it is
 #'   `TRUE` by default.
-#' @param model.link a list with named elements. Each element contains
-#'   the link for the parameter indicated by the name of this element.
 #' @param local a logical value. FALSE by default. If TRUE, the model
 #'   will only integrate the masks within the buffer distance for all
 #'   traps.
@@ -396,7 +394,7 @@ fit.acre = function(data, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, 
       dat$par.extend$model = model
     }
     dat$par.extend$scale = is.scale
-    dat$par.extend$link = model.link
+    dat$par.extend$link = NULL
     
     if(mask_override && !is.null(dat$par.extend$data$mask)){
       convert.loc2mask$loc.cov = arg.input$loc.cov
