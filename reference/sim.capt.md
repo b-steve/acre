@@ -43,9 +43,12 @@ sim.capt(
 
 - detfn:
 
-  character string specifying the detection function to be used. One of
-  "hn`(halfnormal),`hhn`(hazard halfnormal),`hr`(hazard rate),`th`(threshold),`lth`(log-link threshold), or`ss`(signal strength). If`ss\`
-  is used, signal strength information must be provided in capt.
+  A character string specifying the detection function to be used.
+  Either `"hn"` (halfnormal), `"hhn"` (hazard halfnormal), `"hr"`
+  (hazard rate), `"th"` (threshold), `"lth"` (log-link threshold), or
+  `"ss"` (signal strength). If `"ss"` is used, signal strength
+  information must be included in `data`. See the section below on
+  parameter names for further details.
 
 - param:
 
@@ -57,9 +60,11 @@ sim.capt(
 
 - model:
 
-  a list with named elements. Each element contains the formula for the
-  parameter indicated by the name of this element. For example, model =
-  list(D = ~x1+x2, sigma = ~x3+x4)
+  A list with named components. Each component name must match a
+  parameter name. The component itself must be a
+  [formula](https://rdrr.io/r/stats/formula.html) specifying the
+  relationship between covariates and the parameter. See the section on
+  model specifications below.
 
 - traps:
 
@@ -129,12 +134,13 @@ sim.capt(
 
 - ss.opts:
 
-  a list. It could contain 3 elements related to signal strength model.
-  cutoff - the threshold of signal strength could be detected, must be
-  included if signal strength is provided. ss.link - the link function
-  of signal strength, could be `identity`, `log` or `spherical`, by
-  default, it is `identity`. directional - a logical value, indicate
-  whether to apply signal strength directional model.
+  A list with information required to fit models that include signal
+  strengths as auxiliary detection data. One component must be named
+  `cutoff`, a detection threshold. It could contain 3 elements related
+  to signal strength model. An optional component is `ss.link`, which
+  specifies the relationship between distance and the expected received
+  signal strength. See the section below on signal strength models for
+  further details.
 
 - cue.rates:
 

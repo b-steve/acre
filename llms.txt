@@ -74,7 +74,7 @@ Functions for reading, formatting, and preparing acoustic SCR data.
 Fit acoustic SCR models and compute core model quantities.
 
 - [`fit.acre()`](https://b-steve.github.io/acre/reference/fit.acre.md) :
-  Fitting acoustic SCR models
+  Fitting a spatial capture-recapture model
 - [`esa()`](https://b-steve.github.io/acre/reference/esa.md) : Estimated
   effective sampling areas
 

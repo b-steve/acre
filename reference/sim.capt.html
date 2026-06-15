@@ -92,7 +92,12 @@ parameters will be taken from the fitted object, so no other parameters need to 
 
 
 <dt id="arg-detfn">detfn<a class="anchor" aria-label="anchor" href="#arg-detfn"></a></dt>
-<dd><p>character string specifying the detection function to be used. One of "hn<code>(halfnormal),</code>hhn<code>(hazard halfnormal),</code>hr<code>(hazard rate),</code>th<code>(threshold),</code>lth<code>(log-link threshold), or</code>ss<code>(signal strength). If</code>ss` is used, signal strength information must be provided in capt.</p></dd>
+<dd><p>A character string specifying the detection function
+to be used. Either <code>"hn"</code> (halfnormal), <code>"hhn"</code> (hazard
+halfnormal), <code>"hr"</code> (hazard rate), <code>"th"</code> (threshold), <code>"lth"</code>
+(log-link threshold), or <code>"ss"</code> (signal strength).  If <code>"ss"</code> is
+used, signal strength information must be included in <code>data</code>. See
+the section below on parameter names for further details.</p></dd>
 
 
 <dt id="arg-param">param<a class="anchor" aria-label="anchor" href="#arg-param"></a></dt>
@@ -105,8 +110,10 @@ detection function and additional information type(s).</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
-<dd><p>a list with named elements. Each element contains the formula for the parameter indicated by the name of
-this element. For example, model = list(D = ~x1+x2, sigma = ~x3+x4)</p></dd>
+<dd><p>A list with named components. Each component name must
+match a parameter name. The component itself must be a <a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a>
+specifying the relationship between covariates and the
+parameter. See the section on model specifications below.</p></dd>
 
 
 <dt id="arg-traps">traps<a class="anchor" aria-label="anchor" href="#arg-traps"></a></dt>
@@ -180,12 +187,13 @@ sessions, the value will be assigned to all sessions.</p></dd>
 
 
 <dt id="arg-ss-opts">ss.opts<a class="anchor" aria-label="anchor" href="#arg-ss-opts"></a></dt>
-<dd><p>a list. It could contain 3 elements related to signal strength model.
-cutoff - the threshold of signal strength could be detected,
-must be included if signal strength is provided.
-ss.link - the link function of signal strength, could be <code>identity</code>, <code>log</code> or <code>spherical</code>,
-by default, it is <code>identity</code>.
-directional - a logical value, indicate whether to apply signal strength directional model.</p></dd>
+<dd><p>A list with information required to fit models that
+include signal strengths as auxiliary detection data. One
+component must be named <code>cutoff</code>, a detection threshold. It could
+contain 3 elements related to signal strength model. An optional
+component is <code>ss.link</code>, which specifies the relationship between
+distance and the expected received signal strength. See the
+section below on signal strength models for further details.</p></dd>
 
 
 <dt id="arg-cue-rates">cue.rates<a class="anchor" aria-label="anchor" href="#arg-cue-rates"></a></dt>
