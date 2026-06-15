@@ -325,7 +325,7 @@ read.acre = function(captures, traps, mask = NULL,
 #'   location related covariates to the new mask level data.  For any
 #'   details, could refer to the help document in the function
 #'   `read.acre()`
-#' @param is.scale a logical value. Indicate whether to standardize
+#' @param scale.covs a logical value. Indicate whether to standardize
 #'   the numerical covariates for the extended parameters, it is
 #'   `TRUE` by default.
 #' @param local a logical value. FALSE by default. If TRUE, the model
@@ -337,8 +337,6 @@ read.acre = function(captures, traps, mask = NULL,
 #'   model will skip the process of generating automatic derivative
 #'   functions, which will use less RAM, but the optimization process
 #'   will consume more time.
-#' @param sv.link a list; this is mostly for development purpose, not
-#'   recommended to use.
 #' @param CL a logical value. FALSE by default. If TRUE, fit a
 #'   conditional likelihood model, ignoring density parameter
 #'   estimation.
@@ -349,9 +347,9 @@ read.acre = function(captures, traps, mask = NULL,
 #' @return
 #' @export
 fit.acre = function(data, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
-                    control.mask = NULL, mask = NULL, convert.loc2mask = list(), is.scale = TRUE,
-                    model.link = NULL, local = FALSE, tracing = TRUE, gr.skip = FALSE,
-                    sv.link = NULL, two.stage = FALSE, CL = two.stage){
+                    control.mask = NULL, mask = NULL, convert.loc2mask = list(), scale.covs = TRUE,
+                    local = FALSE, tracing = TRUE, gr.skip = FALSE,
+                    two.stage = FALSE, CL = two.stage){
   ## Renaming object.
   dat <- data
   
@@ -393,7 +391,7 @@ fit.acre = function(data, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, 
     } else {
       dat$par.extend$model = model
     }
-    dat$par.extend$scale = is.scale
+    dat$par.extend$scale = scale.covs
     dat$par.extend$link = NULL
     
     if(mask_override && !is.null(dat$par.extend$data$mask)){
@@ -406,7 +404,7 @@ fit.acre = function(data, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, 
     dat$par.extend = NULL
   }
   
-  # Conditional likelihood checks
+                                        # Conditional likelihood checks
   if(CL){
     
     if(!is.null(model) && "D" %in% names(model)){
@@ -440,6 +438,7 @@ fit.acre = function(data, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, 
   dat$bounds = bounds
   dat$fix = fix
   dat$ss.opts = ss.opts
+  sv.link <- NULL
   dat$sv.link = sv.link
   dat$CL = CL
   dat$two.stage = two.stage
