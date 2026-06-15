@@ -31,7 +31,12 @@ sim.capt(
 the bootstrap process "boot.acre()". If \code{fit} is provided, then all other
 parameters will be taken from the fitted object, so no other parameters need to be provided.}
 
-\item{detfn}{character string specifying the detection function to be used. One of "hn\verb{(halfnormal),}hhn\verb{(hazard halfnormal),}hr\verb{(hazard rate),}th\verb{(threshold),}lth\verb{(log-link threshold), or}ss\verb{(signal strength). If}ss` is used, signal strength information must be provided in capt.}
+\item{detfn}{A character string specifying the detection function
+to be used. Either \code{"hn"} (halfnormal), \code{"hhn"} (hazard
+halfnormal), \code{"hr"} (hazard rate), \code{"th"} (threshold), \code{"lth"}
+(log-link threshold), or \code{"ss"} (signal strength).  If \code{"ss"} is
+used, signal strength information must be included in \code{data}. See
+the section below on parameter names for further details.}
 
 \item{param}{A named list. Component names are parameter names, and
 each component is the value of the associated parameter. A
@@ -40,8 +45,10 @@ density, if it an acoustic survey) must always be provided,
 along with values for parameters associated with the chosen
 detection function and additional information type(s).}
 
-\item{model}{a list with named elements. Each element contains the formula for the parameter indicated by the name of
-this element. For example, model = list(D = ~x1+x2, sigma = ~x3+x4)}
+\item{model}{A list with named components. Each component name must
+match a parameter name. The component itself must be a \link{formula}
+specifying the relationship between covariates and the
+parameter. See the section on model specifications below.}
 
 \item{traps}{A matrix or a data frame with two columns, or a list
 of such matrices or data frames for a multi-session model. Each
@@ -95,12 +102,13 @@ on spatial covariates below.}
 length of each session. If it is a scalar and there are multiple
 sessions, the value will be assigned to all sessions.}
 
-\item{ss.opts}{a list. It could contain 3 elements related to signal strength model.
-cutoff - the threshold of signal strength could be detected,
-must be included if signal strength is provided.
-ss.link - the link function of signal strength, could be \code{identity}, \code{log} or \code{spherical},
-by default, it is \code{identity}.
-directional - a logical value, indicate whether to apply signal strength directional model.}
+\item{ss.opts}{A list with information required to fit models that
+include signal strengths as auxiliary detection data. One
+component must be named \code{cutoff}, a detection threshold. It could
+contain 3 elements related to signal strength model. An optional
+component is \code{ss.link}, which specifies the relationship between
+distance and the expected received signal strength. See the
+section below on signal strength models for further details.}
 
 \item{cue.rates}{A numeric vector containing the recorded cue rates
 of individuals, collected separately to the SCR survey. See the
