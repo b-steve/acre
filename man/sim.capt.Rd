@@ -104,11 +104,10 @@ sessions, the value will be assigned to all sessions.}
 
 \item{ss.opts}{A list with information required to fit models that
 include signal strengths as auxiliary detection data. One
-component must be named \code{cutoff}, a detection threshold. It could
-contain 3 elements related to signal strength model. An optional
-component is \code{ss.link}, which specifies the relationship between
-distance and the expected received signal strength. See the
-section below on signal strength models for further details.}
+component must be named \code{cutoff}, a detection threshold. An
+optional component is \code{ss.link}, which specifies the relationship
+between distance and the expected received signal strength. See
+the section below on signal strength models for further details.}
 
 \item{cue.rates}{A numeric vector containing the recorded cue rates
 of individuals, collected separately to the SCR survey. See the

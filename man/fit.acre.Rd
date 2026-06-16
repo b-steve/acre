@@ -8,17 +8,12 @@ fit.acre(
   data,
   model = NULL,
   detfn = NULL,
-  sv = NULL,
-  bounds = NULL,
-  fix = NULL,
   ss.opts = NULL,
   control.mask = NULL,
   mask = NULL,
   convert.loc2mask = list(),
-  scale.covs = TRUE,
-  local = FALSE,
   tracing = TRUE,
-  gr.skip = FALSE,
+  optim.opts = NULL,
   two.stage = FALSE,
   CL = two.stage
 )
@@ -38,29 +33,12 @@ halfnormal), \code{"hr"} (hazard rate), \code{"th"} (threshold), \code{"lth"}
 used, signal strength information must be included in \code{data}. See
 the section below on parameter names for further details.}
 
-\item{sv}{A named list of parameter start values. Element names are
-parameter names, and each element is a start value for the
-associated parameter. See the section below on troubleshooting
-model fitting for further details.}
-
-\item{bounds}{A named list of parameter bounds. Element names are
-parameter names, and each element is a vector of length two,
-specifying the upper and lower bounds for the associated
-parameter. See the section below on troubleshooting model fitting
-for further details.}
-
-\item{fix}{A named list of fixed parameter values. Element names
-are parameter names to be fixed, and each element is the fixed
-value for the associated parameter. If a parameter is fixed, it
-will not be estimated by the model.}
-
 \item{ss.opts}{A list with information required to fit models that
 include signal strengths as auxiliary detection data. One
-component must be named \code{cutoff}, a detection threshold. It could
-contain 3 elements related to signal strength model. An optional
-component is \code{ss.link}, which specifies the relationship between
-distance and the expected received signal strength. See the
-section below on signal strength models for further details.}
+component must be named \code{cutoff}, a detection threshold. An
+optional component is \code{ss.link}, which specifies the relationship
+between distance and the expected received signal strength. See
+the section below on signal strength models for further details.}
 
 \item{control.mask}{a list with elements corresponding to the
 function \code{create.mask}. If provided, and the argument "mask" is
@@ -77,23 +55,13 @@ and if there is any parameter extended under mask level, this
 argument could be used to control the process of converting
 location related covariates to the new mask level data.  For any
 details, could refer to the help document in the function
-\code{read.acre()}}
-
-\item{scale.covs}{a logical value. Indicate whether to standardize
-the numerical covariates for the extended parameters, it is
-\code{TRUE} by default.}
-
-\item{local}{a logical value. FALSE by default. If TRUE, the model
-will only integrate the masks within the buffer distance for all
-traps.}
+\code{read.acre()}.}
 
 \item{tracing}{a logical value. TRUE by default, an indicator of
-showing the tracing information. (seems not work as expected.)}
+showing the tracing information.}
 
-\item{gr.skip}{a logical value. FALSE by default. If TRUE, TMB
-model will skip the process of generating automatic derivative
-functions, which will use less RAM, but the optimization process
-will consume more time.}
+\item{optim.opts}{A list with optimisation options. See the section
+below on optimiser settings.}
 
 \item{two.stage}{a logical value. FALSE by default. If TRUE, after
 fitting a model, the partial derivatives, of the ESA for each
@@ -110,6 +78,8 @@ Fits an a spatial capture-recapture model to a data object returned by \code{\li
 
 
 Specify models using the \code{model} argument.
+
+(More to put in here)
 }
 
 \section{Parameter names}{
@@ -125,13 +95,64 @@ Parameters fall into three groups:
 (More to put in here)
 }
 
-\section{Troubleshooting model fiting}{
+\section{Optimiser settings}{
 
 
-Sometimes model-fitting might be tricky. Setting start values or
-applying bounds on parameters might help.
+The \code{\link[=fit.acre]{fit.acre()}} function fits a spatial capture-recapture model by
+numerically maximising the likelihood function with respect to the
+model parameters. In almost all cases, the optimisation procedure
+will run without a problem, but in rare cases it might help to
+adjust how the optimiser works.
 
-(More to put in here)
+The \code{optim.opts} argument allows the user to change some optimiser
+settings. The argument must be a list. Two optional components
+control parameter-specific optimisation settings:
+\itemize{
+\item \code{sv}: Overrides default parameter start values.
+\item \code{fix}: Holds parameters constant rather than estimating them via
+optimisation.
+}
+
+These must be named lists, where component names are parameter
+names. For \code{sv}, the component is a scalar that provides the
+parameter's start value, and for \code{fix} the component is a scalar
+that provides the fixed value of the parameter. So, for example,
+\code{sv = list(sigma = 200)} will set a start value of 200 m for
+\code{sigma}.
+
+It is not possible to control coefficients for covariates. These
+always have start values of zero (i.e., no effect of the
+covariate), and cannot be fixed. The \code{sv} component can be named
+after a parameter that is modelled with covariates. For example, if
+we include \code{model = list(D = ~ elevation)}, where \code{elevation} is
+height above sea level in metres, then using \code{sv = list(D = 100)}
+sets the starting values so that density is spatially homogenous at
+100 calls per hectare (or 100 animals per hectare, depending on the
+model). The \code{fix} component cannot be used for parameters that are
+modeled with covariates.
+
+Three additional components control optimiser behaviour:
+\itemize{
+\item \code{gr.skip}: A logical value, and \code{FALSE} by default. We use
+automatic differentiation to speed up numeric optimisation, but
+in some cases this requires large amounts of RAM. Setting
+\code{gr.skip} to \code{TRUE} turns off automatic differentiation, which
+reduces RAM demands, but, if you have enough RAM, will increase
+computation time.
+\item \code{scale.covs}: A logical value, and \code{TRUE} by default. If \code{TRUE},
+covariates are centred and standardised (i.e., we subtract the
+mean, then divide by the standard deviation) prior to
+optimisation. This leads to an equivalent model, but optimisation
+is typically more stable. Regardless of whether \code{scale.covs} is
+\code{TRUE} or \code{FALSE}, we report estimated coefficients and standard
+errors on the scale of the original, untransformed covariate.
+\item \code{local}: A logical value, and \code{FALSE} by default, that toggles
+local integration over activity centres. If \code{TRUE}, the
+likelihood will be computed by only integrating over mask points
+that are within the buffer distance of all traps that made a
+detection. This can speed up optimisation, but makes estimates
+more sensitive to the mask buffer setting.
+}
 }
 
 \section{Signal strength models}{
