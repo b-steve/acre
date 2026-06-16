@@ -50,17 +50,12 @@
 <span>  <span class="va">data</span>,</span>
 <span>  model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  detfn <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  sv <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  bounds <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  fix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ss.opts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  control.mask <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mask <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  convert.loc2mask <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  scale.covs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  local <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  tracing <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  gr.skip <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  optim.opts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  two.stage <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  CL <span class="op">=</span> <span class="va">two.stage</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -90,36 +85,13 @@ used, signal strength information must be included in <code>data</code>. See
 the section below on parameter names for further details.</p></dd>
 
 
-<dt id="arg-sv">sv<a class="anchor" aria-label="anchor" href="#arg-sv"></a></dt>
-<dd><p>A named list of parameter start values. Element names are
-parameter names, and each element is a start value for the
-associated parameter. See the section below on troubleshooting
-model fitting for further details.</p></dd>
-
-
-<dt id="arg-bounds">bounds<a class="anchor" aria-label="anchor" href="#arg-bounds"></a></dt>
-<dd><p>A named list of parameter bounds. Element names are
-parameter names, and each element is a vector of length two,
-specifying the upper and lower bounds for the associated
-parameter. See the section below on troubleshooting model fitting
-for further details.</p></dd>
-
-
-<dt id="arg-fix">fix<a class="anchor" aria-label="anchor" href="#arg-fix"></a></dt>
-<dd><p>A named list of fixed parameter values. Element names
-are parameter names to be fixed, and each element is the fixed
-value for the associated parameter. If a parameter is fixed, it
-will not be estimated by the model.</p></dd>
-
-
 <dt id="arg-ss-opts">ss.opts<a class="anchor" aria-label="anchor" href="#arg-ss-opts"></a></dt>
 <dd><p>A list with information required to fit models that
 include signal strengths as auxiliary detection data. One
-component must be named <code>cutoff</code>, a detection threshold. It could
-contain 3 elements related to signal strength model. An optional
-component is <code>ss.link</code>, which specifies the relationship between
-distance and the expected received signal strength. See the
-section below on signal strength models for further details.</p></dd>
+component must be named <code>cutoff</code>, a detection threshold. An
+optional component is <code>ss.link</code>, which specifies the relationship
+between distance and the expected received signal strength. See
+the section below on signal strength models for further details.</p></dd>
 
 
 <dt id="arg-control-mask">control.mask<a class="anchor" aria-label="anchor" href="#arg-control-mask"></a></dt>
@@ -142,31 +114,17 @@ and if there is any parameter extended under mask level, this
 argument could be used to control the process of converting
 location related covariates to the new mask level data.  For any
 details, could refer to the help document in the function
-<code><a href="read.acre.html">read.acre()</a></code></p></dd>
-
-
-<dt id="arg-scale-covs">scale.covs<a class="anchor" aria-label="anchor" href="#arg-scale-covs"></a></dt>
-<dd><p>a logical value. Indicate whether to standardize
-the numerical covariates for the extended parameters, it is
-<code>TRUE</code> by default.</p></dd>
-
-
-<dt id="arg-local">local<a class="anchor" aria-label="anchor" href="#arg-local"></a></dt>
-<dd><p>a logical value. FALSE by default. If TRUE, the model
-will only integrate the masks within the buffer distance for all
-traps.</p></dd>
+<code><a href="read.acre.html">read.acre()</a></code>.</p></dd>
 
 
 <dt id="arg-tracing">tracing<a class="anchor" aria-label="anchor" href="#arg-tracing"></a></dt>
 <dd><p>a logical value. TRUE by default, an indicator of
-showing the tracing information. (seems not work as expected.)</p></dd>
+showing the tracing information.</p></dd>
 
 
-<dt id="arg-gr-skip">gr.skip<a class="anchor" aria-label="anchor" href="#arg-gr-skip"></a></dt>
-<dd><p>a logical value. FALSE by default. If TRUE, TMB
-model will skip the process of generating automatic derivative
-functions, which will use less RAM, but the optimization process
-will consume more time.</p></dd>
+<dt id="arg-optim-opts">optim.opts<a class="anchor" aria-label="anchor" href="#arg-optim-opts"></a></dt>
+<dd><p>A list with optimisation options. See the section
+below on optimiser settings.</p></dd>
 
 
 <dt id="arg-two-stage">two.stage<a class="anchor" aria-label="anchor" href="#arg-two-stage"></a></dt>
@@ -187,6 +145,7 @@ estimation.</p></dd>
 
 
 <p>Specify models using the <code>model</code> argument.</p>
+<p>(More to put in here)</p>
     </div>
     <div class="section level2">
     <h2 id="parameter-names">Parameter names<a class="anchor" aria-label="anchor" href="#parameter-names"></a></h2>
@@ -199,14 +158,56 @@ estimation.</p></dd>
 </ul><p>(More to put in here)</p>
     </div>
     <div class="section level2">
-    <h2 id="troubleshooting-model-fiting">Troubleshooting model fiting<a class="anchor" aria-label="anchor" href="#troubleshooting-model-fiting"></a></h2>
+    <h2 id="optimiser-settings">Optimiser settings<a class="anchor" aria-label="anchor" href="#optimiser-settings"></a></h2>
 
 
 
-<p>Sometimes model-fitting might be tricky. Setting start values or
-applying bounds on parameters might help.</p>
-<p>(More to put in here)</p>
-    </div>
+<p>The <code>fit.acre()</code> function fits a spatial capture-recapture model by
+numerically maximising the likelihood function with respect to the
+model parameters. In almost all cases, the optimisation procedure
+will run without a problem, but in rare cases it might help to
+adjust how the optimiser works.</p>
+<p>The <code>optim.opts</code> argument allows the user to change some optimiser
+settings. The argument must be a list. Two optional components
+control parameter-specific optimisation settings:</p><ul><li><p><code>sv</code>: Overrides default parameter start values.</p></li>
+<li><p><code>fix</code>: Holds parameters constant rather than estimating them via
+optimisation.</p></li>
+</ul><p>These must be named lists, where component names are parameter
+names. For <code>sv</code>, the component is a scalar that provides the
+parameter's start value, and for <code>fix</code> the component is a scalar
+that provides the fixed value of the parameter. So, for example,
+<code>sv = list(sigma = 200)</code> will set a start value of 200 m for
+<code>sigma</code>.</p>
+<p>It is not possible to control coefficients for covariates. These
+always have start values of zero (i.e., no effect of the
+covariate), and cannot be fixed. The <code>sv</code> component can be named
+after a parameter that is modelled with covariates. For example, if
+we include <code>model = list(D = ~ elevation)</code>, where <code>elevation</code> is
+height above sea level in metres, then using <code>sv = list(D = 100)</code>
+sets the starting values so that density is spatially homogenous at
+100 calls per hectare (or 100 animals per hectare, depending on the
+model). The <code>fix</code> component cannot be used for parameters that are
+modeled with covariates.</p>
+<p>Three additional components control optimiser behaviour:</p><ul><li><p><code>gr.skip</code>: A logical value, and <code>FALSE</code> by default. We use
+automatic differentiation to speed up numeric optimisation, but
+in some cases this requires large amounts of RAM. Setting
+<code>gr.skip</code> to <code>TRUE</code> turns off automatic differentiation, which
+reduces RAM demands, but, if you have enough RAM, will increase
+computation time.</p></li>
+<li><p><code>scale.covs</code>: A logical value, and <code>TRUE</code> by default. If <code>TRUE</code>,
+covariates are centred and standardised (i.e., we subtract the
+mean, then divide by the standard deviation) prior to
+optimisation. This leads to an equivalent model, but optimisation
+is typically more stable. Regardless of whether <code>scale.covs</code> is
+<code>TRUE</code> or <code>FALSE</code>, we report estimated coefficients and standard
+errors on the scale of the original, untransformed covariate.</p></li>
+<li><p><code>local</code>: A logical value, and <code>FALSE</code> by default, that toggles
+local integration over activity centres. If <code>TRUE</code>, the
+likelihood will be computed by only integrating over mask points
+that are within the buffer distance of all traps that made a
+detection. This can speed up optimisation, but makes estimates
+more sensitive to the mask buffer setting.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="signal-strength-models">Signal strength models<a class="anchor" aria-label="anchor" href="#signal-strength-models"></a></h2>
 

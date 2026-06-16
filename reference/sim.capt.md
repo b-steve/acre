@@ -136,11 +136,10 @@ sim.capt(
 
   A list with information required to fit models that include signal
   strengths as auxiliary detection data. One component must be named
-  `cutoff`, a detection threshold. It could contain 3 elements related
-  to signal strength model. An optional component is `ss.link`, which
-  specifies the relationship between distance and the expected received
-  signal strength. See the section below on signal strength models for
-  further details.
+  `cutoff`, a detection threshold. An optional component is `ss.link`,
+  which specifies the relationship between distance and the expected
+  received signal strength. See the section below on signal strength
+  models for further details.
 
 - cue.rates:
 

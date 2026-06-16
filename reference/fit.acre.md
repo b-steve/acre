@@ -10,17 +10,12 @@ fit.acre(
   data,
   model = NULL,
   detfn = NULL,
-  sv = NULL,
-  bounds = NULL,
-  fix = NULL,
   ss.opts = NULL,
   control.mask = NULL,
   mask = NULL,
   convert.loc2mask = list(),
-  scale.covs = TRUE,
-  local = FALSE,
   tracing = TRUE,
-  gr.skip = FALSE,
+  optim.opts = NULL,
   two.stage = FALSE,
   CL = two.stage
 )
@@ -50,36 +45,14 @@ fit.acre(
   information must be included in `data`. See the section below on
   parameter names for further details.
 
-- sv:
-
-  A named list of parameter start values. Element names are parameter
-  names, and each element is a start value for the associated parameter.
-  See the section below on troubleshooting model fitting for further
-  details.
-
-- bounds:
-
-  A named list of parameter bounds. Element names are parameter names,
-  and each element is a vector of length two, specifying the upper and
-  lower bounds for the associated parameter. See the section below on
-  troubleshooting model fitting for further details.
-
-- fix:
-
-  A named list of fixed parameter values. Element names are parameter
-  names to be fixed, and each element is the fixed value for the
-  associated parameter. If a parameter is fixed, it will not be
-  estimated by the model.
-
 - ss.opts:
 
   A list with information required to fit models that include signal
   strengths as auxiliary detection data. One component must be named
-  `cutoff`, a detection threshold. It could contain 3 elements related
-  to signal strength model. An optional component is `ss.link`, which
-  specifies the relationship between distance and the expected received
-  signal strength. See the section below on signal strength models for
-  further details.
+  `cutoff`, a detection threshold. An optional component is `ss.link`,
+  which specifies the relationship between distance and the expected
+  received signal strength. See the section below on signal strength
+  models for further details.
 
 - control.mask:
 
@@ -102,28 +75,17 @@ fit.acre(
   control the process of converting location related covariates to the
   new mask level data. For any details, could refer to the help document
   in the function
-  [`read.acre()`](https://b-steve.github.io/acre/reference/read.acre.md)
-
-- scale.covs:
-
-  a logical value. Indicate whether to standardize the numerical
-  covariates for the extended parameters, it is `TRUE` by default.
-
-- local:
-
-  a logical value. FALSE by default. If TRUE, the model will only
-  integrate the masks within the buffer distance for all traps.
+  [`read.acre()`](https://b-steve.github.io/acre/reference/read.acre.md).
 
 - tracing:
 
   a logical value. TRUE by default, an indicator of showing the tracing
-  information. (seems not work as expected.)
+  information.
 
-- gr.skip:
+- optim.opts:
 
-  a logical value. FALSE by default. If TRUE, TMB model will skip the
-  process of generating automatic derivative functions, which will use
-  less RAM, but the optimization process will consume more time.
+  A list with optimisation options. See the section below on optimiser
+  settings.
 
 - two.stage:
 
@@ -140,6 +102,8 @@ fit.acre(
 
 Specify models using the `model` argument.
 
+(More to put in here)
+
 ## Parameter names
 
 Parameters fall into three groups:
@@ -152,12 +116,62 @@ Parameters fall into three groups:
 
 (More to put in here)
 
-## Troubleshooting model fiting
+## Optimiser settings
 
-Sometimes model-fitting might be tricky. Setting start values or
-applying bounds on parameters might help.
+The `fit.acre()` function fits a spatial capture-recapture model by
+numerically maximising the likelihood function with respect to the model
+parameters. In almost all cases, the optimisation procedure will run
+without a problem, but in rare cases it might help to adjust how the
+optimiser works.
 
-(More to put in here)
+The `optim.opts` argument allows the user to change some optimiser
+settings. The argument must be a list. Two optional components control
+parameter-specific optimisation settings:
+
+- `sv`: Overrides default parameter start values.
+
+- `fix`: Holds parameters constant rather than estimating them via
+  optimisation.
+
+These must be named lists, where component names are parameter names.
+For `sv`, the component is a scalar that provides the parameter's start
+value, and for `fix` the component is a scalar that provides the fixed
+value of the parameter. So, for example, `sv = list(sigma = 200)` will
+set a start value of 200 m for `sigma`.
+
+It is not possible to control coefficients for covariates. These always
+have start values of zero (i.e., no effect of the covariate), and cannot
+be fixed. The `sv` component can be named after a parameter that is
+modelled with covariates. For example, if we include
+`model = list(D = ~ elevation)`, where `elevation` is height above sea
+level in metres, then using `sv = list(D = 100)` sets the starting
+values so that density is spatially homogenous at 100 calls per hectare
+(or 100 animals per hectare, depending on the model). The `fix`
+component cannot be used for parameters that are modeled with
+covariates.
+
+Three additional components control optimiser behaviour:
+
+- `gr.skip`: A logical value, and `FALSE` by default. We use automatic
+  differentiation to speed up numeric optimisation, but in some cases
+  this requires large amounts of RAM. Setting `gr.skip` to `TRUE` turns
+  off automatic differentiation, which reduces RAM demands, but, if you
+  have enough RAM, will increase computation time.
+
+- `scale.covs`: A logical value, and `TRUE` by default. If `TRUE`,
+  covariates are centred and standardised (i.e., we subtract the mean,
+  then divide by the standard deviation) prior to optimisation. This
+  leads to an equivalent model, but optimisation is typically more
+  stable. Regardless of whether `scale.covs` is `TRUE` or `FALSE`, we
+  report estimated coefficients and standard errors on the scale of the
+  original, untransformed covariate.
+
+- `local`: A logical value, and `FALSE` by default, that toggles local
+  integration over activity centres. If `TRUE`, the likelihood will be
+  computed by only integrating over mask points that are within the
+  buffer distance of all traps that made a detection. This can speed up
+  optimisation, but makes estimates more sensitive to the mask buffer
+  setting.
 
 ## Signal strength models
 
