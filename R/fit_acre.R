@@ -267,12 +267,41 @@ read.acre = function(captures, traps, mask = NULL,
 #'
 #' (More to put in here)
 #'
-#' @section Troubleshooting model fiting:
+#' @section Optimiser settings:
 #'
-#' Sometimes model-fitting might be tricky. Setting start values or
-#' applying bounds on parameters might help.
+#' The [fit.acre()] function fits a spatial capture-recapture model by
+#' numerically maximising the likelihood function with respect to the
+#' model parameters. In almost all cases, the optimisation procedure
+#' will run without a problem, but in rare cases it might help to
+#' adjust how the optimiser works.
 #'
-#' (More to put in here)
+#' The `optim.opts` argument allows the user to change some optimiser
+#' settings. The argument must be a list, with the following possible
+#' named components:
+#' 
+#' * `sv`: Override the default start values for model parameters.
+#' 
+#' * `bounds`: Apply lower and upper bounds to possible values for parameters.
+#' 
+#' * `fix`: Hold parameters constant rather than estimating them via
+#'    optimisation.
+#' 
+#' * `gr.skip`: A logical value, and `FALSE` by default. We use
+#'   automatic differentiation to speed up numeric optimisation, but
+#'   in some cases this requires large amounts of RAM. Setting
+#'   `gr.skip` to `TRUE` turns off automatic differentiation, which
+#'   reduces RAM demands, but, if you have enough RAM, will increase
+#'   computation time.
+#'
+#' * `scale.covs`: A logical value, and `TRUE` by default. If `TRUE`,
+#'   covariates are centred and standardised (i.e., we subtract the
+#'   mean, then divide by the standard deviation) prior to
+#'   optimisation. This leads to an equivalent model, but optimisation
+#'   is typically more stable. Regardless of whether `scale.covs` is
+#'   `TRUE` or `FALSE`, we report estimated coefficients and standard
+#'   errors on the scale of the original, untransformed covariate.
+#'
+#' (More to put in here about `sv`, `bounds`, and `fix`.)
 #'
 #' @section Signal strength models:
 #'
@@ -291,19 +320,6 @@ read.acre = function(captures, traps, mask = NULL,
 #'   (log-link threshold), or `"ss"` (signal strength).  If `"ss"` is
 #'   used, signal strength information must be included in `data`. See
 #'   the section below on parameter names for further details.
-#' @param sv A named list of parameter start values. Element names are
-#'   parameter names, and each element is a start value for the
-#'   associated parameter. See the section below on troubleshooting
-#'   model fitting for further details.
-#' @param bounds A named list of parameter bounds. Element names are
-#'   parameter names, and each element is a vector of length two,
-#'   specifying the upper and lower bounds for the associated
-#'   parameter. See the section below on troubleshooting model fitting
-#'   for further details.
-#' @param fix A named list of fixed parameter values. Element names
-#'   are parameter names to be fixed, and each element is the fixed
-#'   value for the associated parameter. If a parameter is fixed, it
-#'   will not be estimated by the model.
 #' @param ss.opts A list with information required to fit models that
 #'   include signal strengths as auxiliary detection data. One
 #'   component must be named `cutoff`, a detection threshold. It could
@@ -325,18 +341,13 @@ read.acre = function(captures, traps, mask = NULL,
 #'   location related covariates to the new mask level data.  For any
 #'   details, could refer to the help document in the function
 #'   `read.acre()`
-#' @param scale.covs a logical value. Indicate whether to standardize
-#'   the numerical covariates for the extended parameters, it is
-#'   `TRUE` by default.
 #' @param local a logical value. FALSE by default. If TRUE, the model
 #'   will only integrate the masks within the buffer distance for all
 #'   traps.
 #' @param tracing a logical value. TRUE by default, an indicator of
 #'   showing the tracing information. (seems not work as expected.)
-#' @param gr.skip a logical value. FALSE by default. If TRUE, TMB
-#'   model will skip the process of generating automatic derivative
-#'   functions, which will use less RAM, but the optimization process
-#'   will consume more time.
+#' @param optim.opts A list with optimisation options. See the section
+#'   below on optimiser settings.
 #' @param CL a logical value. FALSE by default. If TRUE, fit a
 #'   conditional likelihood model, ignoring density parameter
 #'   estimation.
@@ -346,9 +357,9 @@ read.acre = function(captures, traps, mask = NULL,
 #' 
 #' @return
 #' @export
-fit.acre = function(data, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
-                    control.mask = NULL, mask = NULL, convert.loc2mask = list(), scale.covs = TRUE,
-                    local = FALSE, tracing = TRUE, gr.skip = FALSE,
+fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
+                    control.mask = NULL, mask = NULL, convert.loc2mask = list(),
+                    local = FALSE, tracing = TRUE, optim.opts = NULL,
                     two.stage = FALSE, CL = two.stage){
   ## Renaming object.
   dat <- data
@@ -356,6 +367,12 @@ fit.acre = function(data, model = NULL, detfn = NULL, sv = NULL, bounds = NULL, 
   arg.input = dat$arg.input
   dat$arg.input = NULL
   mask_override = FALSE
+  ## Pulling out optimiser settings.
+  sv <- optim.opts$sv
+  bounds <- optim.opts$bounds
+  gr.skip <- optim.opts$gr.skip
+  fix <- optim.opts$fix
+  scale.covs <- optim.opts$scale.covs
   
   if(!is.logical(two.stage) || length(two.stage) != 1L || is.na(two.stage)){
     stop("'two.stage' must be a single TRUE/FALSE value.")
