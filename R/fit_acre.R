@@ -364,16 +364,16 @@ read.acre = function(captures, traps, mask = NULL,
 #'   location related covariates to the new mask level data.  For any
 #'   details, could refer to the help document in the function
 #'   `read.acre()`.
-#' @param tracing a logical value. TRUE by default, an indicator of
-#'   showing the tracing information.
+#' @param tracing A logical value. If `TRUE`, information about the
+#'   optimiser's journey through the parameter space is printed during
+#'   model fitting.
 #' @param optim.opts A list with optimisation options. See the section
 #'   below on optimiser settings.
-#' @param CL a logical value. FALSE by default. If TRUE, fit a
-#'   conditional likelihood model, ignoring density parameter
-#'   estimation.
-#' @param two.stage a logical value. FALSE by default. If TRUE, after
-#'   fitting a model, the partial derivatives, of the ESA for each
-#'   session, w.r.t. the other parameters, is calculated and returned.
+#' @param CL A logical value. If `TRUE`, a conditional likelihood
+#'   model is fitted, and so density is not estimated.
+#' @param two.stage A logical value. If `TRUE`, computations required
+#'   to propagate variance under a two-stage density modelling
+#'   approach are carried out.
 #' 
 #' @return
 #' @export
