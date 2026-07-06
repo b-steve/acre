@@ -24,3 +24,5 @@ create.mask(traps, buffer, ...)
 
   a scalar, the furthest distance that a detector could detect (in
   metres)
+
+- ...:

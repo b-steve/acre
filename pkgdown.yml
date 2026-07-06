@@ -1,8 +1,14 @@
 pandoc: 3.8.3
 pkgdown: 2.2.0
 pkgdown_sha: ~
-articles: {}
-last_built: 2026-06-18T04:17Z
+articles:
+  acre: acre.html
+  articles/inhom_density: inhom_density.html
+  articles/multi_sess: multi_sess.html
+  articles/placeholder_1: placeholder_1.html
+  articles/placeholder_2: placeholder_2.html
+  articles/simulation: simulation.html
+last_built: 2026-07-06T02:16Z
 urls:
   reference: https://b-steve.github.io/acre/reference
   article: https://b-steve.github.io/acre/articles

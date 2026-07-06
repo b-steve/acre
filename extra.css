@@ -1,0 +1,281 @@
+/* HOME SIDE BAR CSS */
+
+/* Disable placeholder CRAN link on homepage sidebar */
+.template-home aside a[href="#"],
+.template-home #pkgdown-sidebar a[href="#"] {
+  color: #6c757d !important;
+  pointer-events: none;
+  text-decoration: none;
+  cursor: default;
+  opacity: 0.65;
+}
+
+/* README PLOT CSS */
+
+.acre-hero {
+  float: right;
+  width: 322px;
+  aspect-ratio: 1 / 1.14;
+  margin-left: 2rem;
+  margin-bottom: 0rem;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+
+  margin-top: -95px;
+
+  border: 1px;
+  border-color: grey;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.acre-hero img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  height: auto;
+  /* no transition: jump directly to the next plot */
+  /* transition: transform 0.75s ease-in-out; */
+  user-select: none;
+  pointer-events: none;
+}
+
+.acre-hero-label {
+  position: absolute;
+  right: 0.3rem;
+  bottom: 0rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  line-height: 1;
+  color: lightgrey;
+  background: white;
+  opacity: 0.8;
+}
+
+.acre-hero:hover .acre-hero-label {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .acre-hero {
+    float: none;
+    width: 100%;
+    max-width: 280px;
+    margin-left: 0;
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* NAVVBAR CSS */
+
+.navbar {
+  background-color: #046A38 !important;
+}
+
+.navbar .navbar-brand,
+.navbar .navbar-brand:hover,
+.navbar .navbar-brand:focus,
+.navbar .navbar-nav .nav-link,
+.navbar .navbar-nav .nav-link.active,
+.navbar .navbar-nav .nav-link:hover,
+.navbar .navbar-nav .nav-link:focus,
+.navbar .navbar-nav .show > .nav-link {
+  color: white !important;
+}
+
+/* Version text, e.g. <small class="nav-text text-muted ...">0.1.0</small> */
+.navbar .nav-text,
+.navbar .text-muted,
+.navbar small,
+.navbar small.nav-text,
+.navbar small.text-muted {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* GitHub icon / right-side icons */
+.navbar .navbar-nav .nav-link svg,
+.navbar .navbar-nav .nav-link i {
+  color: white !important;
+}
+
+/* Dropdown */
+.navbar .dropdown-menu {
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.navbar .dropdown-item {
+  color: #212529 !important;
+}
+
+.navbar .dropdown-item:hover,
+.navbar .dropdown-item:focus {
+  color: #046A38 !important;
+  background-color: rgba(4, 106, 56, 0.08);
+}
+
+/* Mobile hamburger */
+.navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.navbar-toggler-icon {
+  filter: invert(1);
+}
+
+/* Site-wide links */
+a {
+  color: #046A38;
+}
+
+a:hover,
+a:focus {
+  color: #034f2a;
+}
+
+/* BIRDS CSS */
+
+.acre-birds {
+  position: fixed;
+  right: 2rem;
+  bottom: 0;
+  width: 420px;
+  height: 120px;
+  z-index: 9000;
+  pointer-events: none;
+}
+
+.acre-bird-perch {
+  position: absolute;
+  bottom: -2px;
+
+  width: 88px;
+  height: 125px;
+
+  pointer-events: auto;
+  cursor: pointer;
+  will-change: transform;
+}
+
+/* Same bottom line, irregular horizontal spacing */
+.acre-bird-perch[data-bird-index="0"] {
+  right: 200px;
+}
+
+.acre-bird-perch[data-bird-index="1"] {
+  right: 156px;
+}
+
+.acre-bird-perch[data-bird-index="2"] {
+  right: 126px;
+}
+
+.acre-bird-perch[data-bird-index="3"] {
+  right: 49px;
+}
+
+.acre-bird-perch[data-bird-index="4"] {
+  right: 24px;
+}
+
+.acre-bird-sprite {
+  width: 88px;
+  height: 125px;
+
+  background-image: url("reference/figures/birds_perch.svg");
+  background-size: contain;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+
+  transform-origin: center bottom;
+  will-change: background-position, transform;
+  filter: hue-rotate(85deg) saturate(0.95) brightness(0.75);
+}
+
+/* Perched direction: same visual size as flying */
+.acre-bird-perch.face-right:not(.is-flying) .acre-bird-sprite {
+  transform: scaleX(1) scale(0.28);
+}
+
+.acre-bird-perch.face-left:not(.is-flying) .acre-bird-sprite {
+  transform: scaleX(-1) scale(0.28);
+}
+
+/* Flying sprite sheet */
+.acre-bird-perch.is-flying .acre-bird-sprite {
+  background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/174479/bird-cells-new.svg");
+  background-size: auto 100%;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+
+  animation-name: acre-bird-flap;
+  animation-timing-function: steps(10);
+  animation-iteration-count: infinite;
+  animation-duration: 0.72s;
+}
+
+/* Flying direction: same visual size as perched */
+.acre-bird-perch.is-flying.face-right .acre-bird-sprite {
+  transform: scaleX(1) scale(0.5);
+}
+
+.acre-bird-perch.is-flying.face-left .acre-bird-sprite {
+  transform: scaleX(-1) scale(0.5);
+}
+
+/* small visual variation */
+.acre-bird-perch[data-bird-index="1"] .acre-bird-sprite {
+  filter: hue-rotate(105deg) saturate(0.9) brightness(0.72);
+}
+
+.acre-bird-perch[data-bird-index="2"] .acre-bird-sprite {
+  filter: hue-rotate(75deg) saturate(0.84) brightness(0.78);
+}
+
+.acre-bird-perch[data-bird-index="3"] .acre-bird-sprite {
+  filter: hue-rotate(95deg) saturate(0.88) brightness(0.70);
+}
+
+.acre-bird-perch[data-bird-index="4"] .acre-bird-sprite {
+  filter: hue-rotate(115deg) saturate(0.86) brightness(0.73);
+}
+
+.acre-bird-perch:hover:not(.is-flying) {
+  transform: translateY(-3px);
+}
+
+.acre-bird-perch.is-flying {
+  pointer-events: none;
+}
+
+/* Faster flap on takeoff */
+.acre-bird-perch.is-taking-off .acre-bird-sprite {
+  animation-duration: 0.32s;
+}
+
+/* Faster flap on landing */
+.acre-bird-perch.is-landing .acre-bird-sprite {
+  animation-duration: 0.36s;
+}
+
+@keyframes acre-bird-flap {
+  100% {
+    background-position: -900px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .acre-birds {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acre-birds {
+    display: none;
+  }
+}

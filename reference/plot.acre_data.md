@@ -11,6 +11,8 @@ plot(x, ...)
 
 ## Arguments
 
+- x:
+
 - ...:
 
   For S3 compatibility.

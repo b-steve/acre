@@ -10,7 +10,8 @@
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Acoustic spatial capture-recapture">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
+<script src="extra.js"></script><meta property="og:title" content="Acoustic spatial capture-recapture">
 <meta name="description" content="This package provides functions to fit spatial capture-recapture (SCR) models, primarily to acoustic data. Acoustic surveys are capable of collecting auxiliary information in addition to capture histories that is informative about the source location of detected cues; examples include signal strengths, times of arrival, estimated bearings, and estimated distances. The acre package fits a class of SCR model that allows use of such information.">
 <meta property="og:description" content="This package provides functions to fit spatial capture-recapture (SCR) models, primarily to acoustic data. Acoustic surveys are capable of collecting auxiliary information in addition to capture histories that is informative about the source location of detected cues; examples include signal strengths, times of arrival, estimated bearings, and estimated distances. The acre package fits a class of SCR model that allows use of such information.">
 </head>
@@ -32,17 +33,17 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/acre.html">Get started</a></li>
-<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/acre.html">Getting started</a></li>
-    <li><a class="dropdown-item" href="articles/data-preparation.html">Data preparation</a></li>
-    <li><a class="dropdown-item" href="articles/model-fitting.html">Model fitting</a></li>
-    <li><a class="dropdown-item" href="articles/bootstrap-uncertainty.html">Bootstrap uncertainty</a></li>
-    <li><a class="dropdown-item" href="articles/simulation-study.html">Simulation studies</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tutorials" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tutorials</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-tutorials">
+<li><a class="dropdown-item" href="articles/inhom_density.html">Inhomogeneous density analysis</a></li>
+    <li><a class="dropdown-item" href="articles/multi_sess.html">Multi-session analysis</a></li>
+    <li><a class="dropdown-item" href="articles/simulation.html">Simulation</a></li>
+    <li><a class="dropdown-item" href="articles/placeholder_1.html">Placeholder 1</a></li>
+    <li><a class="dropdown-item" href="articles/placeholder_2.html">Placeholder 2</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -57,9 +58,23 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="acre">acre<a class="anchor" aria-label="anchor" href="#acre"></a>
 </h1></div>
+<div class="acre-hero" title="Click to show another plot">
+<img id="acre-hero-img" src="reference/figures/acre_plot_gallery.svg" alt="Example plots from acre"><div class="acre-hero-label">
+click to shuffle
+</div>
+</div>
 <p>Acoustic capture-recapture (ACRE) models estimate animal density from records of when and were individuals were detected. The first spatial capture-recapture (SCR) methods for acoustic data were developed by Efford, Dawson, and Borchers (2009).</p>
 <p>The <code>acre</code> package fits SCR models to estimate animal density from acoustic surveys. In particular, these models can incorporate additional data like received signal strengths, times of arrival, estimated distances, estimated bearings, any location or session or detectors related covariates which are informative or correlated about animals’ density. Other more general software packages exist for SCR (e.g., the comprehensive secr R package), but they cannot handle all data types listed above.</p>
 <p>Models that can be fitted in <code>acre</code> include those described by Efford, Dawson, and Borchers (2009), Borchers et al (2015), Stevenson et al (2015), and Stevenson et al (2021).</p>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>The easiest way to install <code>acre</code> package is to first install the <code>devtools</code> package, and then run the following code, although Windows users will need Rtools installed first. If you install Rtools, or have to reinstall <code>acre</code>, then make sure to restart your R session.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
+<span><span class="co"># Currently not available on CRAN</span></span>
+<span><span class="fu">install_github</span><span class="op">(</span><span class="st">"b-steve/acre"</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="help">Help<a class="anchor" aria-label="anchor" href="#help"></a>
 </h2>
@@ -86,6 +101,8 @@
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/b-steve/acre/" class="external-link">Browse source code</a></li>
+<li><a href="#">View on CRAN</a></li>
+<li><a href="https://github.com/b-steve/acre/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 

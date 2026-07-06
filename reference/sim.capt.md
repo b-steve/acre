@@ -151,6 +151,10 @@ sim.capt(
 
   An integer for the number of sessions.
 
+- n.rand:
+
+- random.location:
+
 - sound.speed:
 
   A scalar, the speed of sound in metres per second. This argument is

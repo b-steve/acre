@@ -79,8 +79,8 @@ fit.acre(
 
 - tracing:
 
-  a logical value. TRUE by default, an indicator of showing the tracing
-  information.
+  A logical value. If `TRUE`, information about the optimiser's journey
+  through the parameter space is printed during model fitting.
 
 - optim.opts:
 
@@ -89,14 +89,13 @@ fit.acre(
 
 - two.stage:
 
-  a logical value. FALSE by default. If TRUE, after fitting a model, the
-  partial derivatives, of the ESA for each session, w.r.t. the other
-  parameters, is calculated and returned.
+  A logical value. If `TRUE`, computations required to propagate
+  variance under a two-stage density modelling approach are carried out.
 
 - CL:
 
-  a logical value. FALSE by default. If TRUE, fit a conditional
-  likelihood model, ignoring density parameter estimation.
+  A logical value. If `TRUE`, a conditional likelihood model is fitted,
+  and so density is not estimated.
 
 ## Model specification
 

@@ -29,5 +29,4 @@ y-coordinates, the detector type ('single', 'multi', 'proximity',
 ## Details
 
 The returned object is suitable for use as the `traps` argument of the
-function
-[make.capthist](https://rdrr.io/pkg/secr/man/make.capthist.html).
+function make.capthist.

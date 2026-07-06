@@ -7,3 +7,8 @@ Title
 ``` r
 stdEr(object, ...)
 ```
+
+## Arguments
+
+- object:
+- ...:

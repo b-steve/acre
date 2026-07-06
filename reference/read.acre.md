@@ -233,21 +233,5 @@ estimation from acoustic detections across a fixed microphone array.
 
 Stevenson, B. C., van Dam-Bates, P., Young, C. K. Y., and Measey, J.
 (2021) A spatial capture-recapture model to estimate call rate and
-population density from passive acoustic surveys. \*Methods in Ecology
-and Evolution, *12*(3), 432–442.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-## Getting some data.
-example <- get("simple_hhn")
-## A simple modelthat
-simple.hhn.fit <- read.acre(capt = example$capt, traps = example$traps, control.mask = list(buffer = 30))
-
-## A simple model with a hazard-rate detection function.
-example_hr <- get("simple_hr")
-simple.hr.fit <- read.acre(capt = example_hr$capt, traps = example_hr$traps, control.mask = list(buffer = 30),
-                           detfn = "hr")
-} # }
-```
+population density from passive acoustic surveys. *Methods in Ecology
+and Evolution*, *12*(3), 432–442.

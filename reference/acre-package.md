@@ -17,8 +17,6 @@ Useful links:
 
 Authors:
 
-- Ben Stevenson <ben.stevenson@auckland.ac.nz>
-
 - Joseph Reps <jrep150@aucklanduni.ac.nz>
 
 - Lingyu Hao <lhao446@aucklanduni.ac.nz>

@@ -54,6 +54,8 @@ show.Dsurf(
   included, providing the x- and y-coordinates of the new mask points.
   Additional columns must provide the covariates used to fit the model.
 
+- D.cov:
+
 - xlim:
 
   a numeric vector with two elements as the range of x-axis.
@@ -61,6 +63,10 @@ show.Dsurf(
 - ylim:
 
   a numeric vector with two elements as the range of y-axis.
+
+- x.pixels:
+
+- y.pixels:
 
 - zlim:
 
@@ -94,6 +100,6 @@ show.Dsurf(
   A numeric value, indicating the number of levels to stretch the color
   over
 
-- ...:
+- trap.plot:
 
-  otlp
+- ...:

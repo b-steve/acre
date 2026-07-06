@@ -1,8 +1,16 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://b-steve.github.io/acre/404.html</loc></url>
 <url><loc>https://b-steve.github.io/acre/LICENSE.html</loc></url>
+<url><loc>https://b-steve.github.io/acre/articles/acre.html</loc></url>
+<url><loc>https://b-steve.github.io/acre/articles/index.html</loc></url>
+<url><loc>https://b-steve.github.io/acre/articles/inhom_density.html</loc></url>
+<url><loc>https://b-steve.github.io/acre/articles/multi_sess.html</loc></url>
+<url><loc>https://b-steve.github.io/acre/articles/placeholder_1.html</loc></url>
+<url><loc>https://b-steve.github.io/acre/articles/placeholder_2.html</loc></url>
+<url><loc>https://b-steve.github.io/acre/articles/simulation.html</loc></url>
 <url><loc>https://b-steve.github.io/acre/authors.html</loc></url>
 <url><loc>https://b-steve.github.io/acre/index.html</loc></url>
+<url><loc>https://b-steve.github.io/acre/news/index.html</loc></url>
 <url><loc>https://b-steve.github.io/acre/reference/AIC.acre.html</loc></url>
 <url><loc>https://b-steve.github.io/acre/reference/acre-package.html</loc></url>
 <url><loc>https://b-steve.github.io/acre/reference/bearing_dist_hn.html</loc></url>
