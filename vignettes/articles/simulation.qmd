@@ -1,0 +1,17 @@
+---
+title: "Simulation and bootstrap methods in `acre`"
+format: 
+  html:
+    embed-resources: true
+    self-contained-math: true
+title-block-banner: "#046A38"
+toc: true
+toc-depth: 2
+execute:
+  warning: false
+  message: false
+---
+
+This tutorial demonstrates how to:
+
+1. ???

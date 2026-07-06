@@ -4,39 +4,66 @@ destination: docs
 
 template:
   bootstrap: 5
+  bslib:
+    primary: "#046A38"
+
+home:
+  links:
+  - text: View on CRAN
+    href: "#"
+  - text: Report a bug
+    href: https://github.com/b-steve/acre/issues
 
 navbar:
   structure:
-    left: [intro, reference, articles, news]
+    left: [intro, tutorials, reference, news]
     right: [github]
+
   components:
     intro:
       text: Get started
       href: articles/acre.html
+
+    tutorials:
+      text: Tutorials
+      menu:
+      - text: Inhomogeneous density analysis
+        href: articles/inhom_density.html
+      - text: Multi-session analysis
+        href: articles/multi_sess.html
+      - text: Simulation
+        href: articles/simulation.html
+      - text: Placeholder 1
+        href: articles/placeholder_1.html
+      - text: Placeholder 2
+        href: articles/placeholder_2.html
+
     reference:
       text: Reference
       href: reference/index.html
-    articles:
-      text: Articles
-      menu:
-      - text: Getting started
-        href: articles/acre.html
-      - text: Data preparation
-        href: articles/data-preparation.html
-      - text: Model fitting
-        href: articles/model-fitting.html
-      - text: Bootstrap uncertainty
-        href: articles/bootstrap-uncertainty.html
-      - text: Simulation studies
-        href: articles/simulation-study.html
+
     news:
       text: Changelog
       href: news/index.html
+
     github:
       icon: fa-github
       aria-label: GitHub
       href: https://github.com/b-steve/acre
-      
+
+articles:
+- title: Getting started
+  contents:
+  - acre
+
+- title: Articles
+  contents:
+  - articles/inhom_density
+  - articles/multi_sess
+  - articles/simulation
+  - articles/placeholder_1
+  - articles/placeholder_2
+
 reference:
   - title: Data preparation
     desc: Functions for reading, formatting, and preparing acoustic SCR data.

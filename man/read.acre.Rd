@@ -196,19 +196,6 @@ per minute if \code{survey.length = 30}, but in cues per hour if
 \code{survey.length = 0.5}.
 }
 
-\examples{
-\dontrun{
-## Getting some data.
-example <- get("simple_hhn")
-## A simple modelthat
-simple.hhn.fit <- read.acre(capt = example$capt, traps = example$traps, control.mask = list(buffer = 30))
-
-## A simple model with a hazard-rate detection function.
-example_hr <- get("simple_hr")
-simple.hr.fit <- read.acre(capt = example_hr$capt, traps = example_hr$traps, control.mask = list(buffer = 30),
-                           detfn = "hr")
-}
-}
 \references{
 Borchers, D. L., Stevenson, B. C., Kidney, D., Thomas,
 L., and Marques, T. A. (2015) A unifying model for
@@ -219,11 +206,11 @@ populations. \emph{Journal of the American Statistical Association},
 Stevenson, B. C., Borchers, D. L., Altwegg, R., Swift,
 R. J., Gillespie, D. M., and Measey, G. J. (2015) A general
 framework for animal density estimation from acoustic detections
-across a fixed microphone array. \emph{Methods in Ecology and
-Evolution}, \emph{6}(1), 38--48.
+across a fixed microphone array. \emph{Methods in Ecology and Evolution},
+\emph{6}(1), 38--48.
 
 Stevenson, B. C., van Dam-Bates, P., Young, C. K. Y.,
 and Measey, J. (2021) A spatial capture-recapture model to
 estimate call rate and population density from passive acoustic
-surveys. *Methods in Ecology and Evolution, \emph{12}(3), 432--442.
+surveys. \emph{Methods in Ecology and Evolution}, \emph{12}(3), 432--442.
 }

@@ -6,6 +6,11 @@
 \usage{
 stdEr(object, ...)
 }
+\arguments{
+\item{object}{}
+
+\item{...}{}
+}
 \description{
 Title
 }

@@ -57,19 +57,19 @@ location related covariates to the new mask level data.  For any
 details, could refer to the help document in the function
 \code{read.acre()}.}
 
-\item{tracing}{a logical value. TRUE by default, an indicator of
-showing the tracing information.}
+\item{tracing}{A logical value. If \code{TRUE}, information about the
+optimiser's journey through the parameter space is printed during
+model fitting.}
 
 \item{optim.opts}{A list with optimisation options. See the section
 below on optimiser settings.}
 
-\item{two.stage}{a logical value. FALSE by default. If TRUE, after
-fitting a model, the partial derivatives, of the ESA for each
-session, w.r.t. the other parameters, is calculated and returned.}
+\item{two.stage}{A logical value. If \code{TRUE}, computations required
+to propagate variance under a two-stage density modelling
+approach are carried out.}
 
-\item{CL}{a logical value. FALSE by default. If TRUE, fit a
-conditional likelihood model, ignoring density parameter
-estimation.}
+\item{CL}{A logical value. If \code{TRUE}, a conditional likelihood
+model is fitted, and so density is not estimated.}
 }
 \description{
 Fits an a spatial capture-recapture model to a data object returned by \code{\link[=read.acre]{read.acre()}}.

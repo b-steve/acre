@@ -1,0 +1,19 @@
+---
+title: "Inhomogeneous density analysis with `acre`"
+format: 
+  html:
+    embed-resources: true
+    self-contained-math: true
+title-block-banner: "#046A38"
+toc: true
+toc-depth: 2
+execute:
+  warning: false
+  message: false
+---
+
+This tutorial demonstrates how to:
+
+1. Read in location and distance covariates.
+
+2. Fit models which allow density to vary over space.

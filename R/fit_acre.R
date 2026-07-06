@@ -14,7 +14,7 @@
 #' * `session`: a session identifier.
 #' * `ID`: a call identifier.
 #' * `trap`: a detector identifier.
-#' 
+#'
 #' Additional columns can specify auxiliary data collected about the
 #' calls. Missing values of `NA` are allowed, so that an auxiliary
 #' data type might only be available for a subet of calls.
@@ -32,7 +32,7 @@
 #' provided, they are automatically used by [fit.acre()] during model
 #' fitting via the method described by Borchers et al (2015), which
 #' can considerably improve precision of density estimates.
-#' 
+#'
 #' If `animal_ID` is provided, then calling animal density and call
 #' production rates are separately estimated from the SCR data via the
 #' method described by Stevenson et al (2021). Note that animals are
@@ -102,13 +102,13 @@
 #' @references Stevenson, B. C., Borchers, D. L., Altwegg, R., Swift,
 #'   R. J., Gillespie, D. M., and Measey, G. J. (2015) A general
 #'   framework for animal density estimation from acoustic detections
-#'   across a fixed microphone array. *Methods in Ecology and
-#'   Evolution*, *6*(1), 38--48.
+#'   across a fixed microphone array. *Methods in Ecology and Evolution*,
+#'   *6*(1), 38--48.
 #' @references Stevenson, B. C., van Dam-Bates, P., Young, C. K. Y.,
 #'   and Measey, J. (2021) A spatial capture-recapture model to
 #'   estimate call rate and population density from passive acoustic
-#'   surveys. *Methods in Ecology and Evolution, *12*(3), 432--442.
-#' 
+#'   surveys. *Methods in Ecology and Evolution*, *12*(3), 432--442.
+#'
 #' @param captures A data frame with detection data. Further details
 #'   are available below.
 #' @param traps A matrix or a data frame with two columns, or a list
@@ -165,18 +165,6 @@
 #'   included in the `captures` data frame. Defaults to 330, the
 #'   approximate speed of sound in air.
 #'
-#' @examples
-#' \dontrun{
-#' ## Getting some data.
-#' example <- get("simple_hhn")
-#' ## A simple modelthat
-#' simple.hhn.fit <- read.acre(capt = example$capt, traps = example$traps, control.mask = list(buffer = 30))
-#'
-#' ## A simple model with a hazard-rate detection function.
-#' example_hr <- get("simple_hr")
-#' simple.hr.fit <- read.acre(capt = example_hr$capt, traps = example_hr$traps, control.mask = list(buffer = 30),
-#'                            detfn = "hr")
-#' }
 #' @return
 #' @export
 #'
@@ -194,7 +182,7 @@ read.acre = function(captures, traps, mask = NULL,
 
   output = list()
   capt = create.capt(captures, traps)
-  
+
   #obtain n.sessions, the output of create.capt differs based on the model type, if individual id included, then
   #it is data.frame, otherwise, it is a list
   if(is(capt, 'data.frame')){
@@ -252,7 +240,7 @@ read.acre = function(captures, traps, mask = NULL,
 
 #' Fitting a spatial capture-recapture model
 #'
-#' Fits an a spatial capture-recapture model to a data object returned by [read.acre()]. 
+#' Fits an a spatial capture-recapture model to a data object returned by [read.acre()].
 #'
 #' @section Model specification:
 #'
@@ -280,7 +268,7 @@ read.acre = function(captures, traps, mask = NULL,
 #' The `optim.opts` argument allows the user to change some optimiser
 #' settings. The argument must be a list. Two optional components
 #' control parameter-specific optimisation settings:
-#' 
+#'
 #' * `sv`: Overrides default parameter start values.
 #' * `fix`: Holds parameters constant rather than estimating them via
 #' optimisation.
@@ -319,7 +307,7 @@ read.acre = function(captures, traps, mask = NULL,
 #'   is typically more stable. Regardless of whether `scale.covs` is
 #'   `TRUE` or `FALSE`, we report estimated coefficients and standard
 #'   errors on the scale of the original, untransformed covariate.
-#' 
+#'
 #' * `local`: A logical value, and `FALSE` by default, that toggles
 #'   local integration over activity centres. If `TRUE`, the
 #'   likelihood will be computed by only integrating over mask points
@@ -332,7 +320,7 @@ read.acre = function(captures, traps, mask = NULL,
 #' There are a few options available for signal strength models.
 #'
 #' (More to put in here)
-#' 
+#'
 #' @param data A data object returned by [read.acre()].
 #' @param model A list with named components. Each component name must
 #'   match a parameter name. The component itself must be a [formula]
@@ -374,7 +362,7 @@ read.acre = function(captures, traps, mask = NULL,
 #' @param two.stage A logical value. If `TRUE`, computations required
 #'   to propagate variance under a two-stage density modelling
 #'   approach are carried out.
-#' 
+#'
 #' @return
 #' @export
 fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
@@ -383,7 +371,7 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
                     two.stage = FALSE, CL = two.stage){
   ## Renaming object.
   dat <- data
-  
+
   arg.input = dat$arg.input
   dat$arg.input = NULL
   mask_override = FALSE
@@ -400,23 +388,23 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
   if(!is.logical(two.stage) || length(two.stage) != 1L || is.na(two.stage)){
     stop("'two.stage' must be a single TRUE/FALSE value.")
   }
-  
+
   if(!is.logical(CL) || length(CL) != 1L || is.na(CL)){
     stop("'CL' must be a single TRUE/FALSE value.")
   }
-  
+
   if(isTRUE(two.stage) && isFALSE(CL)) {
     warning("'two.stage' requires CL = TRUE; setting CL = TRUE.")
     CL <- TRUE
   }
-  
+
   if(!is.null(mask)){
     dat$mask = mask
     if(!is.null(control.mask)){
       warning("Argument of 'mask' is provided, 'control.mask' will be ignored.")
     }
     mask_override = TRUE
-    
+
   } else if(!is.null(control.mask)){
     stopifnot(!is.null(control.mask$buffer))
     control.mask$traps = dat$traps
@@ -424,7 +412,7 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
     dat$mask = mask
     mask_override = TRUE
   }
-  
+
   if(!is.null(model)){
     if(is.null(dat$par.extend)){
       dat$par.extend = list(model = model)
@@ -433,30 +421,30 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
     }
     dat$par.extend$scale = scale.covs
     dat$par.extend$link = NULL
-    
+
     if(mask_override && !is.null(dat$par.extend$data$mask)){
       convert.loc2mask$loc.cov = arg.input$loc.cov
       convert.loc2mask$mask = mask
       dat$par.extend$data$mask = do.call("location_cov_to_mask", convert.loc2mask)
     }
-    
+
   } else {
     dat$par.extend = NULL
   }
-  
+
                                         # Conditional likelihood checks
   if(CL){
-    
+
     if(!is.null(model) && "D" %in% names(model)){
       stop("When CL = TRUE, a density model for 'D' cannot be specified.")
     }
-    
+
     if(!is.null(dat$par.extend$model) && "D" %in% names(dat$par.extend$model)){
       stop("When CL = TRUE, 'D' cannot appear in the model specification.")
     }
-    
+
     if(is.null(fix)) fix <- list()
-    
+
     if(is.null(fix$D)){
       if(!is.null(sv) && !is.null(sv$D)){
         fix$D <- sv$D
@@ -464,12 +452,12 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
         fix$D <- 1
       }
     }
-    
+
     if(!is.null(bounds) && "D" %in% names(bounds)){
       bounds$D <- NULL
     }
   }
-  
+
   dat$local = local
   dat$tracing = tracing
   dat$gr.skip = gr.skip
@@ -482,12 +470,12 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
   dat$sv.link = sv.link
   dat$CL = CL
   dat$two.stage = two.stage
-  
+
   output = do.call("fit_og", dat)
   output$arg_input = arg.input
   output$call = match.call()
   output$CL = CL
-  
+
   return(output)
 }
 
@@ -522,7 +510,7 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
 #' @param sv.link a list; this is mostly for development purpose, not recommended to use.
 #' @param CL same as the argument with the same name in the function `fit.acre()`.
 #' @param two.stage same as the argument with the same name in the function `fit.acre()`.
-#' 
+#'
 #' @param ...
 #' @keywords internal
 fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL, cue.rates = NULL,
@@ -693,7 +681,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   #this is important because the "parameter" argument in TMB model
   #follows the order of fulllist.par
   param.og = fulllist.par[which(fulllist.par %in% param.og)]
-  
+
   #############################################################################################################
   #uid stuffs
 
@@ -769,7 +757,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     data.ID_mask = data.ID_mask[order(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$mask, data.ID_mask$ID), ]
   }
   if(!any(c('local', 'toa') %in% bucket_info)){
-    data.ID_mask = data.ID_mask[1,, drop = FALSE] 
+    data.ID_mask = data.ID_mask[1,, drop = FALSE]
   } else {
     if(!'local' %in% bucket_info){
       data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'local'), drop = FALSE]
@@ -806,7 +794,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                sound_speed = sound.speed,
                cue_rates = mean.cue.rates,
 
-            
+
                cutoff = cutoff,
                #code of detfn_index:
                #1:hn, 2:hhn, 3:hr, 4:th, 5:lth, 6:ss
@@ -851,7 +839,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
                index_local = as.numeric(data.ID_mask$local),
                toa_ssq = as.numeric(data.ID_mask$toa_ssq),
-               
+
                # Conditional likelihood
                is_conditional = as.numeric(CL),
                # Two stage (calculate logESA partial derivatives)
@@ -902,7 +890,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     par_name = name.fixed.par.4cpp[i]
     map[[par_name]] = factor(rep(NA, length(parameters[[par_name]])))
   }
-  
+
   # If scaling and centering has been applied to the extended parameters,
   # we are going to need the back-transformation matrices
   # Note that in the case that scaling has not been applied, or a parameter has
@@ -916,75 +904,75 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
   if(!gr.skip) {
     # Have TMB build the likelihood function
-    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, 
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map,
                           silent = TRUE, DLL="acre")
     # True so that when we optimize, hessian is calculated alongside
     obj$hessian <- TRUE
- 
+
     # If tracing is enabled, use custom trace output
     if (tracing) {
       # If the model is extended, make sure to build extended parameter names
       # These need to correspond to the GLM design matrix column names
-      par_names <- get_coef_names(names(obj$par), name.extend.par, 
+      par_names <- get_coef_names(names(obj$par), name.extend.par,
                                   data.full, data.mask)
-      
+
       tap <- make_buffer_printer(trace_cols = par_names,
                                  step = "none",
                                  show_mgc = TRUE)
-      
+
       # Capture originals and wrap safely
       orig_fn <- obj$fn
       orig_gr <- obj$gr
-      
+
       # Wrap the objective / gradient functions, so each time they are
       # evaluated, we print the custom trace information
       obj$fn <- with_fn_tap(orig_fn, tap, par_names, G_lst)
       obj$gr <- with_gr_tap(orig_gr, tap, par_names, G_lst)
     }
-    
+
     opt = stats::nlminb(obj$par, obj$fn, obj$gr, control=list(trace=0))
-    
-    # Restore originals once the initial optimization is done 
+
+    # Restore originals once the initial optimization is done
     # (avoid additional prints when using sdreport())
-    if (tracing) { 
-      obj$fn <- orig_fn 
-      obj$gr <- orig_gr 
+    if (tracing) {
+      obj$fn <- orig_fn
+      obj$gr <- orig_gr
     }
-    
+
     o = TMB::sdreport(obj)
   } else {
-    # In the case we don't use TMB to calculate the gradients, we will need to 
+    # In the case we don't use TMB to calculate the gradients, we will need to
     # proceed slightly differently
-    
+
     # type = 'Fun' specifies to skip the gradient calculation
-    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map, 
+    obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map,
                           silent = TRUE, DLL="acre", type = 'Fun')
 
     # Get the names of the fitted parameters
     # That is, all the parameters we pass to TMB, which are not fixed
     par_name_fitted = setdiff(param.og.4cpp, name.fixed.par.4cpp)
-    
+
     # The name of this ini_par_val is not right, do it later <- ?
     ini_par_val = list_2vector_4value(parameters[par_name_fitted])
     fn_base <- function(par) environment(obj$fn)$f(par, type = "double")
-    
+
     # If tracing is enabled, use custom trace output
     if (tracing) {
       # As before, if the model is extended, make sure to build extended names
-      par_names <- get_coef_names(par_name_fitted, name.extend.par, 
+      par_names <- get_coef_names(par_name_fitted, name.extend.par,
                                   data.full, data.mask)
-      
+
       tap <- make_buffer_printer(trace_cols = par_names,
                                  step = "max",
                                  show_mgc = FALSE)
-      
+
       fn_traced <- with_fn_tap(fn_base, tap, par_names, G_lst)
-      
+
       opt <- stats::nlminb(ini_par_val, fn_traced, control = list(trace = 0))
     } else {
       opt <- stats::nlminb(ini_par_val, fn_base)
     }
-    
+
     # Numerically solve for the hessian
     # Note that the standard errors for g0 may be NaN due to numerical issues,
     # alongside the fact that its true value lies on the boundary of the
@@ -993,7 +981,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     H = solve(H)
     o = gr_free_o_restore(fn_base, opt, H, parameters, param.og.4cpp, dims$n.sessions)
   }
-  
+
   # If partial derivatives are being returned (i.e. two.stage == T)
   esa_partial_derivatives <- NULL
   if (isTRUE(two.stage)) {
@@ -1007,14 +995,14 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     log_esa_pd_rows <- which(names(pd_object$fn()) == "log_esa")
     esa_partial_derivatives <- partial_derivative_matrix[log_esa_pd_rows,]
   }
-  
+
   tmb_output_og = list(est = o$value, vcov = o$cov)
-  
+
   # Restore the estimated parameters' estimation and variance matrix to original scale
   G_lst[["esa"]] = diag(dims$n.sessions)
   est_names = names(o$value)
   u_names = unique(est_names)
-  
+
   missing_G <- setdiff(u_names, names(G_lst))
   for(i in missing_G){
     G_lst[[i]] <- diag(sum(est_names == i))
@@ -1024,10 +1012,10 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     index_u_name = which(est_names == i)
     o$value[index_u_name] = G_lst[[i]] %*% o$value[index_u_name]
   }
-  
+
   # Restore the names
   names(o$value) = est_names
-  
+
   # Combine all these matrix for all coefficient, making sure ordering is correct
   G = diag_block_combine(G_lst[u_names])
   # Delta method to get standard errors
