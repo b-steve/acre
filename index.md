@@ -1,11 +1,29 @@
 # acre
 
+<div class="acre-hero" title="Click to show another plot">
+  <img id="acre-hero-img" src="man/figures/acre_plot_gallery.svg" alt="Example plots from acre">
+  <div class="acre-hero-label">click to shuffle</div>
+</div>
+
  Acoustic capture-recapture (ACRE) models estimate animal density from records of when and were individuals were detected. The first spatial capture-recapture (SCR) methods for acoustic data were developed by Efford, Dawson, and Borchers (2009).
 
  The `acre` package fits SCR models to estimate animal density from acoustic surveys. In particular, these models can incorporate additional data like received signal strengths, times of arrival, estimated distances, estimated bearings, any location or session or detectors related covariates which are informative or correlated about animals' density. Other more general software packages exist for SCR (e.g., the comprehensive secr R package), but they cannot handle all data types listed above.
 
  Models that can be fitted in `acre` include those described by Efford, Dawson, and Borchers (2009), Borchers et al (2015), Stevenson et al (2015), and Stevenson et al (2021).
  
+## Installation
+
+The easiest way to install `acre` package is to first install the `devtools` package, 
+and then run the following code, although Windows users will need Rtools installed 
+first. If you install Rtools, or have to reinstall `acre`, then make sure to restart 
+your R session.
+
+```R
+library(devtools)
+# Currently not available on CRAN
+install_github("b-steve/acre")
+```
+
 ## Help
 
 The `acre` package is still in development, and the documentation is still a very patchy. There's a tutorial [here](https://bcstevenson.nfshost.com/acre-worksheet.html) that provides an introduction to the basics of the package. 
