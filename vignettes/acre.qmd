@@ -13,7 +13,8 @@ execute:
 ---
 
 ```{r include = FALSE}
-devtools::load_all()
+# devtools::load_all()
+library(acre)
 ```
 
 Just placeholder-ish for now.
