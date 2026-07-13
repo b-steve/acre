@@ -56,7 +56,7 @@ we have:
 
 Each survey is treated as one session in the combined analysis.
 
-```{r}
+```{r eval=FALSE}
 data_dir <- "vignette-data/frog-data"
 
 data_files <- list.files(data_dir, pattern = "data_out_of_Access")
@@ -86,7 +86,7 @@ survey length in hours.
 
 We also create the session-level covariates used in the model.
 
-```{r}
+```{r eval=FALSE}
 survey_date <- ymd(survey_info$date)
 
 t <- as.numeric(
@@ -138,7 +138,7 @@ data-preparation detail for this data set, not the focus of the workshop. In a
 real analysis, call allocation is an important modelling and data-processing
 choice, and should be handled carefully.
 
-```{r include=FALSE}
+```{r include=FALSE, eval=FALSE}
 allocate_calls <- function(mics, dets, sound_speed) {
   mics <- as.matrix(mics)
 
@@ -225,7 +225,7 @@ prepare_session <- function(i, survey_info, data_dir, survey_length) {
 For workshop speed, we use the first 15 sessions. To use all available sessions,
 replace `seq_len(15)` with `seq_len(n_sessions)`.
 
-```{r}
+```{r eval=FALSE}
 sessions_to_use <- seq_len(15)
 
 sessions <- lapply(
@@ -256,7 +256,7 @@ head(full_captures)
 The prepared capture histories and detector locations can now be combined into
 one multi-session `acre_data` object.
 
-```{r}
+```{r eval=FALSE}
 full_data <- read.acre(
   captures = full_captures,
   traps = full_traps,
@@ -279,7 +279,7 @@ Before fitting a model, the processed data should be checked for obvious
 problems. A simple first check is the number of detections and unique calls in
 each session.
 
-```{r}
+```{r eval=FALSE}
 detections_by_session <- aggregate(
   trap ~ session,
   data = full_captures,
@@ -318,7 +318,7 @@ layout and the detections.
 
 First, plot the mask and microphone array for one session.
 
-```{r}
+```{r eval=FALSE}
 example_session <- 1
 
 plot(
@@ -330,7 +330,7 @@ plot(
 
 Next, plot the capture data for the same session.
 
-```{r}
+```{r eval=FALSE}
 plot(
   full_data,
   type = "capt",
