@@ -12,60 +12,525 @@ execute:
   message: false
 ---
 
+```{r include = FALSE}
+devtools::load_all()
+```
+
 Just placeholder-ish for now.
 
-## Installation
-
+:::callout-note
 If you haven't already, make sure to install the `acre` using `devtools`.
 
 ```{R eval=FALSE}
-library(devtools)
-install_github("b-steve/acre")
+devtools::install_github("b-steve/acre")
+```
+:::
+
+The basic `acre` workflow is:
+
+1. Prepare survey data.
+2. Combine and process the data using `read.acre()`.
+3. Inspect the processed data using `plot()`.
+4. Fit a model using `fit.acre()`.
+5. Examine and visualize the model results.
+
+This vignette demonstrates each step using a small simulated acoustic survey 
+included with the package.
+
+## Example data
+
+The `island_data` dataset contains a simulated acoustic survey conducted on 
+Whatupuke Island, New Zealand. It is included to demonstrate the main steps in 
+an `acre` analysis.
+
+```{r}
+data("island_data")
+
+names(island_data)
 ```
 
-## Reading in data
+The dataset is a named list containing:
 
-The first step is to combine all of these data sources together into an R object using the read.acre() function. It is your job to create this object. There are five arguments you’ll need to use:
+* `captures`: detector-level records of detected calls;
+* `traps`: the locations of the acoustic detectors;
+* `mask`: the spatial integration mask;
+* `covariates`: spatial measurements of elevation and habitat; and
+* `boundary`: coordinates describing the island coastline.
 
-1. `captures`: the data frame with the detection data.
-traps: the object with the listening post locations.
+The coordinates are represented in a local Cartesian coordinate system and are 
+measured in metres.
 
-2. `control.mask`: you need to specify the maximum distance at which you can possibly detect a gibbon. In this case, the maximum feasible distance is 3000m. Use `control.mask = list(buffer = 3000)` for this argument.
+### Detection data
 
-3. `loc.cov`: a data frame with columns x and y, specifying locations at which spatial covariates have been measured, and then a further column for each spatial covariates themselves. For this step you should provide the data frame containing the measured covariate values, rather than the interpolated values. The function will complete the interpolation for you.
+The detection data contain one row for every occasion on which a detector 
+recorded a call.
 
-4. `dist.cov`: a data frame containing locations of objects of interest, from which you want to construct a spatial covariate for the distance to the nearest object. This needs to be a list, where each component name relates to the type of object, and the component itself is a data frame with columns named x and y specifying the locations of these objects. In this case, we just have to obtain the distance to the nearest village for each point in PPWS, so you can use `dist.cov = list(village = villages.df)`.
+```{r}
+head(island_data$captures)
+```
+
+The three columns required by `acre` are:
+
+* `session`: the survey session in which the detection occurred;
+* `ID`: an identifier for the detected call; and
+* `trap`: the detector that recorded the call.
+
+The example data also contain a column named `bearing`, giving the estimated 
+direction from the detector towards the call in radians.
+
+A call detected at multiple detectors therefore appears in multiple rows, with 
+the same `session` and `ID` but a different `trap`.
+
+For example, the call below was detected by several detectors:
+
+```{r}
+call_counts <- table(island_data$captures$ID)
+example_call <- as.numeric(names(call_counts)[which.max(call_counts)])
+
+subset(
+  island_data$captures,
+  ID == example_call
+)
+```
+
+### Detector locations
+
+The detector coordinates are stored in a two-column data frame:
+
+```{r}
+island_data$traps
+```
+
+Each row corresponds to one detector. Detector identifiers in the `trap` column 
+of the detection data refer to the corresponding row of this object.
+
+### Integration mask
+
+The integration mask represents the possible locations of detected calls:
+
+```{r}
+head(island_data$mask)
+dim(island_data$mask)
+```
+
+Each mask point has an associated area:
+
+```{r}
+attr(island_data$mask, "area")
+```
+
+The mask is used to numerically integrate over unknown call locations during 
+model fitting. In this example it has already been restricted to the coastline 
+of the island.
+
+### Spatial covariates
+
+The example contains one continuous covariate, `elevation`, and one categorical 
+covariate, `habitat`:
+
+```{r}
+head(island_data$covariates)
+
+summary(island_data$covariates$elevation)
+table(island_data$covariates$habitat)
+```
+
+The `x` and `y` columns specify where each covariate measurement was taken. 
+These locations do not need to coincide with the integration-mask points because 
+`read.acre()` can interpolate spatial covariates onto the mask.
+
+## Reading data into `acre`
+
+The function `read.acre()` combines the survey inputs into an `acre_data` object 
+that can be visualized and fitted.
+
+```{r}
+island_acre <- read.acre(
+  captures = island_data$captures,
+  traps = island_data$traps,
+  mask = island_data$mask,
+  loc.cov = island_data$covariates
+)
+```
+
+Because a custom island-shaped mask is supplied, `read.acre()` uses it directly. 
+If no mask is supplied, one can instead be created automatically from the 
+detector locations using the `control.mask` argument.
+
+The resulting object contains the processed capture histories, detector 
+locations, integration mask, and spatial covariates:
+
+```{r}
+class(island_acre)
+names(island_acre)
+```
 
 ## Visualizing data
 
-Multiple exploratory plotting tools available.
+Before fitting a model, the prepared survey data should be inspected for obvious 
+problems. The `plot()` method for an `acre_data` object can display the detector 
+array, capture histories, and interpolated spatial covariates.
 
-See...
+### Survey layout
 
-1. `plot(data.acre, type = "survey")`
+The survey layout shows the integration mask and detector locations:
 
-2. `plot(data.acre, type = "capt")`
+```{r}
+#| label: plot-survey
+#| fig-cap: "Integration mask and acoustic detector locations on Whatupuke Island."
 
-3. `plot(data.acre, type = "covariates")`
+plot(
+  island_acre,
+  type = "survey"
+)
+```
 
-## Fitting models
+The grey points represent the integration mask, while the red points represent 
+acoustic detectors. The integration mask covers the possible locations of 
+detected calls and is used for numerical integration during model fitting.
 
-Maybe fit a basic model here? I think that in this introduction we should definitely
-use an IHD example, but maybe one that is as simple as possible? 
+### Capture histories
 
-Just because being able to plot the detection surface, and seeing how it varies
-is super neat, rather than just one uniform-coloured detection surface blob.
+Individual capture histories can also be visualized. The following code selects 
+the call detected by the largest number of detectors:
 
-1. `fit <- fit.acre(data.acre)`
+```{r}
+#| label: choose-example-call
 
-2. `summary(fit)`
+call_counts <- table(island_data$captures$ID)
+example_call <- as.numeric(
+  names(call_counts)[which.max(call_counts)]
+)
 
-3. `plot(data.acre, type = "detfn")`
+example_call
+```
 
-4. `plot(data.acre, type = "Dsurf")`
+We can then plot the detectors that recorded this call together with its 
+estimated bearings:
 
-## More...(not sure what to title this section)
+```{r}
+#| label: plot-capture
+#| fig-cap: "Detector-level capture history and estimated bearings for one call."
 
-Here explain all the additional functionality provided, and then suggest seeing
-the tutorials for further guidance?
+plot(
+  island_acre,
+  type = "capt",
+  call_id = example_call,
+  ask = FALSE
+)
+```
+
+Crosses indicate detector locations, while circles identify the detectors that 
+recorded the selected call. Arrows show the estimated bearing from each active 
+detector towards the call.
+
+### Spatial covariates
+
+The spatial covariates supplied to `read.acre()` have been interpolated onto the 
+integration mask. They can be inspected using `type = "covariates"`.
+
+```{r}
+#| label: plot-elevation
+#| fig-cap: "Elevation interpolated onto the integration mask."
+
+plot(
+  island_acre,
+  type = "covariates",
+  select_cov = "elevation",
+  ask = FALSE,
+  plot.contours = TRUE
+)
+```
+
+The categorical habitat covariate can be plotted in the same way:
+
+```{r}
+#| label: plot-habitat
+#| fig-cap: "Habitat type interpolated onto the integration mask."
+
+plot(
+  island_acre,
+  type = "covariates",
+  select_cov = "habitat",
+  ask = FALSE
+)
+```
+
+These plots should be inspected before fitting a model. In particular, they can 
+reveal incorrect detector coordinates, poorly chosen mask limits, or implausible 
+spatial interpolation.
+
+## Fitting a model
+
+The function `fit.acre()` fits a spatial capture-recapture model to an object 
+returned by `read.acre()`.
+
+We begin with a simple model in which call density and detection parameters are 
+spatially constant:
+
+```{r}
+#| label: fit-homogeneous
+#| cache: true
+
+fit_homogeneous <- fit.acre(
+  data = island_acre,
+  detfn = "hn",
+  tracing = FALSE
+)
+```
+
+The argument `detfn = "hn"` selects the half-normal detection function. Under 
+this model, the probability that a call at location $\mathbf{s}$ is detected by 
+detector $j$ is
+
+$$
+p_j(\mathbf{s}) = g_0
+\exp\left(
+-\frac{\lVert \mathbf{s}-\mathbf{x}_j\rVert^2}
+{2\sigma^2}
+\right),
+$$
+
+where $g_0$ is the detection probability at zero distance and $\sigma$ controls 
+how quickly detection probability declines with distance.
+
+Because the detection data contain estimated bearings, bearing information is 
+included automatically during model fitting. The model therefore also estimates 
+`kappa`, which controls the precision of the bearing measurements.
+
+Using `summary()` on the fitted object:
+
+```{r}
+summary(fit_homogeneous)
+```
+
+### Model formulas
+
+Spatial or survey covariates can be included through the `model` argument. This 
+must be a named list in which each name identifies a model parameter and each 
+value is an R formula.
+
+For example,
+
+```{r}
+model = list(
+  D = ~ elevation
+)
+```
+
+specifies that call density varies with elevation. Parameters omitted from the 
+list are treated as spatially constant.
+
+The homogeneous model fitted above is therefore equivalent to specifying 
+intercept-only formulas:
+
+```{r}
+model = list(
+  D = ~ 1,
+  g0 = ~ 1,
+  sigma = ~ 1,
+  kappa = ~ 1
+)
+```
+
+In practice, these formulas do not need to be supplied because intercept-only 
+models are the default.
+
+## Examining model results
+
+Model parameters are estimated internally on link scales. The default call to 
+`coef()` returns these linked estimates:
+
+```{r}
+coef(fit_homogeneous)
+```
+
+For interpretation, it is usually more convenient to return parameters on their 
+original scales:
+
+```{r}
+coef(
+  fit_homogeneous,
+  types = "fitted"
+)
+```
+
+Approximate standard errors and confidence intervals can be extracted in the 
+same way:
+
+```{r}
+stdEr(
+  fit_homogeneous,
+  types = "fitted"
+)
+
+confint(
+  fit_homogeneous,
+  types = "fitted"
+)
+```
+
+For this acoustic survey, `D` represents the estimated density of calls rather 
+than the density of individual animals. Estimating animal density would 
+additionally require information linking calls to individuals or independently 
+collected cue-rate data.
+
+### Modelling spatial variation in density
+
+The homogeneous model assumes that expected call density is constant across the 
+island. Spatial covariates can be included using the `model` argument.
+
+Here, we allow call density to vary with habitat and elevation:
+
+```{r}
+#| label: fit-spatial-density
+#| cache: true
+
+fit_spatial <- fit.acre(
+  data = island_acre,
+  model = list(
+    D = ~ habitat + elevation
+  ),
+  detfn = "hn",
+  tracing = FALSE
+)
+```
+
+Parameters omitted from the `model` list remain constant. Thus, this model 
+allows `D` to vary spatially while retaining constant values of `g0`, `sigma`, 
+and `kappa`.
+
+The density component is modelled using a log link:
+
+$$
+\log D(\mathbf{s}) = \beta_0
++
+\beta_{\mathrm{forest}}
+I\{\operatorname{habitat}(\mathbf{s})=\mathrm{forest}\}
++
+\beta_{\mathrm{elevation}}
+\operatorname{elevation}(\mathbf{s}).
+$$
+
+The log link ensures that fitted call density is positive throughout the island.
+
+```{r}
+summary(fit_spatial)
+```
+
+### Interpreting covariate effects
+
+The linked-scale coefficients describe how the log of call density changes with 
+each covariate:
+
+```{r}
+coef(
+  fit_spatial,
+  types = "linked",
+  pars = "D"
+)
+```
+
+The habitat coefficient compares forest with the reference habitat level, 
+coastal habitat. A positive coefficient indicates higher estimated call density 
+in forest.
+
+The elevation coefficient describes the change in log density associated with a 
+one-unit increase in elevation. Since elevation is measured in metres, this 
+coefficient may be small even when elevation has a meaningful cumulative effect 
+across the island.
+
+Approximate uncertainty can be obtained using:
+
+```{r}
+confint(
+  fit_spatial,
+  types = "linked",
+  pars = "D"
+)
+```
+
+### Visualizing estimated density
+
+The fitted spatial model can be used to estimate call density at each 
+integration-mask point.
+
+```{r}
+#| label: plot-fitted-density
+#| fig-cap: "Estimated call-density surface from the spatial model."
+
+plot(
+  fit_spatial,
+  type = "Dsurf"
+)
+```
+
+Areas with larger fitted values correspond to locations where the model predicts 
+a greater density of calls.
+
+The fitted density surface reflects both habitat and elevation because these 
+covariates were included in the model for `D`.
+
+### Comparing models
+
+The homogeneous and spatial models can be compared using Akaike's information 
+criterion:
+
+```{r}
+AIC(
+  fit_homogeneous,
+  fit_spatial
+)
+```
+
+A smaller AIC indicates stronger support relative to the other models 
+considered, after accounting for model complexity.
+
+This comparison should be interpreted as evidence about the models fitted here, 
+rather than proof that one covariate structure is the true ecological process.
+
+## The complete workflow
+
+The main `acre` workflow can be summarized as:
+
+```{r eval = FALSE}
+# Prepare the data
+island_acre <- read.acre(
+  captures = island_data$captures,
+  traps = island_data$traps,
+  mask = island_data$mask,
+  loc.cov = island_data$covariates
+)
+
+# Inspect the survey
+plot(island_acre, type = "survey")
+
+# Fit a model
+fit <- fit.acre(
+  data = island_acre,
+  model = list(
+    D = ~ habitat + elevation
+  ),
+  detfn = "hn",
+  tracing = FALSE
+)
+
+# Examine parameter estimates
+coef(fit, types = "Dsurf")
+confint(fit, types = "Dsurf")
+
+# Visualize fitted density
+plot(fit, type = "D")
+```
+
+## Where to go next
+
+This vignette introduced the standard workflow for preparing, visualizing, 
+fitting, and summarizing an `acre` model.
+
+Further vignettes describe:
+
+* modelling more complex forms of spatial variation;
+* incorporating different types of auxiliary acoustic information; and
+* fitting multi-session models.
 

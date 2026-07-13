@@ -1,5 +1,5 @@
 ---
-title: "Placeholder for future vignettes"
+title: "Auxiliary information in `acre`"
 format: 
   html:
     embed-resources: true

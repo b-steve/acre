@@ -12,14 +12,564 @@ execute:
   message: false
 ---
 
-This tutorial demonstrates how to:
+```{r include=FALSE}
+library(lubridate)
+devtools::load_all()
+```
 
-1. Combine multiple survey sessions into one acre data object.
+::: callout-note
+If you have not already installed `acre`, it can be installed from GitHub using
+`devtools`.
 
-2. Fit multi-session acoustic models.
+```{r eval=FALSE}
+devtools::install_github("b-steve/acre")
+```
+:::
 
-3. Allow density to vary over time and between sites.
+A multi-session analysis combines data from repeated surveys and estimates a
+single model across all sessions. This allows ecological quantities such as
+density, and observation-process parameters such as detectability, to vary with
+session-level covariates.
 
-4. Allow detectability to vary between sites.
+The basic workflow is:
 
+1. Prepare the data for each survey session.
+2. Combine the sessions using `read.acre()`.
+3. Inspect the processed data using `plot()`.
+4. Fit a multi-session model using `fit.acre()`.
+5. Examine and visualize variation in density and detectability.
 
+This vignette demonstrates the workflow using repeated acoustic surveys of
+frogs. The fitted model asks whether frog call density varies through time and
+between sites, while allowing detectability to differ between sites.
+
+## Example data
+
+The frog data consist of repeated acoustic survey sessions. For each session,
+we have:
+
+- a detection file containing detected frog calls;
+- a set of microphone locations;
+- a survey date;
+- a site identifier;
+- a signal-strength cutoff used to remove weak detections.
+
+Each survey is treated as one session in the combined analysis.
+
+```{r}
+data_dir <- "vignette-data/frog-data"
+
+data_files <- list.files(data_dir, pattern = "data_out_of_Access")
+
+survey_info <- data.frame(
+  file = data_files,
+  date = substr(data_files, 1, 8),
+  site = substr(data_files, 13, 13),
+  cutoff = c(
+    140, 155, 147.5, 157.5, 152.5, 140, 155, 157.5,
+    150, 157.5, 155, 145, 155, 140, 155, 157.5,
+    155, 157.5, 147.5, 157.5, 162.5, 155, 152.5,
+    155, 157.5, 152.5, 145, 155, 140, 147.5, 145
+  )
+)
+
+survey_length <- 15
+survey_length_hours <- survey_length / 60
+
+n_sessions <- nrow(survey_info)
+
+head(survey_info)
+```
+
+The survey length is recorded in minutes. When fitting the model, we pass the
+survey length in hours.
+
+We also create the session-level covariates used in the model.
+
+```{r}
+survey_date <- ymd(survey_info$date)
+
+t <- as.numeric(
+  as.duration(interval(min(survey_date), survey_date)),
+  "days"
+)
+
+site <- factor(survey_info$site)
+
+session_cov <- data.frame(
+  session = seq_len(n_sessions),
+  site = site,
+  t = t
+)
+
+head(session_cov)
+```
+
+Here, `t` is the number of days since the first survey. The variable `site` is a
+factor identifying the survey site.
+
+## Preparing the survey sessions
+
+Before fitting an acoustic spatial capture-recapture model, the raw detections
+need to be converted into capture histories.
+
+For these data, the main preparation steps are:
+
+1. restrict detections to the survey time window;
+2. identify which microphone detected each call;
+3. group detections that plausibly came from the same calling frog;
+4. remove detections below the session-specific signal-strength cutoff;
+5. drop signal strength before model fitting;
+6. combine all sessions into one multi-session data object.
+
+::: {.callout-note}
+## How signal strength is used here
+
+In this workshop, signal strength is used only as a **filtering rule**. We remove
+weak detections below the session-specific cutoff, but we do not use signal
+strength in the fitted model.
+
+The fitted model uses time-of-arrival information, microphone locations, and the
+spatial capture-recapture model structure.
+:::
+
+The call-allocation step is deliberately hidden here because it is a
+data-preparation detail for this data set, not the focus of the workshop. In a
+real analysis, call allocation is an important modelling and data-processing
+choice, and should be handled carefully.
+
+```{r include=FALSE}
+allocate_calls <- function(mics, dets, sound_speed) {
+  mics <- as.matrix(mics)
+
+  trap_dists <- distances(mics, mics)
+  n_dets <- nrow(dets)
+
+  dist_mat <- detection_dists(trap_dists, dets$trap)
+  timediff_mat <- detection_timediffs(dets$toa, dets$trap)
+  maxtime_mat <- dist_mat / sound_speed
+
+  match_mat <- timediff_mat <= maxtime_mat
+
+  incomplete_blocks <- find_incomplete_blocks(match_mat)
+  n_blocks <- max(incomplete_blocks)
+
+  final_mat <- matrix(FALSE, nrow = n_dets, ncol = n_dets)
+  reqss_mat <- dist_mat / timediff_mat
+
+  for (i in seq_len(n_blocks)) {
+    block <- match_mat[incomplete_blocks == i, incomplete_blocks == i]
+    reqss <- reqss_mat[incomplete_blocks == i, incomplete_blocks == i]
+
+    is_complete <- all(block)
+
+    if (!is_complete) {
+      block <- blockify(block, reqss)
+    }
+
+    final_mat[incomplete_blocks == i, incomplete_blocks == i] <- block
+  }
+
+  find_incomplete_blocks(final_mat)
+}
+
+prepare_session <- function(i, survey_info, data_dir, survey_length) {
+  traps <- read.csv(
+    file.path(data_dir, paste0("Site", survey_info$site[i], "_estlocs.csv")),
+    header = TRUE
+  )
+
+  dets <- read.csv(
+    file.path(data_dir, survey_info$file[i]),
+    header = TRUE
+  )
+
+  time_range <- c(20 * 60, 20 * 60 + survey_length)
+
+  dets <- dets[
+    dets$startSeconds >= time_range[1] &
+      dets$startSeconds <= time_range[2],
+  ]
+
+  trap_id <- log2(dets$channelMap) + 1
+
+  ids <- allocate_calls(
+    mics = traps,
+    dets = data.frame(
+      trap = trap_id,
+      toa = dets$startSeconds
+    ),
+    sound_speed = 330
+  )
+
+  captures <- data.frame(
+    session = 1,
+    ID = ids,
+    trap = trap_id,
+    ss = dets$amplitude,
+    toa = dets$startSeconds
+  )
+
+  captures <- captures[captures$ss >= survey_info$cutoff[i], ]
+
+  captures_toa <- captures[, c("session", "ID", "trap", "toa")]
+  captures_toa$session <- i
+
+  list(
+    captures = captures_toa,
+    traps = traps
+  )
+}
+```
+
+For workshop speed, we use the first 15 sessions. To use all available sessions,
+replace `seq_len(15)` with `seq_len(n_sessions)`.
+
+```{r}
+sessions_to_use <- seq_len(15)
+
+sessions <- lapply(
+  sessions_to_use,
+  prepare_session,
+  survey_info = survey_info,
+  data_dir = data_dir,
+  survey_length = survey_length
+)
+
+full_captures <- do.call(
+  rbind,
+  lapply(sessions, function(x) x$captures)
+)
+
+full_traps <- lapply(
+  sessions,
+  function(x) x$traps
+)
+
+session_cov_workshop <- session_cov[sessions_to_use, ]
+
+head(full_captures)
+```
+
+## Reading data into `acre`
+
+The prepared capture histories and detector locations can now be combined into
+one multi-session `acre_data` object.
+
+```{r}
+full_data <- read.acre(
+  captures = full_captures,
+  traps = full_traps,
+  control.mask = list(buffer = 40, spacing = 1),
+  survey.length = survey_length_hours,
+  session.cov = session_cov_workshop
+)
+```
+
+The important pieces are:
+
+- `captures`: the combined capture histories from all sessions;
+- `traps`: a list of microphone locations, one element per session;
+- `session.cov`: session-level covariates such as site and time;
+- `survey.length`: the survey duration in hours.
+
+## Inspecting the processed data
+
+Before fitting a model, the processed data should be checked for obvious
+problems. A simple first check is the number of detections and unique calls in
+each session.
+
+```{r}
+detections_by_session <- aggregate(
+  trap ~ session,
+  data = full_captures,
+  FUN = length
+)
+
+names(detections_by_session)[2] <- "n_detections"
+
+calls_by_session <- aggregate(
+  ID ~ session,
+  data = full_captures,
+  FUN = function(x) length(unique(x))
+)
+
+names(calls_by_session)[2] <- "n_calls"
+
+session_summary <- merge(
+  session_cov_workshop,
+  detections_by_session,
+  by = "session"
+)
+
+session_summary <- merge(
+  session_summary,
+  calls_by_session,
+  by = "session"
+)
+
+session_summary
+```
+
+### Survey layout and capture histories
+
+The `plot()` method for `acre` data objects can be used to visualize the survey
+layout and the detections.
+
+First, plot the mask and microphone array for one session.
+
+```{r}
+example_session <- 1
+
+plot(
+  full_data,
+  type = "survey",
+  session = example_session
+)
+```
+
+Next, plot the capture data for the same session.
+
+```{r}
+plot(
+  full_data,
+  type = "capt",
+  session = example_session,
+  call_id = 1
+)
+```
+
+These plots are useful sanity checks before fitting the model. They help confirm
+that the mask, microphone array, and detections look sensible.
+
+## Fitting a model
+
+The function `fit.acre()` fits a spatial capture-recapture model to the object
+returned by `read.acre()`.
+
+Here, call density is allowed to vary by site and through time, while the
+detection parameters are allowed to vary by site.
+
+The model formulas are:
+
+```{r eval=FALSE}
+model = list(
+  D = ~ site + t + I(t^2),
+  lambda0 = ~ site,
+  sigma = ~ site
+)
+```
+
+This separates the ecological component of the model, represented by `D`, from
+the observation component, represented by `lambda0` and `sigma`.
+
+```{r cache=TRUE, eval=FALSE}
+trend_fit <- fit.acre(
+  full_data,
+  detfn = "hhn",
+  model = list(
+    D = ~ site + t + I(t^2),
+    lambda0 = ~ site,
+    sigma = ~ site
+  ),
+  tracing = FALSE
+)
+
+summary(trend_fit)
+```
+
+The density model asks whether frog density differs between sites and changes
+through time. The quadratic time effect allows the density trend to bend rather
+than forcing a straight-line change.
+
+The detection model allows detectability to differ between sites. This matters
+because a lower number of detections at one site might reflect lower density,
+lower detectability, or both.
+
+## Examining model results
+
+### Fitted detection functions
+
+We can visualize the fitted detection function. Because `lambda0` and `sigma`
+vary by site, we provide site-level covariate values using `newdata`.
+
+```{r eval=FALSE}
+site_levels <- levels(session_cov_workshop$site)
+
+detfn_newdata <- data.frame(
+  site = factor(site_levels, levels = site_levels)
+)
+
+plot(
+  trend_fit,
+  type = "detfn",
+  newdata = detfn_newdata,
+  col = seq_along(site_levels),
+  lwd = 2
+)
+
+legend(
+  "topright",
+  legend = paste("Site", site_levels),
+  col = seq_along(site_levels),
+  lwd = 2,
+  bty = "n"
+)
+```
+
+This plot shows how the fitted detection function changes between sites.
+
+### Fitted density surface
+
+We can also plot the fitted density surface for a particular session.
+
+```{r eval=FALSE}
+plot(
+  trend_fit,
+  type = "Dsurf",
+  session = example_session,
+  plot.contours = TRUE
+)
+```
+
+This is a session-specific density surface. In this model, the surface is driven
+by the fitted density for that session's site and time.
+
+### Estimated call locations
+
+Finally, we can plot the estimated location contours for a detected call.
+
+```{r eval=FALSE}
+example_call <- unique(full_captures$ID[
+  full_captures$session == example_session
+])[1]
+
+example_call
+```
+
+```{r eval=FALSE}
+plot(
+  trend_fit,
+  type = "locations",
+  session = example_session,
+  call_id = example_call,
+  filled = FALSE
+)
+```
+
+Location plots combine the capture history for a call with the fitted detection
+model and density surface. They are useful for checking whether the inferred
+call location is plausible given the microphones that detected the call.
+
+### Predicted density trends
+
+To visualize the fitted density trends, we create prediction data over the
+observed time range for each site.
+
+```{r eval=FALSE}
+tt <- seq(
+  min(session_cov_workshop$t),
+  max(session_cov_workshop$t),
+  length.out = 1000
+)
+
+pred_data <- do.call(
+  rbind,
+  lapply(site_levels, function(s) {
+    data.frame(
+      t = tt,
+      site = factor(s, levels = site_levels)
+    )
+  })
+)
+```
+
+Predict density from the fitted model.
+
+```{r eval=FALSE}
+pred <- predict(trend_fit, newdata = pred_data)
+
+pred_data$D <- pred$D[, 1]
+pred_data$log_D <- log(pred_data$D)
+```
+
+Plot the fitted density trends by site.
+
+```{r eval=FALSE}
+plot(
+  NA,
+  xlim = range(session_cov_workshop$t),
+  ylim = range(pred_data$log_D, na.rm = TRUE),
+  xlab = "Days since first survey",
+  ylab = "Predicted log density",
+  main = "Predicted density trends by site"
+)
+
+cols <- seq_along(site_levels)
+
+for (j in seq_along(site_levels)) {
+  site_j <- site_levels[j]
+  pd <- pred_data[pred_data$site == site_j, ]
+
+  lines(
+    pd$t,
+    pd$log_D,
+    col = cols[j],
+    lwd = 2
+  )
+}
+
+legend(
+  "topright",
+  legend = paste("Site", site_levels),
+  col = cols,
+  lwd = 2,
+  bty = "n"
+)
+```
+
+## The complete workflow
+
+The main steps in this multi-session analysis are:
+
+```{r eval=FALSE}
+# Prepare each survey session
+sessions <- lapply(
+  sessions_to_use,
+  prepare_session,
+  survey_info = survey_info,
+  data_dir = data_dir,
+  survey_length = survey_length
+)
+
+# Combine sessions into one acre_data object
+full_data <- read.acre(
+  captures = full_captures,
+  traps = full_traps,
+  control.mask = list(buffer = 40, spacing = 1),
+  survey.length = survey_length_hours,
+  session.cov = session_cov_workshop
+)
+
+# Fit a multi-session model
+trend_fit <- fit.acre(
+  full_data,
+  detfn = "hhn",
+  model = list(
+    D = ~ site + t + I(t^2),
+    lambda0 = ~ site,
+    sigma = ~ site
+  ),
+  tracing = FALSE
+)
+
+# Examine fitted values and plots
+summary(trend_fit)
+plot(trend_fit, type = "detfn", newdata = detfn_newdata)
+plot(trend_fit, type = "Dsurf", session = example_session)
+```
+
+This vignette has shown how repeated surveys can be combined into a single
+analysis in which call density and detectability vary with session-level
+covariates. The same framework can be extended by changing the model formulas
+or supplying additional spatial and session-level covariates.

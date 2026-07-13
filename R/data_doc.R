@@ -538,3 +538,49 @@
 #' @source created from the simulation
 #' @keywords internal
 "ind_ss_sp"
+
+#' Simulated acoustic survey on Whatupuke Island
+#'
+#' A simulated single-session acoustic spatial capture-recapture survey based on
+#' a simplified and transformed coastline of Whatupuke Island, New Zealand.
+#' The dataset is intended to demonstrate the standard `acre` workflow.
+#'
+#' @format A named list with five components:
+#' \describe{
+#'   \item{captures}{
+#'     A data frame containing detector-level detections. The columns are:
+#'     \describe{
+#'       \item{session}{Survey session identifier.}
+#'       \item{ID}{Detected call identifier.}
+#'       \item{trap}{Detector identifier.}
+#'       \item{bearing}{Estimated bearing from the detector to the call, in radians.}
+#'     }
+#'   }
+#'   \item{traps}{
+#'     A data frame containing the Cartesian coordinates of the acoustic
+#'     detectors, in metres.
+#'   }
+#'   \item{mask}{
+#'     A matrix containing the spatial integration-mask coordinates, in metres.
+#'     The mask is restricted to the island boundary.
+#'   }
+#'   \item{covariates}{
+#'     A data frame containing spatial covariate observations. It includes the
+#'     coordinates `x` and `y`, continuous elevation, standardized elevation,
+#'     and the categorical habitat variable.
+#'   }
+#'   \item{boundary}{
+#'     A data frame containing the transformed island-boundary coordinates,
+#'     in metres.
+#'   }
+#' }
+#'
+#' @source The coastline geometry was derived from the LINZ NZ Coastlines and
+#' Islands Polygons (Topo 1:50k) dataset, licensed under Creative Commons
+#' Attribution 4.0. The coastline was simplified, rotated, translated, and
+#' converted to local Cartesian coordinates. Detection and covariate data were
+#' simulated for use as a package example.
+#'
+#' @keywords internal
+"island_data"
+

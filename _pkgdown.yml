@@ -27,16 +27,16 @@ navbar:
     tutorials:
       text: Tutorials
       menu:
+      - text: Auxiliary information in acre
+        href: articles/aux_info.html
+      - text: Visualizing data in acre
+        href: articles/data_vis.html
       - text: Inhomogeneous density analysis
         href: articles/inhom_density.html
       - text: Multi-session analysis
         href: articles/multi_sess.html
       - text: Simulation
         href: articles/simulation.html
-      - text: Placeholder 1
-        href: articles/placeholder_1.html
-      - text: Placeholder 2
-        href: articles/placeholder_2.html
 
     reference:
       text: Reference
@@ -58,11 +58,11 @@ articles:
 
 - title: Articles
   contents:
+  - articles/aux_info
+  - articles/data_vis
   - articles/inhom_density
   - articles/multi_sess
   - articles/simulation
-  - articles/placeholder_1
-  - articles/placeholder_2
 
 reference:
   - title: Data preparation

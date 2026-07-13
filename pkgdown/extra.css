@@ -207,7 +207,7 @@ a:focus {
 
 /* Flying sprite sheet */
 .acre-bird-perch.is-flying .acre-bird-sprite {
-  background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/174479/bird-cells-new.svg");
+  background-image: url("reference/figures/birds_flying.svg");
   background-size: auto 100%;
   background-position: 0 0;
   background-repeat: no-repeat;
