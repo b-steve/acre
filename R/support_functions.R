@@ -230,8 +230,8 @@ p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
     cutoff <- pars$cutoff
     probs = 1 - pnorm(cutoff, mean = probs, sd = sigma.ss)
   }
-  # prod(1 - x) : P(didn't detect on trap 1 & didn't detect on trap 2 & ...)
-  # 1 - prod(1 - x) : P(detect on at least 1 trap)
+  ## prod(1 - x) : P(didn't detect on trap 1 & didn't detect on trap 2 & ...)
+  ## 1 - prod(1 - x) : P(detect on at least 1 trap)
   out <- 1 - apply(1 - probs, 2, prod)
 
   # If esa == TRUE: returns the ESA
@@ -244,6 +244,34 @@ p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
   }
 }
 
+#' Calulating probabilities of detection at mask points
+#'
+#' Calculates the probability of a call produced at a mask point being
+#' detected by one or more detectors.
+#' @inheritParams boot.acre
+#'
+#' @return A list with a component for each session, containing a
+#'   vector of detection probabilities.
+#'
+#' @export
+p.dot <- function(fit){
+  n.sessions <- fit$n.sessions
+  out <- vector(mode = "list", length = n.sessions)
+  for (i in 1:n.sessions){
+    mask <- as.matrix(get_mask(fit)[[i]])
+    traps <- get_trap(fit)[[i]]
+    det.pars <- as.list(coef(fit, type = "fitted"))
+    ext.par.matrices <- get_par_extend_matrix(fit, mask, traps, session = i)
+    det.pars[names(ext.par.matrices)] <- ext.par.matrices
+    out[[i]] <- p.dot.defaultD(points = mask, traps = traps,
+                               detfn = get_detfn(fit),
+                               ss.link = get_ss_link(fit),
+                               pars = det.pars,
+                               A = attr(mask, "area"),
+                               esa = FALSE)
+  }
+  out
+}
 
 formula_separate = function(foo, var.m){
   foo_vars = all.vars(foo[[3]])
