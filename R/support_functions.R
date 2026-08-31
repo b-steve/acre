@@ -214,13 +214,13 @@ detfn.params = function(detfn){
   if(detfn == 'ss'){
     param.og = c('b0.ss', 'b1.ss', 'sigma.ss')
   }
-  
+
   return(param.og)
 }
 
-# See section 1.4.2 in: 
+# See section 1.4.2 in:
 # https://research-repository.st-andrews.ac.uk/bitstream/handle/10023/18233/BenStevensonPhDThesis.pdf
-p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL, 
+p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
                           ss.link = NULL, pars = NULL, A, n.quadpoints = 8,
                           esa = T) {
   dists <- distances(traps, points)
@@ -233,7 +233,9 @@ p.dot.defaultD = function(points = NULL, traps = NULL, detfn = NULL,
   # prod(1 - x) : P(didn't detect on trap 1 & didn't detect on trap 2 & ...)
   # 1 - prod(1 - x) : P(detect on at least 1 trap)
   out <- 1 - apply(1 - probs, 2, prod)
-  
+
+  # If esa == TRUE: returns the ESA
+  # If esa == FALSE: returns P(detect on at least 1 trap) for each mask point
   if (esa) {
     out <- A*sum(out)
     return(out)
@@ -1406,17 +1408,17 @@ location_cov_to_mask = function(mask, loc.cov, control_nn2 = NULL, control_weigh
 
 }
 
-# 
+#
 distance_cov_to_mask = function(mask, dist.cov) {
   ## Directly calculates distance covariates for provided mask
   if(!is.list(dist.cov)){
     stop("dist.cov must be a list containing distance covariates")
   }
-  
+
   # Directly calculate the distance from each mask point to nearest covariate
   # area.
   calculated_dist.cov = convert_dist_cov_to_loc_cov(dist.cov, NULL, mask)
-  
+
   return(calculated_dist.cov)
 }
 
@@ -1496,10 +1498,10 @@ demo_loc_cov = function(){
 
 sim_args_generator = function(sim_name){
   if (!sim_name %in% get_dataset_names()) {
-    stop('invalid input for "sim_name", which should be one of the following: "', 
+    stop('invalid input for "sim_name", which should be one of the following: "',
          paste(get_dataset_names(), collapse = '", "'), '"')
   }
-  
+
   output = list()
   #generate some common settings
   traps = demo_traps()
@@ -1820,7 +1822,7 @@ homo_digit = function(x){
 
 #predict density with information of locations coordinates, only used in the plot currently
 
-predict_D_for_plot = function(fit, session_select = 1, new_data = NULL, 
+predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
                               D_cov = NULL, xlim = NULL, ylim = NULL,
                               x_pixels = 50, y_pixels = 50, se_fit = FALSE, log_scale = FALSE, set_zero = NULL,
                               convert.loc2mask = NULL,
@@ -1875,39 +1877,39 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
     }
 
     # If any of
-    # 
+    #
     # - The fit does not contain any location covariate information
     # - The mask we will be predicting over has changed from the original fit
     # - The covariate information we will be predicting with has changed from
     #   the original fit
-    # 
+    #
     # then we will re-interpolate the location covariates
     if(is.null(old_loc_cov)){
-      
+
       # Grab the original parameter interpolation data
       old_loc_cov = get_par_extend_data(fit)$mask
-      
+
       # If NULL, then the model was fitted without location covariates
       if(!is.null(old_loc_cov)){
-        
+
         mask_level_dat_extract = TRUE
-        
+
         # Grab correct session
         if('session' %in% colnames(old_loc_cov)) {
-          old_loc_cov = subset(old_loc_cov, 
+          old_loc_cov = subset(old_loc_cov,
                                old_loc_cov$session == session_select)
         }
-      
-        # When locations/mask in prediction is assigned by `xlim`/`ylim` or 
-        # `new_data`, we use the original mask level data as `loc.cov`, 
+
+        # When locations/mask in prediction is assigned by `xlim`/`ylim` or
+        # `new_data`, we use the original mask level data as `loc.cov`,
         # otherwise, we do not need to do conversion in the first place
         if(!original_mask){
           if('session' %in% colnames(old_loc_cov)) {
-            old_loc_cov = old_loc_cov[, which(colnames(old_loc_cov)!='session'), 
+            old_loc_cov = old_loc_cov[, which(colnames(old_loc_cov)!='session'),
                                       drop = FALSE]
           }
           if('mask' %in% colnames(old_loc_cov)) {
-            old_loc_cov = old_loc_cov[, which(colnames(old_loc_cov)!='mask'), 
+            old_loc_cov = old_loc_cov[, which(colnames(old_loc_cov)!='mask'),
                                       drop = FALSE]
           }
           tem_mask = get_mask(fit)
@@ -1919,7 +1921,7 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
     }
 
     if(!is.null(old_loc_cov)) {
-      # Like mentioned right above, if we are using original mask data, and 
+      # Like mentioned right above, if we are using original mask data, and
       # mask-level covariates data we do not need to do conversion at all
       if(mask_level_dat_extract & original_mask) {
         cov_mask = old_loc_cov
@@ -1928,30 +1930,30 @@ predict_D_for_plot = function(fit, session_select = 1, new_data = NULL,
           convert.loc2mask = vector('list', 2)
           names(convert.loc2mask) = c('mask', 'loc.cov')
         }
-        # Need to create this object regardless of whether convert.loc2mask 
+        # Need to create this object regardless of whether convert.loc2mask
         # provided or not
         convert.dist2mask = vector('list', 2)
         names(convert.dist2mask) = c('mask', 'dist.cov')
-        
+
         convert.dist2mask$mask = list(mask)
         convert.loc2mask$mask = list(mask)
-        
+
         # We only need to interpolate location covariates, as we can directly
         # calculate the value at each mask point for distance covariates.
-        
+
         # Separating distance covariates from location covariates.
         dist_cov_names = names(fit$arg_input$dist.cov)
         separated_cov = separate_dist_loc_cov(old_loc_cov, dist_cov_names)
-        
-        # NOTICE: We aren't using separated_cov$distance, we want to calculate 
-        # for each mask point directly so just want distance covariate values 
+
+        # NOTICE: We aren't using separated_cov$distance, we want to calculate
+        # for each mask point directly so just want distance covariate values
         # contained within fit object
         convert.dist2mask$dist.cov = fit$arg_input$dist.cov
         convert.loc2mask$loc.cov = separated_cov$location
 
         loc_cov_mask = do.call('location_cov_to_mask', convert.loc2mask)
         dist_cov_mask = do.call('distance_cov_to_mask', convert.dist2mask)
-        
+
         # Combine the distance and location covariates into 1 dataframe.
         # The distance mask should (read: will) have x, y columns matching old_covariates
         cov_mask = cbind(loc_cov_mask, dist_cov_mask)
@@ -2335,7 +2337,7 @@ convert_dist_cov_to_loc_cov = function(dist.cov, loc.cov, mask){
         stop('invlid input of the argument loc.cov.')
       }
     }
-    
+
     if(!is.data.frame(mask)) {
       mask <- do.call('rbind', mask)
     }
@@ -2343,7 +2345,7 @@ convert_dist_cov_to_loc_cov = function(dist.cov, loc.cov, mask){
     for(i in 1:n){
       cov_name = cov_names[i]
       stopifnot(all(c('x', 'y') %in% colnames(dist.cov[[cov_name]])))
-      
+
       tem = dist_nearest(from = mask,
                          to = dist.cov[[cov_name]][, c('x', 'y')], col_name = cov_name)
 
@@ -2413,52 +2415,52 @@ get_dataset_names = function() {
 separate_dist_loc_cov <- function(loc_cov, dist_cov_col_names) {
   # Function which separates  distance covariates from location covariates in a loc_cov list, which
   # contains dataframes of location and dist covariates.
-  
+
   # Check if loc_cov is a list
   if (!is.list(loc_cov)) {
     stop("loc_cov must be a list of data frames.")
   }
-  
+
   # Check if dist_cov_col_names is a character vector
   if (!is.character(dist_cov_col_names)) {
     stop("dist_cov_col_names must be a character vector of distance covariate column names.")
   }
-  
+
   distance <- list()
   location <- list()
-  
+
   for (i in seq_along(loc_cov)) {
     cov_df <- loc_cov[[i]]
-    
+
     # Check items of loc_cov are dataframes
     if (!is.data.frame(cov_df)) {
       stop("loc_cov must be a list of data frames.")
     }
-    
+
     # Make sure each dataframe has x, y columns
     if (!all(c("x", "y") %in% names(cov_df))) {
       stop("Each dataframe in loc_cov must contain 'x' and 'y' columns.")
     }
-    
-    # Split the data frame into 2 new dataframes, each both have the same x,y 
-    # columns, but one has only the distance covariates, the other only location 
+
+    # Split the data frame into 2 new dataframes, each both have the same x,y
+    # columns, but one has only the distance covariates, the other only location
     # covariates.
     dist_cov_indices <- which(names(cov_df) %in% dist_cov_col_names)
     loc_cov_indices <- which(!names(cov_df) %in% c(dist_cov_col_names, "x", "y"))
-    
+
     location_df <- cov_df[, c("x", "y", names(cov_df)[loc_cov_indices]), drop = FALSE]
     distance_df <- cov_df[, c("x", "y", names(cov_df)[dist_cov_indices]), drop = FALSE]
-    
+
     # Only add the dataframe if it contains more than just the x, y columns
     if (ncol(location_df) > 2) {
       location[[length(location) + 1]] <- location_df
     }
-    
+
     if (ncol(distance_df) > 2) {
       distance[[length(distance) + 1]] <- distance_df
     }
-  } 
-  
+  }
+
   return(list(distance = distance, location = location))
 }
 
@@ -2469,14 +2471,14 @@ conf_int_column_can_be_non_scientific <- function(x) {
 format_conf_int_matrix <- function(mat) {
   # Format matrix according to desired behavior:
   #
-  # First two columns: if ALL values in that column can be printed as 
+  # First two columns: if ALL values in that column can be printed as
   # non-scientific, print as such for that column, else print in scientific
   #
-  # Second two columns: if ALL values ACROSS BOTH columns can be printed as 
+  # Second two columns: if ALL values ACROSS BOTH columns can be printed as
   # non-scientific, print as such for both columns, else print in scientific
   #
   # Little bit hacky, there definitely is a better way
-  
+
   formatted_mat <- mat
   # Format first two columns independently
   for (col in 1:2) {
@@ -2486,14 +2488,14 @@ format_conf_int_matrix <- function(mat) {
       formatted_mat[, col] <- format(mat[, col], scientific = TRUE, trim=T)
     }
   }
-  
+
   # Format last two columns together
   if (all(sapply(mat[, 3:4], conf_int_column_can_be_non_scientific))) {
     formatted_mat[, 3:4] <- format(mat[, 3:4], scientific = FALSE, trim=T)
   } else {
     formatted_mat[, 3:4] <- format(mat[, 3:4], scientific = TRUE, trim=T)
   }
-  
+
   return(formatted_mat)
 }
 
@@ -2504,14 +2506,14 @@ is_animal_model <- function(fit) {
 faded_virdis <- function(n_levels, max_alpha = 1, min_alpha = 0) {
   # Generate base virdis colors
   base_colors <- viridisLite::viridis(n_levels)
-  
+
   # Generate sequence of alpha scales
   alpha_values <- seq(min_alpha, max_alpha, length.out = n_levels)
-  
+
   # Apply the alphas to our base colors
   faded_colors <- unlist(
     Map(function(col, a) scales::alpha(col, a), base_colors, alpha_values)
   )
-  
+
   return(faded_colors)
 }
