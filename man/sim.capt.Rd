@@ -115,10 +115,6 @@ section on cue rate data, below.}
 
 \item{n.sessions}{An integer for the number of sessions.}
 
-\item{n.rand}{}
-
-\item{random.location}{}
-
 \item{sound.speed}{A scalar, the speed of sound in metres per
 second. This argument is only used when time-of-arrival data are
 included in the \code{captures} data frame. Defaults to 330, the

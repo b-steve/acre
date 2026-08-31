@@ -7,8 +7,6 @@
 \method{plot}{acre_data}(x, ...)
 }
 \arguments{
-\item{x}{}
-
 \item{...}{For S3 compatibility.}
 }
 \description{
