@@ -724,22 +724,26 @@ plot.acre = function(x, type = NULL, call_id = NULL, animal_id = NULL, session =
   } else if(type == 'detfn'){
     args_pass = list(fit = x, ...)
     args_pass$type = NULL
+    args_pass = args_pass[sapply(args_pass, function(x) !is.null(x))]
     do.call('show.detfn', args_pass)
     
   } else if(type == 'Dsurf'){
     args_pass = list(fit = x, session = session, ...)
     args_pass$type = NULL
+    args_pass = args_pass[sapply(args_pass, function(x) !is.null(x))]
     do.call('show.Dsurf', args_pass)
 
   } else if(type == 'locations'){
     args_pass = list(fit = x, call_id = call_id, animal_id = animal_id,
                      session = session, ...)
     args_pass$type = NULL
+    args_pass = args_pass[sapply(args_pass, function(x) !is.null(x))]
     do.call('plot_locations', args_pass)
     
   } else if(type == 'dev') {
     args_pass = list(fit = x, ...)
     args_pass$type = NULL
+    args_pass = args_pass[sapply(args_pass, function(x) !is.null(x))]
     do.call('plot_dev', args_pass)
     
   } else {
