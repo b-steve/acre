@@ -25,22 +25,21 @@ show.Dsurf(
 )
 }
 \arguments{
-\item{fit}{an object generated from the model fitting function "fit.acre()" or
-the bootstrap process "boot.acre()".}
+\item{fit}{an object generated from the model fitting function
+"fit.acre()" or the bootstrap process "boot.acre()".}
 
 \item{session}{The session with the detector array and invidual(s)
-to be plotted. Ignored if the \code{newdata} argument is
-provided.}
+to be plotted. Ignored if the \code{newdata} argument is provided.}
 
 \item{show.cv}{Logical. If true, the CV of the density estimate is
 plotted rather than the estimate itself. At present, this will
 only work if \code{newdata} is also provided.}
 
-\item{new.data}{A data frame including new mask points and covariate
-values, from which to estimate and plot density estimates
-for. This allows, for example, estimates to be provided for new
-regions not included in the mask used to fit the model. Two
-columns, named \code{x} and \code{y}, must be included,
+\item{new.data}{A data frame including new mask points and
+covariate values, from which to estimate and plot density
+estimates for. This allows, for example, estimates to be provided
+for new regions not included in the mask used to fit the
+model. Two columns, named \code{x} and \code{y}, must be included,
 providing the x- and y-coordinates of the new mask
 points. Additional columns must provide the covariates used to
 fit the model.}
@@ -49,23 +48,26 @@ fit the model.}
 
 \item{ylim}{a numeric vector with two elements as the range of y-axis.}
 
-\item{zlim}{A numeric vector of length 2, giving the range of the density contours}
+\item{zlim}{A numeric vector of length 2, giving the range of the
+density contours}
 
 \item{scale}{By default, density is in animals per hectare. The
-plotted values are multiplied by this argument, allowing
-for user-specified units. For example, setting \code{scale = 100}
-results in densities plotted as animals per square kilometre.}
+plotted values are multiplied by this argument, allowing for
+user-specified units. For example, setting \code{scale = 100} results
+in densities plotted as animals per square kilometre.}
 
 \item{plot.contours}{Logical, if \code{TRUE}, contours are plotted.}
 
-\item{add}{a logical value indicates whether to add the lines into the existing plot}
+\item{add}{a logical value indicates whether to add the lines into
+the existing plot}
 
 \item{convert.loc2mask}{A list to control the spatial interpolation
 method used to compute covariate values for mask locations based
 on data provided in \code{loc.cov} and \code{time.loc.cov}. See the section
 on spatial covariates below.}
 
-\item{arg.col}{A numeric value, indicating the number of levels to stretch the color over}
+\item{arg.col}{A numeric value, indicating the number of levels to
+stretch the color over}
 
 \item{...}{otlp}
 }
