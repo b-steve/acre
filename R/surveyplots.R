@@ -256,20 +256,86 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
 }
 
 
-#' Title
+#' Plot survey information from an acre data object
 #'
-#' @param x
-#' @param ... 
+#' Plot the detector array and mask, capture histories, or spatial covariates
+#' stored in an object created by [read.acre()]. The plot produced is selected
+#' with the `type` argument.
 #'
-#' @return
+#' @param x An object of class `acre_data`, created by [read.acre()].
+#' @param type Character string specifying the plot to produce. The available
+#'   options are `"survey"` (mask and detectors), `"capt"` (capture
+#'   histories), and `"covariates"` (spatial covariates).
+#' @param call_id For `type = "capt"`, a numeric vector containing the ID or
+#'   IDs of the calls to plot. The default, `NULL`, plots all calls. A value of
+#'   0 also selects all calls. If supplied without `session`, session 1 is
+#'   used.
+#' @param animal_id For `type = "capt"` with capture histories that contain an
+#'   `animal_ID` column, a single animal ID to plot. This argument must be
+#'   supplied when `call_id` is used with such data. Ignored for capture
+#'   histories without animal IDs and for other plot types.
+#' @param session A numeric value specifying the capture session to plot when
+#'   the survey contains multiple sessions. For `type = "survey"` and
+#'   `type = "covariates"`, the default is session 1. For `type = "capt"`, the
+#'   default is to plot calls from all sessions, unless `call_id` or
+#'   `animal_id` is supplied, in which case session 1 is used.
+#' @param ... Additional plotting options, including `xlim`, `ylim`, and `ask`.
+#'   See Details for options specific to each plot type.
+#'
+#' @details
+#' `type = "survey"` plots the mask and detector locations for one session.
+#' `session` defaults to 1. When `session` is explicitly supplied, the plot is
+#' titled with the session label. The appearance of the mask can be controlled
+#' with `pch_mask`, `col_mask`, and `cex_mask`; the corresponding detector
+#' options are `pch_trap`, `col_trap`, and `cex_trap`.
+#'
+#' `type = "capt"` plots detector-level capture information, with one plot per
+#' call. By default, calls from all sessions are plotted. Use `session` to
+#' restrict the plot to a particular session and **`call_id` to select the ID
+#' or IDs of the calls whose capture histories are plotted**. For example,
+#' `plot(x, type = "capt", session = 1, call_id = 3)` plots call 3 from the
+#' first session. If `call_id` is supplied without `session`, the first session
+#' is used. A `call_id` value of 0, or omitting `call_id`, selects all calls.
+#' For capture histories containing an `animal_ID` column, `animal_id`
+#' selects an individual and must be supplied when selecting a `call_id`;
+#' within such data, call IDs are interpreted within the selected animal.
+#'
+#' Capture plots display any auxiliary `bearing`, `dist`, or `toa` information
+#' present in the capture history. `arrow_len` controls bearing-arrow length
+#' when distances are unavailable, and `circle_acc` controls the number of
+#' points used to draw distance circles.
+#'
+#' `type = "covariates"` plots the spatial covariates for one session, which
+#' defaults to 1. Use `select_cov` or `cov_names` to restrict the covariates,
+#' `arg.col` to set the number of colours, and `plot.contours = TRUE` to add
+#' contours to numeric covariates.
+#'
+#' For plot types that can produce multiple plots, `ask = TRUE` (the default)
+#' prompts before advancing to the next plot. Set `ask = FALSE` for
+#' non-interactive use.
+#'
+#' @return `NULL`, invisibly. The function is called for its plotting side
+#'   effects.
 #' @export
 #'
 #' @examples
-plot.acre_data <- function(x, ...){
+#' data("bearing_dist_hn")
+#'
+#' acre_dat <- read.acre(
+#'   captures = bearing_dist_hn$capt,
+#'   traps = bearing_dist_hn$traps,
+#'   control.mask = bearing_dist_hn$control.mask
+#' )
+#'
+#' # Plot the survey mask and detector locations for session 1.
+#' plot(acre_dat, type = "survey", session = 1)
+#'
+#' # Plot the capture history for the first call in session 1.
+#' plot(acre_dat, type = "capt", session = 1, call_id = 1, ask = FALSE)
+plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
+                           session = NULL, ...){
   
   extra_args = list(...)
-  type = extra_args$type
-  session = extra_args$session
   ask = extra_args$ask
   if(is.null(ask)) ask = TRUE
   xlim = extra_args$xlim
@@ -280,6 +346,7 @@ plot.acre_data <- function(x, ...){
   if(!(type %in% c('survey', 'capt', 'covariates'))) stop('invalid input for "type", which should be either "survey", "capt" or "covariates".')
   ################################################################################################
   if(type == 'survey'){
+    session_supplied = !is.null(session)
     if(is.null(session)){
       session = 1
     }
@@ -297,6 +364,7 @@ plot.acre_data <- function(x, ...){
     
     plot(masks, pch = pch_mask, cex = cex_mask, asp = 1, col = col_mask)
     points(get_trap_from_data(x)[[session]], pch = pch_trap, col = col_trap, cex = cex_trap)
+    if(session_supplied) title(main = paste0("session: ", session))
   }
   ################################################################################################
   if(type == 'capt'){
@@ -330,25 +398,25 @@ plot.acre_data <- function(x, ...){
     if("animal_ID" %in% c_names) animal.model = TRUE else animal.model = FALSE
 
     # When animal ID or call ID equals to zero, it means all detection
-    if(any(!is.null(extra_args$animal_id), !is.null(extra_args$call_id)) & session == 0){
+    if(any(!is.null(animal_id), !is.null(call_id)) & session == 0){
       session = 1
     }
     
     if(animal.model){
-      if(is.null(extra_args$animal_id)){
+      if(is.null(animal_id)){
         a_id = 0
         # Cannot plot with call ID but without animal_ID
-        if(!is.null(extra_args$call_id)) stop("Please provide information about animal_ID.")
+        if(!is.null(call_id)) stop("Please provide information about animal_ID.")
       } else {
-        a_id = extra_args$animal_id
+        a_id = animal_id
         stopifnot(length(a_id) == 1)
       }
     }
     
-    if(is.null(extra_args$call_id)){
+    if(is.null(call_id)){
       c_id = 0
     } else {
-      c_id = extra_args$call_id
+      c_id = call_id
     } 
 
     t_list = get_trap_from_data(x)
