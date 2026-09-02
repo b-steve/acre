@@ -2,13 +2,104 @@
 % Please edit documentation in R/surveyplots.R
 \name{plot.acre_data}
 \alias{plot.acre_data}
-\title{Plotting acre data}
+\title{Plotting \code{acre} data}
 \usage{
-\method{plot}{acre_data}(x, ...)
+\method{plot}{acre_data}(x, type = NULL, call_id = NULL, animal_id = NULL, session = NULL, ...)
 }
 \arguments{
-\item{...}{For S3 compatibility.}
+\item{x}{A data object returned by \code{\link[=read.acre]{read.acre()}}.}
+
+\item{type}{A character string specifying the plot to produce. The
+available options are \code{"survey"} (mask and detectors), \code{"capt"}
+(capture histories), and \code{"covariates"} (spatial covariates). See
+Details below.}
+
+\item{call_id}{For \code{type = "capt"}, a numeric vector containing the
+ID or IDs of the calls to plot. The default, \code{NULL}, plots all
+calls. A value of 0 also selects all calls. If supplied without
+\code{session}, session 1 is used.}
+
+\item{animal_id}{For \code{type = "capt"} with capture histories that
+contain an \code{animal_ID} column, a single animal ID to plot. This
+argument must be supplied when \code{call_id} is used with such
+data. Ignored for capture histories without animal IDs and for
+other plot types.}
+
+\item{session}{A numeric value specifying the capture session to
+plot when the survey contains multiple sessions. For \code{type = "survey"} and \code{type = "covariates"}, the default is session
+\enumerate{
+\item For \code{type = "capt"}, the default is to plot calls from all
+sessions, unless \code{call_id} or \code{animal_id} is supplied, in which
+case session 1 is used.
+}}
+
+\item{...}{Additional plotting options, including \code{xlim}, \code{ylim},
+and \code{ask}.  See Details for options specific to each plot type.}
+}
+\value{
+\code{NULL}, invisibly. The function is called for its plotting side
+effects.
 }
 \description{
-Plotting acre data
+Plots the detector array and mask, capture histories, or spatial
+covariates stored in an object created by \code{\link[=read.acre]{read.acre()}}. The plot
+produced is selected with the \code{type} argument.
+}
+\details{
+When \code{type = "survey"}, the mask and detector locations for one
+session are plotted, and \code{session} defaults to 1. When \code{session} is
+explicitly supplied, the plot is titled with the session label. The
+appearance of the mask can be controlled with \code{pch_mask},
+\code{col_mask}, and \code{cex_mask}; the corresponding detector options are
+\code{pch_trap}, \code{col_trap}, and \code{cex_trap}.
+
+When \code{type = "capt"}, detector-level capture data are plotted, with
+one plot per detected call. By default, calls from all sessions are
+plotted. Use \code{session} to restrict the plot to a particular session
+and \code{call_id} to select the ID or IDs of the calls whose capture
+histories are to be plotted. For example, \code{plot(x, type = "capt", session = 1, call_id = 3)} plots call 3 from the first session. If
+\code{call_id} is supplied without \code{session}, the first session is
+used. A \code{call_id} value of 0, or omitting \code{call_id}, selects all
+calls.  For capture histories containing an \code{animal_ID} column,
+\code{animal_id} selects an individual and must be supplied when
+selecting a \code{call_id}; within such data, call IDs are interpreted
+within the selected animal.
+
+Capture plots display any auxiliary bearing, distance, or
+time-of-arrival data present in the capture history. Arrows are
+plotted for estimated bearings, and the arrow length corresponds to
+the estimated bearing, if those are also provided. Circles indicate
+estimated distances if bearings are not available. When
+time-of-arrival data are available, numbers are plotted next to
+each detector indicating the order in which the signal arrived,
+with a 1 indicating the detector that received the signal first, a
+2 indicating the detector that received the signal second, and so
+on. Additional plotting options include \code{arrow_len}, controlling
+bearing-arrow length when distances are unavailable, and
+\code{circle_acc}, controlling the number of points used to draw
+distance circles.
+
+When \code{type = "covariates"} spatial covariates for one session are
+plotted, the first session by default. Additional plotting options
+include \code{select_cov} or \code{cov_names} to restrict the covariates,
+\code{arg.col} to set the number of colours, and \code{plot.contours = TRUE}
+to add contours to numeric covariates.
+
+For plot types that can produce multiple plots, \code{ask = TRUE} (the
+default) prompts before advancing to the next plot. Set \code{ask = FALSE} for non-interactive use.
+}
+\examples{
+data("bearing_dist_hn")
+
+acre_dat <- read.acre(
+  captures = bearing_dist_hn$capt,
+  traps = bearing_dist_hn$traps,
+  control.mask = bearing_dist_hn$control.mask
+)
+
+# Plot the survey mask and detector locations for session 1.
+plot(acre_dat, type = "survey", session = 1)
+
+# Plot the capture history for the first call in session 1.
+plot(acre_dat, type = "capt", session = 1, call_id = 1, ask = FALSE)
 }
