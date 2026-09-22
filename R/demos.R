@@ -7,6 +7,9 @@ demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE){
   bounds = dat$bounds
   detfn = dat$detfn
   ss_opts = dat$ss.opts
+  if (!is.null(dat$control_create_mask)){
+    dat$control.mask <- dat$control_create_mask
+  }
   
   dat[c('model', 'sv', 'fix', 'bounds', 'detfn', 'ss.opts', 
         'control.capt', 'control_create_mask')] = NULL
