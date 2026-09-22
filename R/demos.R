@@ -1,4 +1,4 @@
-demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL){
+demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE){
   dat = get(data_name)
 
   model = dat$model
@@ -7,7 +7,6 @@ demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL
   bounds = dat$bounds
   detfn = dat$detfn
   ss_opts = dat$ss.opts
-  dat$control.mask = dat$control_create_mask
   
   dat[c('model', 'sv', 'fix', 'bounds', 'detfn', 'ss.opts', 
         'control.capt', 'control_create_mask')] = NULL
@@ -17,13 +16,9 @@ demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE, sv_link = NULL
   dat_model$dat = do.call('read.acre', dat)
   dat_model$model = model
   dat_model$detfn = detfn
-  dat_model$sv = sv
-  dat_model$fix = fix
   dat_model$bounds = bounds
   dat_model$ss.opts = ss_opts
-  dat_model$gr.skip = gradient_free
-  dat_model$sv.link = sv_link
-
+  dat_model$optim.opts = list(sv = sv, fix = fix, gr.skip = gradient_free)
 
 
   if(fit){
