@@ -607,8 +607,8 @@ test_that("signal strength model with spherical link and individual identity", {
   ############################################################################################################
   
   #test confidence interval
-  conf_95 = matrix(c(4.587758, -2.875471, 2.250470, 3.842757, 2.119420,
-                     4.6681639, -0.4834148, 2.3601167, 4.6267429, 2.3759144), ncol = 2)
+  conf_95 = matrix(c(4.58776, -2.875357, 2.250471, 3.84273, 2.119423,
+                     4.668163, -0.4834706, 2.360118, 4.626725, 2.375917), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
   o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
@@ -630,8 +630,8 @@ test_that("signal strength model with spherical link and individual identity", {
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(98.27382219, 0.05638956, 9.49219541, 46.65394249, 8.32630792,
-                            106.5020104, 0.6166739, 10.5921879, 102.1807100, 10.7608483), ncol = 2)
+  conf_95_fitted = matrix(c(98.27403, 0.05639598, 9.492202, 46.65267, 8.326332,
+                            106.5019, 0.6166396, 10.5922, 102.1788, 10.76088), ncol = 2)
   
   o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
@@ -735,7 +735,7 @@ test_that("Signal strength & toa model - no gradient", {
   ##########################################################################################################
   #check coefficients estimations without back transformation
   
-  pars_link_est_values = c(4.497327, 1.356604, 2.228033, -6.398831, 7.812649)
+  pars_link_est_values = c(4.497227, 1.357671, 2.227983, -6.400474, 7.814611)
   
   pars_link_names = c("b0.ss_link", "b1.ss_link", "sigma.ss_link", "sigma.toa_link", "D_link")
   pars_names = c('b0.ss', 'b1.ss', 'sigma.ss', 'sigma.toa', 'D')
@@ -746,7 +746,7 @@ test_that("Signal strength & toa model - no gradient", {
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
   #test fitted estimations
-  pars_est_values = c(8.977683e+01, 3.882984e+00, 9.281592e+00, 1.663501e-03, 2.471669e+03)
+  pars_est_values = c(89.76786, 3.887131, 9.281129, 0.001660769, 2476.524)
   relative.error = max(abs((coef(fit, types = 'fitted')[pars_names] - pars_est_values)/pars_est_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -754,7 +754,7 @@ test_that("Signal strength & toa model - no gradient", {
   ############################################################################################################
   
   #test linked std errors
-  pars_link_std_values = c(0.01398754, 0.05076602, 0.04959744, 0.08643598, 0.09945805)
+  pars_link_std_values = c(0.01398517, 0.05075751, 0.04960074, 0.08670579, 0.09944046)
   
   
   relative.error = max(abs((stdEr(fit, types = 'linked')[pars_link_names] - pars_link_std_values)/pars_link_std_values))
@@ -762,7 +762,7 @@ test_that("Signal strength & toa model - no gradient", {
   
   
   #test fitted std errors
-  pars_std_values = c(1.255757e+00, 1.971236e-01, 4.603432e-01, 1.437863e-04, 2.458274e+02)
+  pars_std_values = c(1.255419, 0.1973011, 0.4603509, 0.0001439983, 246.2667)
   relative.error = max(abs((stdEr(fit, types = 'fitted')[pars_names] - pars_std_values)/pars_std_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
@@ -770,8 +770,8 @@ test_that("Signal strength & toa model - no gradient", {
   ############################################################################################################
   
   #test confidence interval
-  conf_95 = matrix(c(4.469912, 1.257104, 2.130824, -6.568242, 7.617715,
-                     4.524742, 1.456104, 2.325242, -6.229420, 8.007583), ncol = 2)
+  conf_95 = matrix(c(4.469817, 1.258188, 2.130768, -6.570415, 7.619711,
+                     4.524637, 1.457154, 2.325199, -6.230534, 8.009511), ncol = 2)
   
   #[pars_link_names, ] is use to make sure the order is correct
   o = confint(fit, types = 'linked', level = 0.95)[pars_link_names,]
@@ -782,8 +782,8 @@ test_that("Signal strength & toa model - no gradient", {
   
   
   #test another confidence level
-  conf_90 = matrix(c(4.474320, 1.273101, 2.146453, -6.541006, 7.649055,
-                     4.520334, 1.440107, 2.309614, -6.256656, 7.976243), ncol = 2)
+  conf_90 = matrix(c(4.474223, 1.274183, 2.146397, -6.543093, 7.651046,
+                     4.520231, 1.44116, 2.309569, -6.257856, 7.978176), ncol = 2)
   
   
   o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
@@ -793,8 +793,8 @@ test_that("Signal strength & toa model - no gradient", {
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(8.734903e+01, 3.515228e+00, 8.421803e+00, 1.404263e-03, 2.033909e+03,
-                            9.227212e+01, 4.289214e+00, 1.022916e+01, 1.970595e-03, 3.003649e+03), ncol = 2)
+  conf_95_fitted = matrix(c(87.3407, 3.519041, 8.421328, 0.001401216, 2037.974,
+                            92.26246, 4.293723, 10.22871, 0.0019684, 3009.445), ncol = 2)
   o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
   expect_equal(relative.error, 0, tolerance = 1e-4)
@@ -812,7 +812,7 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   ##########################################################################################################
   #check coefficients estimations without back transformation
   
-  pars_link_est_values = c(0.7713772, 1.8352614, -6.6387914, 10.6122319, -0.4882450, 2.1657846)
+  pars_link_est_values = c(0.7707153, 1.835559, -6.637848, 10.60045, -0.4870398, 2.165754)
   
   pars_link_names = c("sigma_link", "lambda0_link", "sigma.toa_link", "D.(Intercept)_link", "D.noise_link", "mu_link")
   
@@ -825,7 +825,7 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   ############################################################################################################
   
   #test std error
-  pars_link_std_values = c(0.07513802, 0.26995232, 0.10891498, 5.11553391, 0.47807445, 0.14269430)
+  pars_link_std_values = c(0.07506419, 0.2700215, 0.1091684, 5.117405, 0.4782013, 0.1426855)
   
   
   relative.error = max(abs((stdEr(fit, types = 'linked')[pars_link_names] - pars_link_std_values)/pars_link_std_values))
@@ -835,8 +835,8 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   ############################################################################################################
   
   #test confidence interval
-  conf_95 = matrix(c(0.6241094, 1.3061645, -6.8522608, 0.5859697, -1.4252537, 1.8861089,
-                     0.9186450, 2.3643582, -6.4253220, 20.6384941, 0.4487637, 2.4454603), ncol = 2)
+  conf_95 = matrix(c(0.6235922, 1.306327, -6.851815, 0.5705239, -1.424297, 1.886096,
+                     0.9178384, 2.364792, -6.423882, 20.63038, 0.4502174, 2.445412), ncol = 2)
   
   
   #[pars_link_names, ] is use to make sure the order is correct
@@ -849,8 +849,8 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   
   
   #test another confidence level
-  conf_90 = matrix(c(0.6477861, 1.3912293, -6.8179406, 2.1979274, -1.2746075, 1.9310733,
-                     0.8949682, 2.2792934, -6.4596422, 19.0265364, 0.2981175, 2.4004958), ncol = 2)
+  conf_90 = matrix(c(0.6472457, 1.391414, -6.817414, 2.183071, -1.273611, 1.931057,
+                     0.8941849, 2.279705, -6.458282, 19.01784, 0.2995312, 2.400451), ncol = 2)
   
   
   o = confint(fit, types = 'linked', level = 0.9)[pars_link_names,]
@@ -866,18 +866,18 @@ test_that("heterogeneous density & toa model with individual identity -- hazard 
   new_data = data.frame(noise = 7.7)
   pars_names_og = c('sigma', 'lambda0', 'sigma.toa', 'D', 'mu')
   
-  expected_values = c(2.162743e+00, 6.266772e+00, 1.308608e-03, 9.464758e+02, 8.721442e+00)
+  expected_values = c(2.161312, 6.26864, 0.001309842, 944.1142, 8.721175)
   o = coef(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
-  expected_values = c(1.625042e-01, 1.691730e+00, 1.425270e-04, 1.374889e+03, 1.244500e+00)
+  expected_values = c(0.1622371, 1.692667, 0.0001429934, 1372.279, 1.244385)
   o = stdEr(fit, types = 'fitted', new.covariates = new_data)[pars_names_og]
   relative.error = max(abs((o - expected_values)/expected_values))
   expect_equal(relative.error, 0, tolerance = 1e-4)
   
-  expected_values = matrix(c(1.866582775, 3.691986084, 0.001057063, 54.905971702, 6.593661864,
-                             2.505893e+00, 1.063721e+01, 1.620012e-03, 1.631546e+04, 1.153586e+01),
+  expected_values = matrix(c(1.865618, 3.692587, 0.001057535, 54.67584, 6.593574,
+                             2.503872, 10.64182, 0.001622346, 16302.48, 11.53531),
                            ncol = 2)
   o = confint(fit, types = 'fitted', new.covariates = new_data)[pars_names_og,]
   relative.error = max(abs((o - expected_values)/expected_values))
@@ -949,8 +949,8 @@ test_that("signal strength model with spherical link and individual identity - n
   expect_true(all(colnames(o) == c('5 %', '95 %')))
   
   #test fitted confident interval
-  conf_95_fitted = matrix(c(98.2755539, 0.0564122, 9.4921905, 46.6531090, 8.3263254,
-                            106.5003050, 0.6164591, 10.5921762, 102.1794778, 10.7608676), ncol = 2)
+  conf_95_fitted = matrix(c(98.2754, 0.05640565, 9.492199, 46.6532, 8.326308,
+                            106.5001, 0.6164695, 10.59219, 102.1796, 10.76085), ncol = 2)
   
   o = confint(fit, types = 'fitted', level = 0.95)[pars_names,]
   relative.error = max(abs((o - conf_95_fitted)/conf_95_fitted))
