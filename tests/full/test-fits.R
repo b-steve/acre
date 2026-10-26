@@ -1,3 +1,5 @@
+#comprehensive tests on the default masks; slow, so kept out of tests/testthat. Run them with
+#testthat::test_dir("tests/full", load_package = "source")
 
 test_that("joint bearing/dist fitting -- half normal", {
   #fit the model using 'demo_fit'
