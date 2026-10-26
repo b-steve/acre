@@ -720,11 +720,9 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
 
                nrow_data_mask = nrow(data.mask),
                nrow_dx = nrow(data.dists.thetas),
-               nrow_id_mask = nrow(data.ID_mask),
 
                A = A,
                survey_length = survey.length,
-               sound_speed = sound.speed,
                cue_rates = mean.cue.rates,
 
 
@@ -737,7 +735,7 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
                ## Simply use the row index of 'data.par' as the numeric substitute for parameters:
                ## 1:g0, 2:sigma, 3:lambda0, 4:z, 5:shape.1, 6:shape.2, 7:shape, 8:scale, 9:b0.ss,
                ## 10:b1.ss, 11:b2.ss, 12:sigma.ss, 13:kappa, 14:alpha, 15:sigma.toa,
-               ## 16:sigma.b0.ss, 17:D.
+               ## 16:sigma.b0.ss, 17:D, 18:mu.
                ## Remember that in TMB indices begin at 0, so all of the indices above should have 1 subtracted.
 
                param_og = (1:nrow(data.par))[which(data.par[['par']] %in% param.og)],
@@ -750,19 +748,16 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
 
                is_animalID = as.numeric(animal.model),
                is_ss = as.numeric("ss" %in% bucket_info),
-               is_ss_origin = as.numeric("ss" %in% bucket_info),
                is_bearing = as.numeric("bearing" %in% bucket_info),
                is_toa = as.numeric("toa" %in% bucket_info),
                is_dist = as.numeric("dist" %in% bucket_info),
                is_local = as.numeric("local" %in% bucket_info),
-               is_freqs = as.numeric("freqs" %in% bucket_info),
 
 
                capt_bin = ifelse(is.na(data.calls$bincapt), NA_real_, data.calls$bincapt),
                capt_bearing = ifelse(is.na(data.calls$bearing), NA_real_, data.calls$bearing),
                capt_dist = ifelse(is.na(data.calls$dist), NA_real_, data.calls$dist),
                capt_ss = ifelse(is.na(data.calls$ss), NA_real_, data.calls$ss),
-               capt_toa = ifelse(is.na(data.calls$toa), NA_real_, data.calls$toa),
 
 
                dx = data.dists.thetas$dx,
