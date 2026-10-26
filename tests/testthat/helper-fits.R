@@ -1,9 +1,6 @@
-## The comprehensive tests on the default (fine) masks take several minutes, so they live in tests/full
-## and are run with testthat::test_dir("tests/full", load_package = "source").
-
 ## Fit a demo model the same way as demo.fit(), but on a coarse mask (nx points across), which is
 ## much faster; the estimates differ from the ones on the default mask, but are just as reproducible.
-fit.demo.coarse <- function(data.name, nx = 20, gradient.free = FALSE){
+fit.demo.coarse <- function(data.name, nx = 16, gradient.free = FALSE){
   dat <- get(data.name)
   if(!is.null(dat$control_create_mask)) dat$control.mask <- dat$control_create_mask
   dat$control.mask$nx <- nx
