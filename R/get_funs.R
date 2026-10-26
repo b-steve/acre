@@ -717,13 +717,13 @@ get.bias <- function(res, coefs){
   return(bias)
 }
 
-get.coef.names <- function(pars, pars.extended, data.full, data.mask) {
+get.coef.names <- function(pars, pars.extended, data.trap, data.mask) {
   ## If there are no extended parameters, just return the default parameter names.
   if (length(pars.extended) == 0) {
     return(pars)
   }
 
-  data_full_names <- strsplit(colnames(data.full), " _ ")
+  data_trap_names <- strsplit(colnames(data.trap), " _ ")
   data_mask_names <- strsplit(colnames(data.mask), " _ ")
 
   ## Bad code: we should pre-define the length and fill it, rather than grow it with iterations.
@@ -732,11 +732,11 @@ get.coef.names <- function(pars, pars.extended, data.full, data.mask) {
 
   for (i in seq_along(u_pars)) {
     if (u_pars[i] %in% pars.extended) {
-      index_full <- which(sapply(data_full_names, function(x) x[1] == u_pars[i]))
+      index_full <- which(sapply(data_trap_names, function(x) x[1] == u_pars[i]))
       index_mask <- which(sapply(data_mask_names, function(x) x[1] == u_pars[i]))
 
       for (j in index_full) {
-        name_output <- c(name_output, paste0(data_full_names[[j]], collapse = "."))
+        name_output <- c(name_output, paste0(data_trap_names[[j]], collapse = "."))
       }
       for (j in index_mask) {
         name_output <- c(name_output, paste0(data_mask_names[[j]], collapse = "."))

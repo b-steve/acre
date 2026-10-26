@@ -371,7 +371,10 @@ mask.fun <- function(mask, dims, animal.model, data.traps, data.full, bucket.inf
 
 ###############################################################################
 
-par.extend.fun <- function(par.extend, data.full, data.mask, animal.model, dims, fulllist.par, extra.args){
+par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.model, dims, fulllist.par, extra.args){
+  ## Covariates are at the session, detector or mask level, never at the call level, so the
+  ## design columns for the session and detector levels need one row per session and detector.
+  data.trap <- data.traps[order(data.traps$session, data.traps$trap), c('session', 'trap')]
   
   n.sessions <- dims$n.sessions
   n.traps <- dims$n.traps
@@ -723,15 +726,13 @@ par.extend.fun <- function(par.extend, data.full, data.mask, animal.model, dims,
     }
     
     
-    data.full <- merge(data.full, data.par.non.mask, by = c('session',
-                                                           'trap'[!is.null(data.par.non.mask[['trap']])],
-                                                           'animal_ID'[!is.null(data.par.non.mask[['animal_ID']])],
-                                                           'ID'[!is.null(data.par.non.mask[['ID']])]), all = TRUE)
+    data.trap <- merge(data.trap, data.par.non.mask, by = c('session', 'trap'[!is.null(data.par.non.mask[['trap']])]),
+                       all = TRUE)
     data.mask <- merge(data.mask, data.par.mask, by = c('session', 'mask'))
     
     for(i in fulllist.par){
       if(!(i %in% name.extend.par)){
-        data.full[[paste0(i, ' _ (Intercept)')]] <- 1
+        data.trap[[paste0(i, ' _ (Intercept)')]] <- 1
         param_distribution[[i]] <- c(1, 0)
       }
     }
@@ -740,7 +741,7 @@ par.extend.fun <- function(par.extend, data.full, data.mask, animal.model, dims,
     
   } else {
     for(i in fulllist.par){
-      data.full[[paste0(i, ' _ (Intercept)')]] <- 1
+      data.trap[[paste0(i, ' _ (Intercept)')]] <- 1
       param_distribution[[i]] <- c(1, 0)
     }
     name.extend.par <- NULL
@@ -795,7 +796,9 @@ par.extend.fun <- function(par.extend, data.full, data.mask, animal.model, dims,
   }
   
   
-  return(list(data.full = data.full, data.mask = data.mask, data.par = df.par, is.scale = is.scale,
+  data.trap <- data.trap[order(data.trap$session, data.trap$trap), , drop = FALSE]
+
+  return(list(data.full = data.full, data.trap = data.trap, data.mask = data.mask, data.par = df.par, is.scale = is.scale,
               name.extend.par = name.extend.par, fgam = fgam, gam_output= gam_output,
               lst_mean_std = lst_mean_std))
 }
@@ -1015,7 +1018,7 @@ CR.SL <- function(cue.rates, survey.length, bucket.info, dims){
 
 ############################################################################
 
-param.detfn.fun <- function(animal.model, sv, fix, bounds, name.extend.par, detfn, data.full, data.mask,
+param.detfn.fun <- function(animal.model, sv, fix, bounds, name.extend.par, detfn, data.full, data.trap, data.mask,
                            data.par, ss.opts, bucket.info, fulllist.par, A, buffer,
                            survey.length, dims, sv.link){
   ## Check bounds, sv, fix.
@@ -1107,7 +1110,7 @@ param.detfn.fun <- function(animal.model, sv, fix, bounds, name.extend.par, detf
   design.matrices.full <- vector('list', length(fulllist.par))
   names(design.matrices.full) <- fulllist.par
   
-  tem <- strsplit(colnames(data.full), " _ ")
+  tem <- strsplit(colnames(data.trap), " _ ")
   tem <- lapply(tem, function(x) x[[1]])
   clean.names.full <- do.call('c', tem)
   
@@ -1127,8 +1130,8 @@ param.detfn.fun <- function(animal.model, sv, fix, bounds, name.extend.par, detf
       design.matrices.mask[[i]] <- matrix(0, ncol = 2, nrow = 2)
     }
     
-    ## Because the intercept is in "data.full", this design matrix always has something in it.
-    design.matrices.full[[i]] <- as.matrix(data.full[, which(clean.names.full == i), drop = FALSE])
+    ## Because the intercept is in "data.trap", this design matrix always has something in it.
+    design.matrices.full[[i]] <- as.matrix(data.trap[, which(clean.names.full == i), drop = FALSE])
     
     if(i %in% param.og){
       ## Deal with "fix" first.
@@ -1360,7 +1363,7 @@ gr.free.o.restore <- function(fn, opt, H, parameters, param.og.4cpp, n.sessions)
   return(o)
 }
 
-outFUN <- function(data.par, data.full, data.traps, data.mask, data.dists.thetas, detfn, param.og, param.og.4cpp, o, tmb.output.og, opt,
+outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.dists.thetas, detfn, param.og, param.og.4cpp, o, tmb.output.og, opt,
                   name.fixed.par, name.extend.par, dims, DX.full, DX.mask, fix.input, bucket.info, cue.rates, mean.cue.rates, A,
                   survey.length, sound.speed, par.extend, arg.input, fgam, gam.output, lst.mean.std, is.scale, ss.link, cutoff,
                   CL, esa.partial.derivatives){
@@ -1419,7 +1422,7 @@ outFUN <- function(data.par, data.full, data.traps, data.mask, data.dists.thetas
   name_output_tmb <- name_output
   name_output_tmb$esa <- NULL
   
-  name_split_full <- strsplit(colnames(data.full), " _ ")
+  name_split_full <- strsplit(colnames(data.trap), " _ ")
   name_split_mask <- strsplit(colnames(data.mask), " _ ")
   
   ## The object out_coef is temporary, and will be assigned to out$coefficients later.
@@ -1435,7 +1438,7 @@ outFUN <- function(data.par, data.full, data.traps, data.mask, data.dists.thetas
       ## First, sort out the names for the output coefficients.
       index_full <- which(sapply(name_split_full, function(x) x[1] == i))
       index_mask <- which(sapply(name_split_mask, function(x) x[1] == i))
-      name_output[[i]] <- c(colnames(data.full)[index_full], colnames(data.mask)[index_mask])
+      name_output[[i]] <- c(colnames(data.trap)[index_full], colnames(data.mask)[index_mask])
       name_output_tmb[[i]] <- name_output[[i]]
       name_output[[i]] <- gsub(" _ ", ".", name_output[[i]])
       ## If i is "D", then keep the .(Intercept) whatever the model.
@@ -1545,9 +1548,9 @@ outFUN <- function(data.par, data.full, data.traps, data.mask, data.dists.thetas
     
     for(i in 1:dims$n.sessions){
       tem_name <- paste0('D_mask[', i, ']')
-      ## D is only extendable at the session level, not the trap level, so we can take the first observation in each session
-      ## from 'data.full' only, which is tem_full below.
-      out$coeflist[[tem_name]] <- tem_full[which(data.full$session ==i)[1]] +
+      ## D is only extendable at the session level, not the trap level, so we can take the first row of each session
+      ## in 'data.trap', which is tem_full below.
+      out$coeflist[[tem_name]] <- tem_full[which(data.trap$session == i)[1]] +
         tem_mask[which(data.mask$session == i)]
       out$coeflist[[tem_name]] <- unlink.fun(data.par[par.id['D'], 'link'],
                                             out$coeflist[[tem_name]])
@@ -1718,9 +1721,9 @@ outFUN <- function(data.par, data.full, data.traps, data.mask, data.dists.thetas
   out$mm.ihd <- vector('list', dims$n.sessions)
   
   for(s in 1:dims$n.sessions){
-    ## First get the first index of this session in data.full.
-    tem <- min(which(data.full$session == s))
-    ## Then get the data from DX.full, which denotes the "design matrix for data.full".
+    ## First get the first row of this session in data.trap.
+    tem <- min(which(data.trap$session == s))
+    ## Then get the data from DX.full, the design matrix for data.trap.
     tem <- DX.full$D[tem,]
     ## Finally, generate a matrix with n.masks rows that contains the information
     ## on "D" at the session level.

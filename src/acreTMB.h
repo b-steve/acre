@@ -249,12 +249,10 @@ Type acreTMB(objective_function<Type>* obj)
   DATA_INTEGER(n_sessions);
   DATA_IVECTOR(n_animals);
   DATA_IVECTOR(n_IDs);
-  DATA_IVECTOR(n_IDs_for_datafull); 
   DATA_IVECTOR(n_traps);
   DATA_IVECTOR(n_masks);
   DATA_IVECTOR(n_calls_each_animal);
   
-  DATA_INTEGER(nrow_data_full);
   DATA_INTEGER(nrow_data_mask);
   DATA_INTEGER(nrow_dx);
   DATA_INTEGER(nrow_id_mask);
@@ -761,11 +759,11 @@ Type acreTMB(objective_function<Type>* obj)
   //group-level factor, and the final normalisation.
   //
   //Data layouts, by row:
-  //  data_full:          session - call - trap (calls ordered by group; a session with no
-  //                      detections has one placeholder call, see n_IDs_for_datafull)
-  //  data_mask:          session - mask
-  //  dx, theta and essx: session - mask - trap
-  //  data_IDmask:        session - call - mask
+  //  capture data (capt_*): session - call - trap (calls ordered by group)
+  //  *_DX, so *_vec_full:   session - trap (there are no call-level covariates)
+  //  data_mask:             session - mask
+  //  dx, theta and essx:    session - mask - trap
+  //  data_IDmask:           session - call - mask
   //---------------------------------------------------------------------------------------
 
   vector<Type> essx(nrow_dx);
@@ -774,6 +772,7 @@ Type acreTMB(objective_function<Type>* obj)
 
   //first rows of the current session in each data layout
   int off_full = 0;
+  int off_trap = 0;
   int off_mask = 0;
   int off_dt = 0;
   int off_idmask = 0;
@@ -794,7 +793,7 @@ Type acreTMB(objective_function<Type>* obj)
     Type survey_len = survey_length(s);
 
     //density, call rate and detection probabilities at each mask point; D, mu and
-    //sigma_toa have no trap-level covariates, so they come from the session's first row
+    //sigma_toa have no trap-level covariates, so they come from the session's first trap
     vector<Type> D_m(n_m);
     vector<Type> mu_m(n_m);
     vector<Type> p_dot(n_m);
@@ -803,10 +802,10 @@ Type acreTMB(objective_function<Type>* obj)
     esa(s) = Type(0.0);
     for(int m = 0; m < n_m; m++){
       int mrow = off_mask + m;
-      D_m(m) = linked(D_vec_full(off_full) + D_vec_mask(mrow), par_link(16));
+      D_m(m) = linked(D_vec_full(off_trap) + D_vec_mask(mrow), par_link(16));
       p_dot(m) = Type(1.0);
       for(int t = 0; t < n_t; t++){
-        int row = off_full + t;
+        int row = off_trap + t;
         int dt = off_dt + m * n_t + t;
         if(detfn_index == 1){
           detfn_param(0) = linked(g0_vec_full(row) + g0_vec_mask(mrow), par_link(0));
@@ -848,7 +847,7 @@ Type acreTMB(objective_function<Type>* obj)
         esa(s) += p_dot(m);
         lambda_theta += D_m(m) * p_dot(m);
       } else {
-        mu_m(m) = linked(mu_vec_full(off_full) + mu_vec_mask(mrow), par_link(17));
+        mu_m(m) = linked(mu_vec_full(off_trap) + mu_vec_mask(mrow), par_link(17));
         Type p_animal = 1 - exp((-1) * mu_m(m) * survey_len * p_dot(m));
         esa(s) += p_animal;
         lambda_theta += D_m(m) * p_animal;
@@ -946,8 +945,8 @@ Type acreTMB(objective_function<Type>* obj)
 
           //times of arrival
           if(is_toa == 1){
-            if(!(std::isnan(asDouble(sigma_toa_vec_full(off_full))) || std::isnan(asDouble(sigma_toa_vec_mask(mrow))))){
-              Type sigma_toa_tem = linked(sigma_toa_vec_full(off_full) + sigma_toa_vec_mask(mrow), par_link(14));
+            if(!(std::isnan(asDouble(sigma_toa_vec_full(off_trap))) || std::isnan(asDouble(sigma_toa_vec_mask(mrow))))){
+              Type sigma_toa_tem = linked(sigma_toa_vec_full(off_trap) + sigma_toa_vec_mask(mrow), par_link(14));
               int n_det = uid_n_det[call_uid[c]];
               fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * toa_ssq(off_idmask + c * n_m + m) / pow(sigma_toa_tem, 2);
             }
@@ -956,22 +955,23 @@ Type acreTMB(objective_function<Type>* obj)
           //bearings, distances and signal strengths exist only for detections
           for(int t = 0; t < n_t; t++){
             int row = off_full + c * n_t + t;
+            int trow = off_trap + t;
             if(uid_hist[call_uid[c]][t] != 1) continue;
             int dt = off_dt + m * n_t + t;
 
             if(is_bearing == 1 && !std::isnan(asDouble(capt_bearing(row)))){
-              Type kappa_tem = linked(kappa_vec_full(row) + kappa_vec_mask(mrow), par_link(12));
+              Type kappa_tem = linked(kappa_vec_full(trow) + kappa_vec_mask(mrow), par_link(12));
               fy_bear_log += kappa_tem * cos(capt_bearing(row) - theta(dt)) - log(bessi0(kappa_tem));
             }
 
             if(is_dist == 1 && !std::isnan(asDouble(capt_dist(row)))){
-              Type alpha_tem = linked(alpha_vec_full(row) + alpha_vec_mask(mrow), par_link(13));
+              Type alpha_tem = linked(alpha_vec_full(trow) + alpha_vec_mask(mrow), par_link(13));
               fy_dist_log += ((-1) * (alpha_tem * (log(dx(dt)) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) *
                 log(capt_dist(row)) - alpha_tem * capt_dist(row) / dx(dt));
             }
 
             if(is_ss_origin == 1){
-              Type sigma_ss_tem = linked(sigma_ss_vec_full(row) + sigma_ss_vec_mask(mrow), par_link(11));
+              Type sigma_ss_tem = linked(sigma_ss_vec_full(trow) + sigma_ss_vec_mask(mrow), par_link(11));
               fy_ss_log += dnorm(capt_ss(row), essx(dt), sigma_ss_tem, true);
             }
           }
@@ -1007,7 +1007,8 @@ Type acreTMB(objective_function<Type>* obj)
       c0 += n_cg;
     }
 
-    off_full += n_IDs_for_datafull(s) * n_t;
+    off_full += n_c * n_t;
+    off_trap += n_t;
     off_mask += n_m;
     off_dt += n_m * n_t;
     off_idmask += n_c * n_m;

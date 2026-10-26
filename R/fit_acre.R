@@ -584,11 +584,12 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
   ## In the animal_ID model, the cue rate is no longer an input argument but a fitted parameter, named "mu".
   fulllist.par <- fulllist.par.generator()
 
-  o.par.extend <- par.extend.fun(par.extend = par.extend, data.full = data.full, data.mask = data.mask,
+  o.par.extend <- par.extend.fun(par.extend = par.extend, data.full = data.full, data.traps = data.traps, data.mask = data.mask,
                                 animal.model = animal.model, dims = dims, fulllist.par = fulllist.par,
                                 extra.args = extra_args)
 
   data.full <- o.par.extend$data.full
+  data.trap <- o.par.extend$data.trap
   data.mask <- o.par.extend$data.mask
   data.par <- o.par.extend$data.par
   name.extend.par <- o.par.extend$name.extend.par
@@ -663,7 +664,7 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
 
   ########################################################################################################
   o.param <- param.detfn.fun(animal.model= animal.model, sv = sv, fix = fix, bounds = bounds,
-                            name.extend.par = name.extend.par, detfn = detfn, data.full = data.full,
+                            name.extend.par = name.extend.par, detfn = detfn, data.full = data.full, data.trap = data.trap,
                             data.mask = data.mask, data.par = data.par, ss.opts = ss.opts,
                             bucket.info = bucket_info, fulllist.par = fulllist.par, A = A, buffer = buffer,
                             survey.length = survey.length, dims = dims, sv.link = sv.link)
@@ -705,19 +706,18 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
     }
   }
 
+  ## Capture data for TMB, one row per call and detector; the placeholder rows that data.full
+  ## keeps for sessions without detections are not needed.
+  data.calls <- data.full[!is.na(data.full$ID), , drop = FALSE]
+
   data <- list(n_sessions = dims$n.sessions,
                n_animals = dims$n.animals,
                n_IDs = dims$n.IDs,
-               ## In data.full, a session with no detections
-               ## still has n.traps rows, so a special n.id for
-               ## looking up the row index in data.full is necessary.
-               n_IDs_for_datafull = ifelse(dims$n.IDs == 0, 1, dims$n.IDs),
                n_traps = dims$n.traps,
                n_masks = dims$n.masks,
                n_calls_each_animal = dims$n.animal.call,
 
 
-               nrow_data_full = nrow(data.full),
                nrow_data_mask = nrow(data.mask),
                nrow_dx = nrow(data.dists.thetas),
                nrow_id_mask = nrow(data.ID_mask),
@@ -758,11 +758,11 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
                is_freqs = as.numeric("freqs" %in% bucket_info),
 
 
-               capt_bin = ifelse(is.na(data.full$bincapt), NA_real_, data.full$bincapt),
-               capt_bearing = ifelse(is.na(data.full$bearing), NA_real_, data.full$bearing),
-               capt_dist = ifelse(is.na(data.full$dist), NA_real_, data.full$dist),
-               capt_ss = ifelse(is.na(data.full$ss), NA_real_, data.full$ss),
-               capt_toa = ifelse(is.na(data.full$toa), NA_real_, data.full$toa),
+               capt_bin = ifelse(is.na(data.calls$bincapt), NA_real_, data.calls$bincapt),
+               capt_bearing = ifelse(is.na(data.calls$bearing), NA_real_, data.calls$bearing),
+               capt_dist = ifelse(is.na(data.calls$dist), NA_real_, data.calls$dist),
+               capt_ss = ifelse(is.na(data.calls$ss), NA_real_, data.calls$ss),
+               capt_toa = ifelse(is.na(data.calls$toa), NA_real_, data.calls$toa),
 
 
                dx = data.dists.thetas$dx,
@@ -844,7 +844,7 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
       ## If the model is extended, make sure to build the extended parameter names.
       ## These need to correspond to the GLM design matrix column names.
       par_names <- get.coef.names(names(obj$par), name.extend.par,
-                                  data.full, data.mask)
+                                  data.trap, data.mask)
 
       tap <- make.buffer.printer(trace.cols = par_names,
                                  step = "none",
@@ -890,7 +890,7 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
     if (tracing) {
       ## As before, if the model is extended, make sure to build extended names.
       par_names <- get.coef.names(par_name_fitted, name.extend.par,
-                                  data.full, data.mask)
+                                  data.trap, data.mask)
 
       tap <- make.buffer.printer(trace.cols = par_names,
                                  step = "max",
@@ -954,6 +954,7 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
 
   out <- outFUN(data.par = data.par,
                data.full = data.full,
+               data.trap = data.trap,
                data.traps = data.traps,
                data.mask = data.mask,
                data.dists.thetas = data.dists.thetas,
