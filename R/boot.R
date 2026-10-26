@@ -53,30 +53,6 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   traps <- arguments$traps
   masks <- arguments$mask
 
-
-
-  ###############################################################################
-  ## For 'mrds', I'm not sure how to deal with it in the bootstrap yet, because the number
-  ## of detections from the simulation is random, whereas 'mrds' provides the number
-  ## of detections with their locations. How can this conflict be resolved?
-  ## Temporarily force it to be FALSE, since it is not yet clear how to deal with it.
-  if(fit$fit.types['mrds']){
-    fit$infotypes <- fit$infotypes[which(fit$infotypes!='mrds')]
-    arguments$capt <- arguments$capt[, !colnames(arguments$capt) %in% c('mrds_x', 'mrds_y'), drop = FALSE]
-  }
-
-  if(!is.null(infotypes)){
-    for(i in 1:length(infotypes)){
-      if('mrds' %in% infotypes[[i]]) infotypes[[i]] <- infotypes[[i]][which(infotypes[[i]] != 'mrds')]
-    }
-  }
-
-
-  fit$fit.types['mrds'] <- FALSE
-  ##############################################################################
-
-
-
   ## Coefficient names.
   coefs <- coef(fit, 'linked')
   n_pars <- length(coefs)

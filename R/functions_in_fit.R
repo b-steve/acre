@@ -20,7 +20,6 @@ capture.fun <- function(capt, traps, animal.model){
   n.sessions <- length(traps)
   n.traps <- sapply(traps, nrow)
   bucket_info <- all.types[all.types %in% colnames(capt)]
-  is.mrds <- animal.model && "mrds_x" %in% colnames(capt)
   ## The animal model keeps only the auxiliary data types that were recorded; the call model has
   ## columns for all of them.
   types <- if(animal.model) bucket_info else all.types
@@ -49,15 +48,9 @@ capture.fun <- function(capt, traps, animal.model){
     tem$trap <- rep(seq_len(n.traps[s]), n.calls)
     tem$bincapt <- 0
     for(j in types) tem[[j]] <- 0
-    tem$mrds_x <- 0
-    tem$mrds_y <- 0
     row <- (match(call.key, unique(call.key)) - 1) * n.traps[s] + det$trap
     tem$bincapt[row] <- 1
     for(j in bucket_info) tem[[j]][row] <- det[[j]]
-    if(is.mrds){
-      tem$mrds_x[row] <- det$mrds_x
-      tem$mrds_y[row] <- det$mrds_y
-    }
     data.capt[[s]] <- tem
   }
   data.capt <- do.call("rbind", data.capt)
@@ -65,7 +58,7 @@ capture.fun <- function(capt, traps, animal.model){
     data.capt <- data.frame(session = numeric(0), animal_ID = character(0)[animal.model], ID = character(0),
                             trap = numeric(0), bincapt = numeric(0))
   }
-  for(j in c(all.types, "mrds_x", "mrds_y")){
+  for(j in all.types){
     if(!j %in% colnames(data.capt)) data.capt[[j]] <- 0
   }
 
@@ -84,7 +77,7 @@ capture.fun <- function(capt, traps, animal.model){
 
   return(list(data.capt = data.capt, dims = list(n.sessions = n.sessions, n.traps = n.traps,
                                                  n.IDs = n.IDs, n.animals = n.animals),
-              bucket_info = c(bucket_info, "mrds"[is.mrds])))
+              bucket_info = bucket_info))
 }
 
 
@@ -193,20 +186,7 @@ mask.fun <- function(mask, dims, animal.model, data.traps, data.full, bucket.inf
   all.which.local <- vector(mode = "list", length = n.sessions)
   all.n.local <- vector(mode = "list", length = n.sessions)
   
-  if ("mrds" %in% bucket.info){
-    local <- TRUE
-    for (i in 1:n.sessions){
-      
-      if(n.IDs[i] > 0){
-        mrds <- data.full[data.full$session == i, c("mrds_x", "mrds_y")]
-        mrds <- mrds[!duplicated(mrds),]
-        all.which.local[[i]] <- find.nearest.mask(as.matrix(mrds), mask[[i]])
-        all.n.local[[i]] <- plyr::laply(all.which.local[[i]], length)
-        all.which.local[[i]] <- c(all.which.local[[i]], recursive = TRUE)
-      }
-      
-    }
-  } else if (local){
+  if (local){
     
     for (i in 1:n.sessions){
       if(n.IDs[i] > 0){
@@ -857,7 +837,7 @@ ss.fun <- function(ss.opts, data.full, data.ID.mask, animal.model, dims, bucket.
     for(s in lost.sessions){
       tem <- data.full[which(data.full$session == s), ]
       tem <- tem[!duplicated(tem$trap), ]
-      for(i in c("animal_ID"[animal.model], "ID", "bincapt", "bearing", "dist", "ss", "toa", "mrds_x", "mrds_y")){
+      for(i in c("animal_ID"[animal.model], "ID", "bincapt", "bearing", "dist", "ss", "toa")){
         if(!is.null(tem[[i]])) tem[[i]] <- NA
       }
       data.no.det.session <- rbind(data.no.det.session, tem)
@@ -1625,20 +1605,19 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   #####################################################################################################
   ## Component: 'fit.types'.
   tem <- logical(5)
-  names(tem) <- c('bearing', 'dist', 'ss', 'toa', 'mrds')
+  names(tem) <- c('bearing', 'dist', 'ss', 'toa')
   
   tem['bearing'] <- ('bearing' %in% bucket.info)
   tem['dist'] <- ('dist' %in% bucket.info)
   tem['ss'] <- ('ss' %in% bucket.info)
   tem['toa'] <- ('toa' %in% bucket.info)
-  tem['mrds'] <- ('mrds' %in% bucket.info)
   
   out$fit.types <- tem
   
   #####################################################################################################
   ## Component: 'infotypes'.
   
-  out$infotypes <- bucket.info[which(bucket.info %in% c('bearing', 'dist', 'ss', 'toa', 'mrds'))]
+  out$infotypes <- bucket.info[which(bucket.info %in% c('bearing', 'dist', 'ss', 'toa'))]
   
   
   ######################################################################################################

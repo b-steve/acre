@@ -78,7 +78,7 @@ create.capt <- function(captures, traps){
               any(is.list(traps), is.matrix(traps), is.data.frame(traps)))
 
     expected_col_names <- c('session', 'animal_ID', 'ID', 'trap', 'bincapt',
-                            'bearing', 'toa', 'dist', 'ss', 'mrds_x', 'mrds_y', 'occasion')
+                            'bearing', 'toa', 'dist', 'ss', 'occasion')
     if (!all(names(captures) %in% expected_col_names)) {
       unexpected_columns <- which(!(names(captures) %in% expected_col_names))
       warning("Unexpected column '", paste(names(captures)[unexpected_columns], collapse="', '"), "' found in captures dataframe. Unexpected columns will be ignored.")
@@ -162,10 +162,8 @@ create.capt <- function(captures, traps){
     }
     captures <- captures[!dupli,]
 
-    ## One row per detection, with the auxiliary data that were recorded. Locations from a
-    ## mark-recapture distance sampling survey ('mrds_x', 'mrds_y') are only used by the animal model.
-    keep <- c("session", "animal_ID", "ID", "trap", "bearing", "dist", "ss", "toa",
-              "mrds_x"[is.animalID], "mrds_y"[is.animalID])
+    ## One row per detection, with the auxiliary data that were recorded.
+    keep <- c("session", "animal_ID", "ID", "trap", "bearing", "dist", "ss", "toa")
     captures <- captures[, colnames(captures) %in% keep, drop = FALSE]
     captures <- data.sort(captures, 'data.full')
     rownames(captures) <- NULL

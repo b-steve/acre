@@ -1065,12 +1065,6 @@ ori.name <- function(char){
   return(output)
 }
 
-## Find the nearest mask point to an observed MRDS location.
-find.nearest.mask <- function(locs, mask){
-  dists <- distances(locs, mask)
-  as.list(apply(dists, 1, function(x) which(x == min(x))[1]))
-}
-
 diy.mean <- function(vec){
   if(length(vec) > 0){
     if(is(vec, 'numeric')){

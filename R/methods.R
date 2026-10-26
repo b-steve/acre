@@ -1107,7 +1107,7 @@ print.summary.acre <- function(x, ...){
   detfn <- c(hn = "Halfnormal", hhn = "Hazard halfnormal", hr = "Hazard rate", th = "Threshold",
              lth = "Log-link threshold", ss = "Signal strength")[x$detfn]
   infotypes <- c(bearing = "Bearings", dist = "Distances", ss = "Signal strengths",
-                 toa = "Times of arrival", mrds = "Exact locations")[x$infotypes]
+                 toa = "Times of arrival")[x$infotypes]
   
   pars_ext_links <- x$pars_ext_links
   ss_opts <- x$ss_opts
