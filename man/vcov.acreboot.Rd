@@ -9,8 +9,8 @@
   types = NULL,
   pars = NULL,
   new.covariates = NULL,
-  from_boot = TRUE,
-  show_fixed_par = TRUE,
+  from.boot = TRUE,
+  show.fixed.par = TRUE,
   ...
 )
 }
@@ -23,10 +23,10 @@
 
 \item{new.covariates}{a data frame, the same as "coef.acre()".}
 
-\item{from_boot}{a logical value, TRUE by default, to control whether the covariance matrix is calculated
+\item{from.boot}{a logical value, TRUE by default, to control whether the covariance matrix is calculated
 from the bootstrap results. If FALSE, the method "vcov.acre()" will be called.}
 
-\item{show_fixed_par}{a logical value, the same as "vcov.acre()".}
+\item{show.fixed.par}{a logical value, the same as "vcov.acre()".}
 
 \item{...}{For S3 compatibility.}
 }

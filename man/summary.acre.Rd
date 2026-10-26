@@ -4,13 +4,13 @@
 \alias{summary.acre}
 \title{Summarise \code{acre} Model Fits}
 \usage{
-\method{summary}{acre}(object, derived_print = FALSE, ...)
+\method{summary}{acre}(object, derived.print = FALSE, ...)
 }
 \arguments{
 \item{object}{an object generated from the model fitting function "fit.acre()" or
 the bootstrap process "boot.acre()".}
 
-\item{derived_print}{a logical value indicates whether to show the estimations of "esa".}
+\item{derived.print}{a logical value indicates whether to show the estimations of "esa".}
 
 \item{...}{For S3 compatibility.}
 }

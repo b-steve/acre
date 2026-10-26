@@ -93,7 +93,7 @@ approximate speed of sound in air.}
 Combines detection data, detector locations, and covariate data
 into a single object. Performs spatial interpolation for spatial
 covariates. The resulting object can be used to plot detection and
-covariate data with \code{\link[=plot.acre_data]{plot.acre_data()}}, and to fit models with
+covariate data with \code{\link[=plot.acre.data]{plot.acre.data()}}, and to fit models with
 \code{\link[=fit.acre]{fit.acre()}}.
 }
 \section{Captures argument}{
@@ -161,7 +161,7 @@ interpolated covariate values. If the covariate data provided via
 interpolated covariates may not closely approximate reality,
 leading to poor inference. Users should inspect plots of
 interpolated covariates using \code{plot()} to assess their
-suitability. See \code{\link[=plot.acre_data]{plot.acre_data()}}.
+suitability. See \code{\link[=plot.acre.data]{plot.acre.data()}}.
 
 If a user does not want to use our spatial interpolation method,
 they can take full control of the procedure using these steps:

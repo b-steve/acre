@@ -3,7 +3,7 @@
 #' Combines detection data, detector locations, and covariate data
 #' into a single object. Performs spatial interpolation for spatial
 #' covariates. The resulting object can be used to plot detection and
-#' covariate data with [plot.acre_data()], and to fit models with
+#' covariate data with [plot.acre.data()], and to fit models with
 #' [fit.acre()].
 #'
 #' @section Captures argument:
@@ -64,7 +64,7 @@
 #'  interpolated covariates may not closely approximate reality,
 #'  leading to poor inference. Users should inspect plots of
 #'  interpolated covariates using `plot()` to assess their
-#'  suitability. See [plot.acre_data()].
+#'  suitability. See [plot.acre.data()].
 #'
 #'  If a user does not want to use our spatial interpolation method,
 #'  they can take full control of the procedure using these steps:
@@ -168,72 +168,72 @@
 #' @return
 #' @export
 #'
-read.acre = function(captures, traps, mask = NULL,
+read.acre <- function(captures, traps, mask = NULL,
                      control.mask = list(), loc.cov = NULL, time.loc.cov = NULL,
                      convert.loc2mask = list(), session.cov = NULL, trap.cov = NULL, dist.cov = NULL,
                      cue.rates = NULL, survey.length = NULL, sound.speed = 330){
-  #keep all original input arguments
+  ## Keep all original input arguments.
   arg.names <- names(as.list(environment()))
   arg.input <- vector('list', length(arg.names))
   names(arg.input) <- arg.names
   for(i in arg.names) {
-    arg.input[[i]] = get(i)
+    arg.input[[i]] <- get(i)
   }
 
-  output = list()
-  capt = create.capt(captures, traps)
+  output <- list()
+  capt <- create.capt(captures, traps)
 
-  #obtain n.sessions, the output of create.capt differs based on the model type, if individual id included, then
-  #it is data.frame, otherwise, it is a list
+  ## Obtain n.sessions; the output of create.capt differs with the model type: if individual ID is included,
+  ## it is a data frame, otherwise it is a list.
   if(is(capt, 'data.frame')){
-    n.sessions = max(capt$session)
+    n.sessions <- max(capt$session)
   } else {
     if("bincapt" %in% names(capt)){
-      n.sessions = 1
+      n.sessions <- 1
     } else {
-      n.sessions = length(capt)
+      n.sessions <- length(capt)
     }
 
   }
 
-  traps = df_to_list(traps, n.sessions)
+  traps <- df.to.list(traps, n.sessions)
 
   if(!is.null(mask)){
-    mask = df_to_list(mask, n.sessions)
+    mask <- df.to.list(mask, n.sessions)
 
     for(i in 1:n.sessions){
-      mask[[i]] = convert_one_mask(mask[[i]], traps[[i]])
+      mask[[i]] <- convert.one.mask(mask[[i]], traps[[i]])
     }
 
   } else {
     stopifnot(!is.null(control.mask$buffer))
-    control.mask$traps = traps
-    mask = do.call('create.mask', control.mask)
+    control.mask$traps <- traps
+    mask <- do.call('create.mask', control.mask)
   }
 
 
 
-  #set up the data for par.extend
-  tem = par_extend_create(loc.cov = loc.cov, dist.cov = dist.cov, mask = mask,
+  ## Set up the data for par.extend.
+  tem <- par.extend.create(loc.cov = loc.cov, dist.cov = dist.cov, mask = mask,
                                  convert.loc2mask = convert.loc2mask,
                                  session.cov = session.cov, trap.cov = trap.cov,
                                  time.loc.cov = time.loc.cov)
 
-  par.extend = tem$output
-  arg.input$loc.cov = tem$loc.cov
+  par.extend <- tem$output
+  arg.input$loc.cov <- tem$loc.cov
 
-  output$capt = capt
-  output$traps = traps
-  output$mask = mask
+  output$capt <- capt
+  output$traps <- traps
+  output$mask <- mask
 
-  output$par.extend = par.extend
-  output$cue.rates = cue.rates
-  output$survey.length = survey.length
-  output$sound.speed = sound.speed
+  output$par.extend <- par.extend
+  output$cue.rates <- cue.rates
+  output$survey.length <- survey.length
+  output$sound.speed <- sound.speed
 
-  #arg.input is not used for fit_og, but we need this to be passed to the final model fit object
-  output$arg.input = arg.input
-  class(output) <- "acre_data"
+  ## The object arg.input is not used by fit.og, but it needs to be passed to the final model fit object.
+  output$arg.input <- arg.input
+  class(output) <- "acre.data"
   return(output)
 }
 
@@ -365,16 +365,16 @@ read.acre = function(captures, traps, mask = NULL,
 #'
 #' @return
 #' @export
-fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
+fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(),
                     tracing = TRUE, optim.opts = NULL,
                     two.stage = FALSE, CL = two.stage){
   ## Renaming object.
   dat <- data
 
-  arg.input = dat$arg.input
-  dat$arg.input = NULL
-  mask_override = FALSE
+  arg.input <- dat$arg.input
+  dat$arg.input <- NULL
+  mask_override <- FALSE
   ## Pulling out optimiser settings.
   sv <- optim.opts$sv
   bounds <- NULL
@@ -399,40 +399,40 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
   }
 
   if(!is.null(mask)){
-    dat$mask = mask
+    dat$mask <- mask
     if(!is.null(control.mask)){
       warning("Argument of 'mask' is provided, 'control.mask' will be ignored.")
     }
-    mask_override = TRUE
+    mask_override <- TRUE
 
   } else if(!is.null(control.mask)){
     stopifnot(!is.null(control.mask$buffer))
-    control.mask$traps = dat$traps
-    mask = do.call("create.mask", control.mask)
-    dat$mask = mask
-    mask_override = TRUE
+    control.mask$traps <- dat$traps
+    mask <- do.call("create.mask", control.mask)
+    dat$mask <- mask
+    mask_override <- TRUE
   }
 
   if(!is.null(model)){
     if(is.null(dat$par.extend)){
-      dat$par.extend = list(model = model)
+      dat$par.extend <- list(model = model)
     } else {
-      dat$par.extend$model = model
+      dat$par.extend$model <- model
     }
-    dat$par.extend$scale = scale.covs
-    dat$par.extend$link = NULL
+    dat$par.extend$scale <- scale.covs
+    dat$par.extend$link <- NULL
 
     if(mask_override && !is.null(dat$par.extend$data$mask)){
-      convert.loc2mask$loc.cov = arg.input$loc.cov
-      convert.loc2mask$mask = mask
-      dat$par.extend$data$mask = do.call("location_cov_to_mask", convert.loc2mask)
+      convert.loc2mask$loc.cov <- arg.input$loc.cov
+      convert.loc2mask$mask <- mask
+      dat$par.extend$data$mask <- do.call("location.cov.to.mask", convert.loc2mask)
     }
 
   } else {
-    dat$par.extend = NULL
+    dat$par.extend <- NULL
   }
 
-                                        # Conditional likelihood checks
+                                        ## Conditional likelihood checks.
   if(CL){
 
     if(!is.null(model) && "D" %in% names(model)){
@@ -458,23 +458,23 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
     }
   }
 
-  dat$local = local
-  dat$tracing = tracing
-  dat$gr.skip = gr.skip
-  dat$detfn = detfn
-  dat$sv = sv
-  dat$bounds = bounds
-  dat$fix = fix
-  dat$ss.opts = ss.opts
+  dat$local <- local
+  dat$tracing <- tracing
+  dat$gr.skip <- gr.skip
+  dat$detfn <- detfn
+  dat$sv <- sv
+  dat$bounds <- bounds
+  dat$fix <- fix
+  dat$ss.opts <- ss.opts
   sv.link <- NULL
-  dat$sv.link = sv.link
-  dat$CL = CL
-  dat$two.stage = two.stage
+  dat$sv.link <- sv.link
+  dat$CL <- CL
+  dat$two.stage <- two.stage
 
-  output = do.call("fit_og", dat)
-  output$arg_input = arg.input
-  output$call = match.call()
-  output$CL = CL
+  output <- do.call("fit.og", dat)
+  output$arg_input <- arg.input
+  output$call <- match.call()
+  output$CL <- CL
 
   return(output)
 }
@@ -513,29 +513,29 @@ fit.acre = function(data, model = NULL, detfn = NULL, ss.opts = NULL,
 #'
 #' @param ...
 #' @keywords internal
-fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL, cue.rates = NULL,
+fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL, cue.rates = NULL,
                   survey.length = NULL, sound.speed = 331, local = FALSE, par.extend = NULL, tracing = TRUE, gr.skip = FALSE,
                   sv.link = NULL, CL = FALSE, two.stage = FALSE, ...){
-  #keep all original input arguments
+  ## Keep all original input arguments.
   arg.names <- names(as.list(environment()))
   arg.input <- vector('list', length(arg.names))
   names(arg.input) <- arg.names
   for(i in arg.names) {
     if(!is.null(get(i))){
-      arg.input[[i]] = get(i)
+      arg.input[[i]] <- get(i)
     }
   }
 
-  extra_args = list(...)
+  extra_args <- list(...)
 
   ####################################################################################################
-  #there are two kinds of models (individual identification <included/not included> model), so sort this out first
+  ## There are two kinds of models (with or without individual identification), so sort this out first.
   if(is(capt, 'data.frame')){
     if('animal_ID' %in% colnames(capt)){
-      animal.model = TRUE
+      animal.model <- TRUE
 
       if(!is.null(cue.rates)){
-        cue.rates = NULL
+        cue.rates <- NULL
         warning('argument "cue.rates" is ignored since "animal.model" is TRUE.')
       }
 
@@ -543,236 +543,236 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
       stop('information about "animal_ID" is not provided.')
     }
   } else {
-    animal.model = FALSE
+    animal.model <- FALSE
     if(!is(capt, 'list')) stop('invalid input "capt", "create.capt()" is recommended for obtaining valid input object.')
   }
 
 
   ####################################################################################################
-  #begin of fit_acre()
-  o = capture.fun(capt = capt, animal.model = animal.model)
-  dims = o$dims
-  data.full = o$data.capt
-  bucket_info = o$bucket_info
+  ## Beginning of fit.acre().
+  o <- capture.fun(capt = capt, animal.model = animal.model)
+  dims <- o$dims
+  data.full <- o$data.capt
+  bucket_info <- o$bucket_info
 
   #########################################################################################################
-  data.traps = trap.fun(traps = traps, dims = dims)
-  data.full = merge(data.full, data.traps, by = c('session', 'trap'), all = TRUE)
-  data.full = sort.data(data.full, 'data.full')
+  data.traps <- trap.fun(traps = traps, dims = dims)
+  data.full <- merge(data.full, data.traps, by = c('session', 'trap'), all = TRUE)
+  data.full <- data.sort(data.full, 'data.full')
 
   ########################################################################################################
-  o.mask = mask.fun(mask = mask, dims = dims, animal.model = animal.model,
+  o.mask <- mask.fun(mask = mask, dims = dims, animal.model = animal.model,
                     data.traps = data.traps, data.full = data.full,
-                    local = local, bucket_info = bucket_info, sound.speed = sound.speed)
-  dims[["n.masks"]] = o.mask$n.masks
-  data.full = o.mask$data.full
-  bucket_info = o.mask$bucket_info
-  #keep the old version of output temporarily, might be useful later
-  mask = o.mask$mask
-  arg.input[['mask']] = mask
+                    local = local, bucket.info = bucket_info, sound.speed = sound.speed)
+  dims[["n.masks"]] <- o.mask$n.masks
+  data.full <- o.mask$data.full
+  bucket_info <- o.mask$bucket_info
+  ## Keep the old version of the output temporarily; it might be useful later.
+  mask <- o.mask$mask
+  arg.input[['mask']] <- mask
 
-  #dists = o.mask$dists
-  A = o.mask$A
-  buffer = o.mask$buffer
-  #all.which.local = o.mask$all.which.local
-  #all.n.local = o.mask$all.n.local
-  data.dists.thetas = o.mask$data.dists.thetas
-  data.ID_mask = o.mask$data.ID_mask
-  data.mask = o.mask$data.mask
+  ## dists = o.mask$dists
+  A <- o.mask$A
+  buffer <- o.mask$buffer
+  ## all.which.local = o.mask$all.which.local
+  ## all.n.local = o.mask$all.n.local
+  data.dists.thetas <- o.mask$data.dists.thetas
+  data.ID_mask <- o.mask$data.ID_mask
+  data.mask <- o.mask$data.mask
 
   ########################################################################################################
-  #in animal_ID model, the cue.rate is no longer an inputted argument, but a fitted argument, named as "mu"
-  fulllist.par = fulllist.par.generator()
+  ## In the animal_ID model, the cue rate is no longer an input argument but a fitted parameter, named "mu".
+  fulllist.par <- fulllist.par.generator()
 
-  o.par.extend = par.extend.fun(par.extend = par.extend, data.full = data.full, data.mask = data.mask,
+  o.par.extend <- par.extend.fun(par.extend = par.extend, data.full = data.full, data.mask = data.mask,
                                 animal.model = animal.model, dims = dims, fulllist.par = fulllist.par,
-                                extra_args = extra_args)
+                                extra.args = extra_args)
 
-  data.full = o.par.extend$data.full
-  data.mask = o.par.extend$data.mask
-  data.par = o.par.extend$data.par
-  name.extend.par = o.par.extend$name.extend.par
-  #fgam is for compatibility with ADMB model
-  fgam = o.par.extend$fgam
-  gam_output = o.par.extend$gam_output
-  lst_mean_std = o.par.extend$lst_mean_std
-  is.scale = o.par.extend$is.scale
+  data.full <- o.par.extend$data.full
+  data.mask <- o.par.extend$data.mask
+  data.par <- o.par.extend$data.par
+  name.extend.par <- o.par.extend$name.extend.par
+  ## The object fgam is for compatibility with the ADMB model.
+  fgam <- o.par.extend$fgam
+  gam_output <- o.par.extend$gam_output
+  lst_mean_std <- o.par.extend$lst_mean_std
+  is.scale <- o.par.extend$is.scale
 
-  #we didn't modify the 'animal_ID' and 'ID' to successive natural number because in 'animal_ID' level
-  #extend covariates data, the user may want to assign some covariates to each 'animal_ID', so we must keep
-  #it as original input, but after dealing with 'par.extend', there is no interaction with users about
-  #'animal_ID' or 'ID', so we modify them to make sure design matrices are in right order
+  ## We didn't convert 'animal_ID' and 'ID' to successive natural numbers earlier because, with 'animal_ID'-level
+  ## covariates, the user may want to assign covariates to each 'animal_ID', so we must keep
+  ## the original input; but after dealing with 'par.extend', there is no interaction with users about
+  ## 'animal_ID' or 'ID', so we convert them here to make sure the design matrices are in the right order.
 
-  #(additional notes in 09/09/2022: we may not include animal_ID level covariates, there are quite a few reasons,
-  #for example, if we add it, the simulation will not work as animal_ID is an item to be simulated, the output
-  #animal_ID will be random, we cannot assign any covariate to it. But since the model works
-  #no need to change this part.)
+  ## (Additional note, 09/09/2022: we may not include animal_ID-level covariates, for quite a few reasons;
+  ## for example, if we add them, the simulation will not work, as animal_ID is simulated, so the output
+  ## animal_ID will be random and we cannot assign any covariate to it. But since the model works,
+  ## there is no need to change this part.)
 
-  #in the 'convert_natural_number()', the key component is as.numeric(as.factor(xxx)). Both 'data.full' and
-  #'data.ID_mask' contains the same combination of 'animal_ID' and 'ID', but they may be in different order,
-  #to make sure as.numeric(as.factor(xxx)) output the same numeric value to the same 'animal_ID' or 'ID',
-  #sort these two data set first, so they will have the same content and the same order, there should be no
-  #possibility result in different output
-  data.full = sort.data(data.full, 'data.full')
-  data.ID_mask = sort.data(data.ID_mask, 'data.ID_mask')
+  ## In convert.natural.number(), the key component is as.numeric(as.factor(xxx)). Both 'data.full' and
+  ## 'data.ID_mask' contain the same combinations of 'animal_ID' and 'ID', but possibly in a different order.
+  ## To make sure as.numeric(as.factor(xxx)) gives the same numeric value for the same 'animal_ID' or 'ID',
+  ## sort these two data sets first, so they have the same content in the same order; then there is no
+  ## possibility of a different result.
+  data.full <- data.sort(data.full, 'data.full')
+  data.ID_mask <- data.sort(data.ID_mask, 'data.ID_mask')
 
-  data.full = convert_natural_number(data.full, animal.model, 'both')
-  data.ID_mask = convert_natural_number(data.ID_mask, animal.model, 'both')
+  data.full <- convert.natural.number(data.full, animal.model, 'both')
+  data.ID_mask <- convert.natural.number(data.ID_mask, animal.model, 'both')
 
-  #because there is 'rbind' in the convert_natural_numer, so sort them again
-  data.full = sort.data(data.full, 'data.full')
-  data.ID_mask = sort.data(data.ID_mask, 'data.ID_mask')
+  ## Because convert.natural.number() uses rbind(), sort them again.
+  data.full <- data.sort(data.full, 'data.full')
+  data.ID_mask <- data.sort(data.ID_mask, 'data.ID_mask')
 
   if(animal.model){
-    #n.animal.call is a vector with length of sum(n.animals), each element is the number of calls
-    #made by that animal, since the order of animal_ID matters, so we calculate it here
-    tem = subset(data.full, !is.na(data.full$animal_ID))
-    tem = agg_sort(tem, 'ID', c('session', 'animal_ID'), function(x) length(unique(x)))
-    dims$n.animal.call = tem$x
+    ## The vector n.animal.call has length sum(n.animals), and each element is the number of calls
+    ## made by that animal; since the order of animal_ID matters, we calculate it here.
+    tem <- subset(data.full, !is.na(data.full$animal_ID))
+    tem <- agg.sort(tem, 'ID', c('session', 'animal_ID'), function(x) length(unique(x)))
+    dims$n.animal.call <- tem$x
   } else {
-    dims$n.animal.call = 0
+    dims$n.animal.call <- 0
   }
 
 
   #####################################################################################################
-  o.ss = ss.fun(ss.opts = ss.opts, data.full = data.full, data.ID_mask = data.ID_mask,
-                animal.model = animal.model, dims = dims, bucket_info = bucket_info,
+  o.ss <- ss.fun(ss.opts = ss.opts, data.full = data.full, data.ID.mask = data.ID_mask,
+                animal.model = animal.model, dims = dims, bucket.info = bucket_info,
                 sv = sv, fix = fix)
 
-  data.full = o.ss$data.full
-  data.ID_mask = o.ss$data.ID_mask
-  dims = o.ss$dims
-  bucket_info = o.ss$bucket_info
-  ss.opts = o.ss$ss.opts
-  ss.link = ss.opts$ss.link
+  data.full <- o.ss$data.full
+  data.ID_mask <- o.ss$data.ID_mask
+  dims <- o.ss$dims
+  bucket_info <- o.ss$bucket_info
+  ss.opts <- o.ss$ss.opts
+  ss.link <- ss.opts$ss.link
 
 
   ######################################################################################################
-  o.CR_SL = CR_SL(cue.rates = cue.rates, survey.length = survey.length,
-                  bucket_info = bucket_info, dims = dims)
+  o.CR_SL <- CR.SL(cue.rates = cue.rates, survey.length = survey.length,
+                  bucket.info = bucket_info, dims = dims)
 
-  survey.length = o.CR_SL$survey.length
-  #update the survey length to the input, thus this will be included in the output as well
-  arg.input[['survey.length']] = survey.length
+  survey.length <- o.CR_SL$survey.length
+  ## Update the survey length in the input, so it is included in the output as well.
+  arg.input[['survey.length']] <- survey.length
 
-  bucket_info = o.CR_SL$bucket_info
-  #this is the mean of cue.rate, and it will be generated anyway, but when animal.model = TRUE
-  #this "mean.cue.rates" will not be used in the model.
-  mean.cue.rates = o.CR_SL$mean.cue.rates
+  bucket_info <- o.CR_SL$bucket_info
+  ## This is the mean of cue.rate, and it is always generated, but when animal.model = TRUE
+  ## this "mean.cue.rates" is not used in the model.
+  mean.cue.rates <- o.CR_SL$mean.cue.rates
 
 
   ########################################################################################################
-  o.param = param.detfn.fun(animal.model= animal.model, sv = sv, fix = fix, bounds = bounds,
+  o.param <- param.detfn.fun(animal.model= animal.model, sv = sv, fix = fix, bounds = bounds,
                             name.extend.par = name.extend.par, detfn = detfn, data.full = data.full,
                             data.mask = data.mask, data.par = data.par, ss.opts = ss.opts,
-                            bucket_info = bucket_info, fulllist.par = fulllist.par, A = A, buffer = buffer,
+                            bucket.info = bucket_info, fulllist.par = fulllist.par, A = A, buffer = buffer,
                             survey.length = survey.length, dims = dims, sv.link = sv.link)
 
-  DX.full = o.param$design.matrices.full
-  DX.mask = o.param$design.matrices.mask
-  data.par = o.param$data.par
-  sv.input = o.param$sv.input
-  fix.input = o.param$fix.input
-  bounds.input = o.param$bounds.input
-  name.extend.par = o.param$name.extend.par
-  detfn = o.param$detfn
-  param.og = o.param$param.og
-  #make sure the param.og follows the order of fulllist.par
-  #this is important because the "parameter" argument in TMB model
-  #follows the order of fulllist.par
-  param.og = fulllist.par[which(fulllist.par %in% param.og)]
+  DX.full <- o.param$design.matrices.full
+  DX.mask <- o.param$design.matrices.mask
+  data.par <- o.param$data.par
+  sv.input <- o.param$sv.input
+  fix.input <- o.param$fix.input
+  bounds.input <- o.param$bounds.input
+  name.extend.par <- o.param$name.extend.par
+  detfn <- o.param$detfn
+  param.og <- o.param$param.og
+  ## Make sure param.og follows the order of fulllist.par;
+  ## this is important because the "parameter" argument of the TMB model
+  ## follows the order of fulllist.par.
+  param.og <- fulllist.par[which(fulllist.par %in% param.og)]
 
   #############################################################################################################
-  #uid stuffs
+  ## Unique capture history set-up.
 
-  #dims$n.detection records the number of detectors with detection for every each 'ID' or 'animal_ID-ID'
-  #so it is a vector with length of sum(n.animal.call) or sum(n.IDs)
-  dims$n.detection = cal_n_det(data.full)
+  ## The element dims$n.detection records the number of detectors with a detection for each 'ID' or 'animal_ID-ID',
+  ## so it is a vector of length sum(n.animal.call) or sum(n.IDs).
+  dims$n.detection <- cal.n.det(data.full)
 
   if(!animal.model){
 
-    tem = extract_unique_id(data.full, dims)
-    #these two dimensions are a little bit ambiguous
-    #n.id.uid means the number of IDs under each unique capture history, this is a vector that
-    #simply combines these numbers for all unique capture histories in all sessions in a row
-    #for example, if there are 3 sessions and 1st session has 3 unique capture histories, and 2nd has no detection
-    #and the 3rd session has 2 unique capture histories
-    #then this n.id.uid will be a vector with length of 3 + 0 + 2 = 5
+    tem <- extract.unique.id(data.full, dims)
+    ## These two dimensions are a little ambiguous.
+    ## The vector n.id.uid holds the number of IDs under each unique capture history; it simply
+    ## concatenates these numbers for all unique capture histories in all sessions.
+    ## For example, if there are 3 sessions, the 1st session has 3 unique capture histories, the 2nd has no detections
+    ## and the 3rd session has 2 unique capture histories,
+    ## then n.id.uid will be a vector of length 3 + 0 + 2 = 5.
 
-    dims$n.id.uid = tem$n_id_uid
+    dims$n.id.uid <- tem$n_id_uid
 
-    #n.uids is the number of unique capture histories in each session, it is a vector
-    #with length of n.sessions
+    ## The vector n.uids holds the number of unique capture histories in each session; it is a vector
+    ## of length n.sessions.
 
-    dims$n.uids = tem$n_uids
+    dims$n.uids <- tem$n_uids
 
-    #each unique capture history
-    data_u_bin = tem$data_u_bin
-    uid_dup_data_full = tem$uid_dup_data_full
+    ## Each unique capture history.
+    data_u_bin <- tem$data_u_bin
+    uid_dup_data_full <- tem$uid_dup_data_full
 
-    DX.full.uid = lapply(DX.full,
-                         function(x) {x = x[!uid_dup_data_full,,drop = FALSE]; x = x[order(data_u_bin$session, data_u_bin$u_id, data_u_bin$trap),,drop = FALSE]; return(x)})
+    DX.full.uid <- lapply(DX.full,
+                         function(x) {x <- x[!uid_dup_data_full,,drop = FALSE]; x <- x[order(data_u_bin$session, data_u_bin$u_id, data_u_bin$trap),,drop = FALSE]; return(x)})
 
-    data_u_bin = sort.data(data_u_bin, "data_u_bin")
+    data_u_bin <- data.sort(data_u_bin, "data_u_bin")
 
-    #this one is like the number of detection for each uid, like 'n.detection', this is a literately vector
-    #if 3 sessions, and their n.uid is 3,0,2, then this "n.detection.uid" is vector with length of 5
-    dims$n.detection.uid = cal_n_det(data_u_bin, is_uid = TRUE)
+    ## This is like the number of detections for each uid, as in 'n.detection'; it is a plain vector:
+    ## if there are 3 sessions, and their n.uid values are 3, 0, 2, then "n.detection.uid" is a vector of length 5.
+    dims$n.detection.uid <- cal.n.det(data_u_bin, is.uid = TRUE)
 
-    #this is a literately vector as well, "n.detection.uid" must be used to extract the index of traps for one uid
-    index_traps_uid = agg_sort(data_u_bin, 'bincapt', c('session', 'u_id'), function(x) which(x == 1))
-    index_traps_uid = do.call('c', index_traps_uid$x)
+    ## This is a plain vector as well; "n.detection.uid" must be used to extract the indices of traps for one uid.
+    index_traps_uid <- agg.sort(data_u_bin, 'bincapt', c('session', 'u_id'), function(x) which(x == 1))
+    index_traps_uid <- do.call('c', index_traps_uid$x)
 
 
-    #ID and unique capture history match table
-    u_id_match = tem$u_id_match
-    u_id_match = sort.data(u_id_match, "u_id_match")
+    ## Table matching IDs to unique capture histories.
+    u_id_match <- tem$u_id_match
+    u_id_match <- data.sort(u_id_match, "u_id_match")
   } else {
-    #for animal.model, we do not use unique capture history trick, set these related variables to zero
-    dims$n.id.uid = 0
-    dims$n.uids = numeric(dims$n.sessions)
-    dims$n.detection.uid = 0
-    data_u_bin = data.frame(bincapt = 0)
-    DX.full.uid = vector('list', length(fulllist.par))
-    names(DX.full.uid) = fulllist.par
-    for(i in fulllist.par) DX.full.uid[[i]] = matrix(0, ncol = 2, nrow = 2)
-    index_traps_uid = 0
-    u_id_match = data.frame(ID = 0)
+    ## For animal.model, we do not use the unique capture history trick, so set these related variables to zero.
+    dims$n.id.uid <- 0
+    dims$n.uids <- numeric(dims$n.sessions)
+    dims$n.detection.uid <- 0
+    data_u_bin <- data.frame(bincapt = 0)
+    DX.full.uid <- vector('list', length(fulllist.par))
+    names(DX.full.uid) <- fulllist.par
+    for(i in fulllist.par) DX.full.uid[[i]] <- matrix(0, ncol = 2, nrow = 2)
+    index_traps_uid <- 0
+    u_id_match <- data.frame(ID = 0)
   }
 
   if(is.null(ss.opts)){
-    cutoff = 0
+    cutoff <- 0
   } else {
-    cutoff = ss.opts$cutoff
+    cutoff <- ss.opts$cutoff
   }
 
   #####################################################################
 
-  #dist is a little special because it could appear in log(capt_dist) in the likelihood
-  #capt_dist = ifelse(is.na(data.full$dist), 0, data.full$dist)
-  #capt_dist = ifelse(capt_dist == 0, 1e-20, capt_dist)
+  ## The dist data are a little special because they could appear in log(capt_dist) in the likelihood.
+  ## capt_dist = ifelse(is.na(data.full$dist), 0, data.full$dist)
+  ## capt_dist = ifelse(capt_dist == 0, 1e-20, capt_dist)
 
   if(animal.model){
-    #due to the order of loop in the c++ template, re-order this data set
-    data.ID_mask = data.ID_mask[order(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$mask, data.ID_mask$ID), ]
+    ## Due to the order of the loops in the C++ template, re-order this data set.
+    data.ID_mask <- data.ID_mask[order(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$mask, data.ID_mask$ID), ]
   }
   if(!any(c('local', 'toa') %in% bucket_info)){
-    data.ID_mask = data.ID_mask[1,, drop = FALSE]
+    data.ID_mask <- data.ID_mask[1,, drop = FALSE]
   } else {
     if(!'local' %in% bucket_info){
-      data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'local'), drop = FALSE]
+      data.ID_mask <- data.ID_mask[,-which(colnames(data.ID_mask) == 'local'), drop = FALSE]
     }
     if(!"toa" %in% bucket_info){
-      data.ID_mask = data.ID_mask[,-which(colnames(data.ID_mask) == 'toa_ssq'), drop = FALSE]
+      data.ID_mask <- data.ID_mask[,-which(colnames(data.ID_mask) == 'toa_ssq'), drop = FALSE]
     }
   }
 
   data <- list(n_sessions = dims$n.sessions,
                n_animals = dims$n.animals,
                n_IDs = dims$n.IDs,
-               #because in the data.full, if one session has no detection
-               #it will still record n.trap's rows, a special n.id for
-               #looking up the index of row in data.full is necessary
+               ## In data.full, a session with no detections
+               ## still has n.traps rows, so a special n.id for
+               ## looking up the row index in data.full is necessary.
                n_IDs_for_datafull = ifelse(dims$n.IDs == 0, 1, dims$n.IDs),
                n_traps = dims$n.traps,
                n_masks = dims$n.masks,
@@ -796,24 +796,24 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
 
 
                cutoff = cutoff,
-               #code of detfn_index:
-               #1:hn, 2:hhn, 3:hr, 4:th, 5:lth, 6:ss
-               detfn_index = numeric_detfn(detfn),
+               ## Codes for detfn_index:
+               ## 1:hn, 2:hhn, 3:hr, 4:th, 5:lth, 6:ss.
+               detfn_index = numeric.detfn(detfn),
 
 
-               #simply use the row index of 'data.par' as the numeric subtitution of parameters
-               #1:g0, 2:sigma; 3:lambda0, 4:z, 5:shape.1, 6:shape.2, 7:shpe, 8:scale, 9:b0.ss,
-               #10:b1.ss, 11:b2.ss, 12:sigma.ss, 13:kappa, 14:alpha, 15:sigma.toa,
-               #16:sigma.b0.ss, 17:D
-               #remeber in TMB, index begins from 0, so all of the index above should minus 1
+               ## Simply use the row index of 'data.par' as the numeric substitute for parameters:
+               ## 1:g0, 2:sigma, 3:lambda0, 4:z, 5:shape.1, 6:shape.2, 7:shape, 8:scale, 9:b0.ss,
+               ## 10:b1.ss, 11:b2.ss, 12:sigma.ss, 13:kappa, 14:alpha, 15:sigma.toa,
+               ## 16:sigma.b0.ss, 17:D.
+               ## Remember that in TMB indices begin at 0, so all of the indices above should have 1 subtracted.
 
                param_og = (1:nrow(data.par))[which(data.par[['par']] %in% param.og)],
 
                par_n_col = as.matrix(data.par[, c('n_col_full', 'n_col_mask')]),
-               #link index: 1 - identity, 2 - log, 3 - logit
-               par_link = numeric_link(data.par[['link']]),
-               #link index: 1 - identity, 2 - log, 4 - spherical
-               ss_link = numeric_link(ss.link),
+               ## Link index: 1 - identity, 2 - log, 3 - logit.
+               par_link = numeric.link(data.par[['link']]),
+               ## Link index: 1 - identity, 2 - log, 4 - spherical.
+               ss_link = numeric.link(ss.link),
 
                is_animalID = as.numeric(animal.model),
                is_ss = as.numeric("ss" %in% bucket_info),
@@ -840,149 +840,149 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                index_local = as.numeric(data.ID_mask$local),
                toa_ssq = as.numeric(data.ID_mask$toa_ssq),
 
-               # Conditional likelihood
+               ## Conditional likelihood.
                is_conditional = as.numeric(CL),
-               # Two stage (calculate logESA partial derivatives)
+               ## Two-stage fitting (calculate logESA partial derivatives).
                is_two_stage = 0
   )
 
-  #to avoid "." in .cpp file
-  fulllist.par.4cpp = gsub("\\.", "_", fulllist.par)
-  param.og.4cpp = gsub("\\.", "_", param.og)
+  ## To avoid "." in the .cpp file.
+  fulllist.par.4cpp <- gsub("\\.", "_", fulllist.par)
+  param.og.4cpp <- gsub("\\.", "_", param.og)
 
-  parameters = vector('list', length(fulllist.par) + 1)
-  names(parameters) = c(fulllist.par.4cpp, "u")
+  parameters <- vector('list', length(fulllist.par) + 1)
+  names(parameters) <- c(fulllist.par.4cpp, "u")
 
   for(i in 1:length(fulllist.par)){
-    name.r = fulllist.par[i]
-    name.cpp = fulllist.par.4cpp[i]
-    data[[paste0(name.cpp, "_DX")]] = ifelse(is.na(DX.full[[name.r]]), 0, DX.full[[name.r]])
-    #column in the design matrix for intercept should be always 1
-    data[[paste0(name.cpp, "_DX")]][,1] = ifelse(data[[paste0(name.cpp, "_DX")]][,1] == 0, 1,
+    name.r <- fulllist.par[i]
+    name.cpp <- fulllist.par.4cpp[i]
+    data[[paste0(name.cpp, "_DX")]] <- ifelse(is.na(DX.full[[name.r]]), 0, DX.full[[name.r]])
+    ## The column in the design matrix for the intercept should always be 1.
+    data[[paste0(name.cpp, "_DX")]][,1] <- ifelse(data[[paste0(name.cpp, "_DX")]][,1] == 0, 1,
                                                  data[[paste0(name.cpp, "_DX")]][,1])
-    data[[paste0(name.cpp, "_DX_mask")]] = ifelse(is.na(DX.mask[[name.r]]), 0, DX.mask[[name.r]])
-    data[[paste0(name.cpp, "_DX_uid")]] = ifelse(is.na(DX.full.uid[[name.r]]), 0, DX.full.uid[[name.r]])
-    data[[paste0(name.cpp, "_bound")]] = bounds.input[[name.r]]
-    parameters[[name.cpp]] = sv.input[[name.r]]
+    data[[paste0(name.cpp, "_DX_mask")]] <- ifelse(is.na(DX.mask[[name.r]]), 0, DX.mask[[name.r]])
+    data[[paste0(name.cpp, "_DX_uid")]] <- ifelse(is.na(DX.full.uid[[name.r]]), 0, DX.full.uid[[name.r]])
+    data[[paste0(name.cpp, "_bound")]] <- bounds.input[[name.r]]
+    parameters[[name.cpp]] <- sv.input[[name.r]]
   }
 
-  parameters$u = numeric(sum(dims$n.IDs))
+  parameters$u <- numeric(sum(dims$n.IDs))
 
-  #set the "map" argument for fixed parameters
-  #obtain the fixed parameter that assigned by the user
-  name.fixed.par = names(fix.input)[!sapply(fix.input, is.null)]
-  name.fixed.par.4cpp = gsub("\\.", "_", name.fixed.par)
+  ## Set the "map" argument for fixed parameters;
+  ## obtain the fixed parameters assigned by the user.
+  name.fixed.par <- names(fix.input)[!sapply(fix.input, is.null)]
+  name.fixed.par.4cpp <- gsub("\\.", "_", name.fixed.par)
 
-  #combine this with the parameters that will not be used in this model
-  name.fixed.par.4cpp = c(name.fixed.par.4cpp, fulllist.par.4cpp[!(fulllist.par.4cpp %in% param.og.4cpp)])
+  ## Combine this with the parameters that will not be used in this model.
+  name.fixed.par.4cpp <- c(name.fixed.par.4cpp, fulllist.par.4cpp[!(fulllist.par.4cpp %in% param.og.4cpp)])
 
-  #in case there is any duplication, delete them
-  name.fixed.par.4cpp = unique(name.fixed.par.4cpp)
-
-
-  name.fixed.par.4cpp = c(name.fixed.par.4cpp, "u")
+  ## In case there is any duplication, remove it.
+  name.fixed.par.4cpp <- unique(name.fixed.par.4cpp)
 
 
-  map = vector('list', length(name.fixed.par.4cpp))
-  names(map) = name.fixed.par.4cpp
+  name.fixed.par.4cpp <- c(name.fixed.par.4cpp, "u")
+
+
+  map <- vector('list', length(name.fixed.par.4cpp))
+  names(map) <- name.fixed.par.4cpp
 
   for(i in 1:length(name.fixed.par.4cpp)){
-    par_name = name.fixed.par.4cpp[i]
-    map[[par_name]] = factor(rep(NA, length(parameters[[par_name]])))
+    par_name <- name.fixed.par.4cpp[i]
+    map[[par_name]] <- factor(rep(NA, length(parameters[[par_name]])))
   }
 
-  # If scaling and centering has been applied to the extended parameters,
-  # we are going to need the back-transformation matrices
-  # Note that in the case that scaling has not been applied, or a parameter has
-  # not been extended, the associated back transformation matrix is the identity
-  # matrix
-  # Also note that we need to make sure the parameter names we use match the
-  # output style of TMB
+  ## If scaling and centering has been applied to the extended parameters,
+  ## we are going to need the back-transformation matrices.
+  ## Note that in the case that scaling has not been applied, or a parameter has
+  ## not been extended, the associated back transformation matrix is the identity
+  ## matrix.
+  ## Also note that we need to make sure the parameter names we use match the
+  ## output style of TMB.
   TMB_par_names <- rep(gsub("\\.", "_", param.og), lengths(parameters[gsub("\\.", "_", param.og)]))
-  G_lst <- construct_G_matrix_list(TMB_par_names, name.extend.par, lst_mean_std,
+  G_lst <- construct.G.matrix.list(TMB_par_names, name.extend.par, lst_mean_std,
                                    is.scale)
 
   if(!gr.skip) {
-    # Have TMB build the likelihood function
+    ## Have TMB build the likelihood function.
     obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map,
                           silent = TRUE, DLL="acre")
-    # True so that when we optimize, hessian is calculated alongside
+    ## True so that the Hessian is calculated alongside when we optimise.
     obj$hessian <- TRUE
 
-    # If tracing is enabled, use custom trace output
+    ## If tracing is enabled, use custom trace output.
     if (tracing) {
-      # If the model is extended, make sure to build extended parameter names
-      # These need to correspond to the GLM design matrix column names
-      par_names <- get_coef_names(names(obj$par), name.extend.par,
+      ## If the model is extended, make sure to build the extended parameter names.
+      ## These need to correspond to the GLM design matrix column names.
+      par_names <- get.coef.names(names(obj$par), name.extend.par,
                                   data.full, data.mask)
 
-      tap <- make_buffer_printer(trace_cols = par_names,
+      tap <- make.buffer.printer(trace.cols = par_names,
                                  step = "none",
-                                 show_mgc = TRUE)
+                                 show.mgc = TRUE)
 
-      # Capture originals and wrap safely
+      ## Capture the originals and wrap them safely.
       orig_fn <- obj$fn
       orig_gr <- obj$gr
 
-      # Wrap the objective / gradient functions, so each time they are
-      # evaluated, we print the custom trace information
-      obj$fn <- with_fn_tap(orig_fn, tap, par_names, G_lst)
-      obj$gr <- with_gr_tap(orig_gr, tap, par_names, G_lst)
+      ## Wrap the objective / gradient functions, so each time they are
+      ## evaluated, we print the custom trace information.
+      obj$fn <- tap.fn(orig_fn, tap, par_names, G_lst)
+      obj$gr <- tap.gr(orig_gr, tap, par_names, G_lst)
     }
 
-    opt = stats::nlminb(obj$par, obj$fn, obj$gr, control=list(trace=0))
+    opt <- stats::nlminb(obj$par, obj$fn, obj$gr, control=list(trace=0))
 
-    # Restore originals once the initial optimization is done
-    # (avoid additional prints when using sdreport())
+    ## Restore the originals once the initial optimisation is done
+    ## (avoid additional prints when using sdreport()).
     if (tracing) {
       obj$fn <- orig_fn
       obj$gr <- orig_gr
     }
 
-    o = TMB::sdreport(obj)
+    o <- TMB::sdreport(obj)
   } else {
-    # In the case we don't use TMB to calculate the gradients, we will need to
-    # proceed slightly differently
+    ## In the case we don't use TMB to calculate the gradients, we will need to
+    ## proceed slightly differently.
 
-    # type = 'Fun' specifies to skip the gradient calculation
+    ## The argument type = 'Fun' specifies skipping the gradient calculation.
     obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map,
                           silent = TRUE, DLL="acre", type = 'Fun')
 
-    # Get the names of the fitted parameters
-    # That is, all the parameters we pass to TMB, which are not fixed
-    par_name_fitted = setdiff(param.og.4cpp, name.fixed.par.4cpp)
+    ## Get the names of the fitted parameters,
+    ## that is, all the parameters we pass to TMB that are not fixed.
+    par_name_fitted <- setdiff(param.og.4cpp, name.fixed.par.4cpp)
 
-    # The name of this ini_par_val is not right, do it later <- ?
-    ini_par_val = list_2vector_4value(parameters[par_name_fitted])
-    fn_base <- function(par) environment(obj$fn)$f(par, type = "double")
+    ## The name of ini_par_val is not right; fix it later.
+    ini_par_val <- list.2vector.4value(parameters[par_name_fitted])
+    fn.base <- function(par) environment(obj$fn)$f(par, type = "double")
 
-    # If tracing is enabled, use custom trace output
+    ## If tracing is enabled, use custom trace output.
     if (tracing) {
-      # As before, if the model is extended, make sure to build extended names
-      par_names <- get_coef_names(par_name_fitted, name.extend.par,
+      ## As before, if the model is extended, make sure to build extended names.
+      par_names <- get.coef.names(par_name_fitted, name.extend.par,
                                   data.full, data.mask)
 
-      tap <- make_buffer_printer(trace_cols = par_names,
+      tap <- make.buffer.printer(trace.cols = par_names,
                                  step = "max",
-                                 show_mgc = FALSE)
+                                 show.mgc = FALSE)
 
-      fn_traced <- with_fn_tap(fn_base, tap, par_names, G_lst)
+      fn_traced <- tap.fn(fn.base, tap, par_names, G_lst)
 
       opt <- stats::nlminb(ini_par_val, fn_traced, control = list(trace = 0))
     } else {
-      opt <- stats::nlminb(ini_par_val, fn_base)
+      opt <- stats::nlminb(ini_par_val, fn.base)
     }
 
-    # Numerically solve for the hessian
-    # Note that the standard errors for g0 may be NaN due to numerical issues,
-    # alongside the fact that its true value lies on the boundary of the
-    # parameter space
-    H = stats::optimHess(opt$par, fn_base)
-    H = solve(H)
-    o = gr_free_o_restore(fn_base, opt, H, parameters, param.og.4cpp, dims$n.sessions)
+    ## Numerically solve for the Hessian.
+    ## Note that the standard errors for g0 may be NaN due to numerical issues,
+    ## alongside the fact that its true value lies on the boundary of the
+    ## parameter space.
+    H <- stats::optimHess(opt$par, fn.base)
+    H <- solve(H)
+    o <- gr.free.o.restore(fn.base, opt, H, parameters, param.og.4cpp, dims$n.sessions)
   }
 
-  # If partial derivatives are being returned (i.e. two.stage == T)
+  ## If partial derivatives are being returned (i.e. two.stage == T).
   esa_partial_derivatives <- NULL
   if (isTRUE(two.stage)) {
     data$is_two_stage <- as.numeric(TRUE)
@@ -990,18 +990,18 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
     pd_object <- TMB::MakeADFun(data = data, parameters = parameters, map = map,
                                 silent = TRUE, DLL="acre", ADreport = TRUE)
     partial_derivative_matrix <- pd_object$gr(opt$par)
-    # Extracting the names using pd_object$fn() means that in the future, new
-    # ADREPORT()'s won't mess things up (i.e. if we extracted positionally instead)
+    ## Extracting the names using pd_object$fn() means that in the future, new
+    ## ADREPORT()'s won't mess things up (i.e. if we extracted positionally instead).
     log_esa_pd_rows <- which(names(pd_object$fn()) == "log_esa")
     esa_partial_derivatives <- partial_derivative_matrix[log_esa_pd_rows,]
   }
 
-  tmb_output_og = list(est = o$value, vcov = o$cov)
+  tmb_output_og <- list(est = o$value, vcov = o$cov)
 
-  # Restore the estimated parameters' estimation and variance matrix to original scale
-  G_lst[["esa"]] = diag(dims$n.sessions)
-  est_names = names(o$value)
-  u_names = unique(est_names)
+  ## Restore the estimated parameters' estimates and variance matrix to the original scale.
+  G_lst[["esa"]] <- diag(dims$n.sessions)
+  est_names <- names(o$value)
+  u_names <- unique(est_names)
 
   missing_G <- setdiff(u_names, names(G_lst))
   for(i in missing_G){
@@ -1009,20 +1009,20 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
   }
 
   for(i in u_names) {
-    index_u_name = which(est_names == i)
-    o$value[index_u_name] = G_lst[[i]] %*% o$value[index_u_name]
+    index_u_name <- which(est_names == i)
+    o$value[index_u_name] <- G_lst[[i]] %*% o$value[index_u_name]
   }
 
-  # Restore the names
-  names(o$value) = est_names
+  ## Restore the names.
+  names(o$value) <- est_names
 
-  # Combine all these matrix for all coefficient, making sure ordering is correct
-  G = diag_block_combine(G_lst[u_names])
-  # Delta method to get standard errors
-  o$cov = G %*% o$cov %*% t(G)
-  o$sd = sqrt(diag(o$cov))
+  ## Combine the matrices for all coefficients, making sure the ordering is correct.
+  G <- diag.block.combine(G_lst[u_names])
+  ## Delta method to get standard errors.
+  o$cov <- G %*% o$cov %*% t(G)
+  o$sd <- sqrt(diag(o$cov))
 
-  out = outFUN(data.par = data.par,
+  out <- outFUN(data.par = data.par,
                data.full = data.full,
                data.traps = data.traps,
                data.mask = data.mask,
@@ -1031,7 +1031,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                param.og = param.og,
                param.og.4cpp = param.og.4cpp,
                o = o,
-               tmb_output_og = tmb_output_og,
+               tmb.output.og = tmb_output_og,
                opt = opt,
                name.fixed.par = name.fixed.par,
                name.extend.par = name.extend.par,
@@ -1039,7 +1039,7 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                DX.full = DX.full,
                DX.mask = DX.mask,
                fix.input = fix.input,
-               bucket_info = bucket_info,
+               bucket.info = bucket_info,
                cue.rates = cue.rates,
                mean.cue.rates = mean.cue.rates,
                A = A,
@@ -1048,13 +1048,13 @@ fit_og = function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix
                par.extend = par.extend,
                arg.input = arg.input,
                fgam = fgam,
-               gam_output = gam_output,
-               lst_mean_std = lst_mean_std,
+               gam.output = gam_output,
+               lst.mean.std = lst_mean_std,
                is.scale = is.scale,
                ss.link = ss.link,
                cutoff = cutoff,
                CL = CL,
-               esa_partial_derivatives = esa_partial_derivatives)
+               esa.partial.derivatives = esa_partial_derivatives)
 
   class(out) <- "acre"
 

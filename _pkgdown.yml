@@ -70,7 +70,7 @@ reference:
     contents:
       - read.acre
       - create.mask
-      - location_density
+      - location.density
 
   - title: Model fitting
     desc: Fit acoustic SCR models and compute core model quantities.
@@ -111,5 +111,5 @@ reference:
     desc: Simulate acoustic SCR data and run simulation studies.
     contents:
       - sim.capt
-      - sim_data
-      - sim_study
+      - sim.data
+      - sim.study

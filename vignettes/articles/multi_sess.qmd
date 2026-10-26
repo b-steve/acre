@@ -145,13 +145,13 @@ allocate_calls <- function(mics, dets, sound_speed) {
   trap_dists <- distances(mics, mics)
   n_dets <- nrow(dets)
 
-  dist_mat <- detection_dists(trap_dists, dets$trap)
-  timediff_mat <- detection_timediffs(dets$toa, dets$trap)
+  dist_mat <- detection.dists(trap_dists, dets$trap)
+  timediff_mat <- detection.timediffs(dets$toa, dets$trap)
   maxtime_mat <- dist_mat / sound_speed
 
   match_mat <- timediff_mat <= maxtime_mat
 
-  incomplete_blocks <- find_incomplete_blocks(match_mat)
+  incomplete_blocks <- find.incomplete.blocks(match_mat)
   n_blocks <- max(incomplete_blocks)
 
   final_mat <- matrix(FALSE, nrow = n_dets, ncol = n_dets)
@@ -170,7 +170,7 @@ allocate_calls <- function(mics, dets, sound_speed) {
     final_mat[incomplete_blocks == i, incomplete_blocks == i] <- block
   }
 
-  find_incomplete_blocks(final_mat)
+  find.incomplete.blocks(final_mat)
 }
 
 prepare_session <- function(i, survey_info, data_dir, survey_length) {
@@ -254,7 +254,7 @@ head(full_captures)
 ## Reading data into `acre`
 
 The prepared capture histories and detector locations can now be combined into
-one multi-session `acre_data` object.
+one multi-session `acre.data` object.
 
 ```{r eval=FALSE}
 full_data <- read.acre(
@@ -335,7 +335,7 @@ plot(
   full_data,
   type = "capt",
   session = example_session,
-  call_id = 1
+  call.id = 1
 )
 ```
 
@@ -452,7 +452,7 @@ plot(
   trend_fit,
   type = "locations",
   session = example_session,
-  call_id = example_call,
+  call.id = example_call,
   filled = FALSE
 )
 ```
@@ -542,7 +542,7 @@ sessions <- lapply(
   survey_length = survey_length
 )
 
-# Combine sessions into one acre_data object
+# Combine sessions into one acre.data object
 full_data <- read.acre(
   captures = full_captures,
   traps = full_traps,

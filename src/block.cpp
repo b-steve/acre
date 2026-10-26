@@ -21,7 +21,7 @@ void reset_matrix(IntegerMatrix& mat);
 // Functions for determining cue sources.
 
 // Finding sets of incomplete blocks.
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "find.incomplete.blocks")]]
 IntegerVector find_incomplete_blocks(const LogicalMatrix& mat){
   int n = mat.nrow();
   IntegerVector out(n);
@@ -247,7 +247,7 @@ void reset_in_block(LogicalVector& in_block){
 }
 
 // Generates distances between all detections.
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "detection.dists")]]
 NumericMatrix detection_dists(const NumericMatrix& trap_dists, const NumericVector& traps){
   int n = traps.size();
   NumericMatrix out(n, n);
@@ -261,7 +261,7 @@ NumericMatrix detection_dists(const NumericMatrix& trap_dists, const NumericVect
 }
 
 // Generates time differences between all detections.
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "detection.timediffs")]]
 NumericMatrix detection_timediffs(const NumericVector& times, const NumericVector& traps){
   int n = traps.size();
   NumericMatrix out(n, n);
@@ -327,7 +327,7 @@ void copy_matrix(const LogicalMatrix& from, LogicalMatrix& to){
   }
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "skip.matrix.min")]]
 int min_skip_matrix(const IntegerMatrix& skip, const LogicalMatrix& allocated){
   int n = skip.nrow();
   int i, j;

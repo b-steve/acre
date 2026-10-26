@@ -40,7 +40,7 @@ NumericMatrix bearings(const NumericMatrix& a, const NumericMatrix& b){
   return out;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "make.toa.ssq")]]
 NumericMatrix make_toa_ssq(const NumericMatrix& capt, const NumericMatrix& dists, const double& sound_speed){
   int n = capt.nrow();
   int n_traps = capt.ncol();
@@ -68,7 +68,7 @@ NumericMatrix make_toa_ssq(const NumericMatrix& capt, const NumericMatrix& dists
   return out;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "find.local")]]
 List find_local(const IntegerMatrix& capt, const NumericMatrix& dists, const double& buffer){
   int n = capt.nrow();
   int n_traps = capt.ncol();

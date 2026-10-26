@@ -1,7 +1,7 @@
-#fast regression tests: the same demo models as tests/full/test-fits.R, but fitted on coarse masks (see
-#fit_demo_coarse() in helper-fits.R), so the expected values differ from the ones there
+## Fast regression tests: the same demo models as tests/full/test-fits.R, but fitted on coarse masks (see
+## fit.demo.coarse() in helper-fits.R), so the expected values differ from the ones there.
 
-expected_fast = list(
+expected_fast <- list(
   bearing_dist_hn = list(
     linked = c(`g0_link` = 36.04365339, `sigma_link` = 1.637706767, `kappa_link` = 2.543717688, `alpha_link` = 1.307177035, `D_link` = 7.786664818),
     fitted = c(`g0` = 1, `sigma` = 5.143361052, `kappa` = 12.72689776, `alpha` = 3.695726067, `D` = 2408.272148),
@@ -36,7 +36,7 @@ expected_fast = list(
     se = c(`b0.ss_link` = 0.02068886311, `b1.ss_link` = 0.6090011913, `sigma.ss_link` = 0.0279840291, `D_link` = 0.2000002474, `mu_link` = 0.06543279516))
 )
 
-expect_fit_matches = function(fit, expected, tolerance = 1e-4){
+expect.fit.matches <- function(fit, expected, tolerance = 1e-4){
   expect_equal(coef(fit, types = 'linked'), expected$linked, tolerance = tolerance)
   expect_equal(coef(fit, types = 'fitted'), expected$fitted, tolerance = tolerance)
   expect_equal(stdEr(fit, types = 'linked'), expected$se, tolerance = tolerance)
@@ -44,21 +44,21 @@ expect_fit_matches = function(fit, expected, tolerance = 1e-4){
 
 for(data_name in names(expected_fast)){
   test_that(paste0("fast fit on coarse mask -- ", data_name), {
-    fit = fit_demo_coarse(data_name)
-    expect_fit_matches(fit, expected_fast[[data_name]])
+    fit <- fit.demo.coarse(data_name)
+    expect.fit.matches(fit, expected_fast[[data_name]])
   })
 }
 
 test_that("gradient-free fit on coarse mask agrees with the gradient-based one", {
-  fit = fit_demo_coarse('ihd_ext', gradient_free = TRUE)
-  expect_fit_matches(fit, expected_fast[['ihd_ext']])
+  fit <- fit.demo.coarse('ihd_ext', gradient.free = TRUE)
+  expect.fit.matches(fit, expected_fast[['ihd_ext']])
 })
 
 test_that("confidence intervals are consistent with estimates and std errors", {
-  fit = fit_demo_coarse('hhn_cue')
-  ci = confint(fit, types = 'linked', level = 0.9)
-  est = coef(fit, types = 'linked')[rownames(ci)]
-  se = stdEr(fit, types = 'linked')[rownames(ci)]
+  fit <- fit.demo.coarse('hhn_cue')
+  ci <- confint(fit, types = 'linked', level = 0.9)
+  est <- coef(fit, types = 'linked')[rownames(ci)]
+  se <- stdEr(fit, types = 'linked')[rownames(ci)]
   expect_equal(unname(ci[, 1]), unname(est + stats::qnorm(0.05) * se), tolerance = 1e-6)
   expect_equal(unname(ci[, 2]), unname(est + stats::qnorm(0.95) * se), tolerance = 1e-6)
   expect_equal(colnames(ci), c('5 %', '95 %'))

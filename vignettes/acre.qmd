@@ -142,7 +142,7 @@ These locations do not need to coincide with the integration-mask points because
 
 ## Reading data into `acre`
 
-The function `read.acre()` combines the survey inputs into an `acre_data` object 
+The function `read.acre()` combines the survey inputs into an `acre.data` object 
 that can be visualized and fitted.
 
 ```{r}
@@ -169,7 +169,7 @@ names(island_acre)
 ## Visualizing data
 
 Before fitting a model, the prepared survey data should be inspected for obvious 
-problems. The `plot()` method for an `acre_data` object can display the detector 
+problems. The `plot()` method for an `acre.data` object can display the detector 
 array, capture histories, and interpolated spatial covariates.
 
 ### Survey layout
@@ -216,7 +216,7 @@ estimated bearings:
 plot(
   island_acre,
   type = "capt",
-  call_id = example_call,
+  call.id = example_call,
   ask = FALSE
 )
 ```

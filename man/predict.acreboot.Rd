@@ -12,8 +12,8 @@
   confidence = TRUE,
   level = 0.95,
   realnames = NULL,
-  correct_bias = FALSE,
-  from_boot = TRUE,
+  correct.bias = FALSE,
+  from.boot = TRUE,
   ...
 )
 }
@@ -32,11 +32,11 @@
 
 \item{realnames}{a character vector, the same as "predict.acre()".}
 
-\item{correct_bias}{a logical value indicates whether to apply the bias correction method to the
+\item{correct.bias}{a logical value indicates whether to apply the bias correction method to the
 point estimations and the confidence intervals. The method is described in the
 functions "coef.acreboot()" and "confint.acreboot()".}
 
-\item{from_boot}{a logical value indicates whether to extract standard error and confidence interval
+\item{from.boot}{a logical value indicates whether to extract standard error and confidence interval
 from the bootstrap results.}
 
 \item{...}{For S3 compatibility.}

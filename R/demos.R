@@ -1,44 +1,44 @@
-demo_fit = function(data_name, fit = TRUE, gradient_free = FALSE){
-  dat = get(data_name)
+demo.fit <- function(data.name, fit = TRUE, gradient.free = FALSE){
+  dat <- get(data.name)
 
-  model = dat$model
-  sv = dat$sv
-  fix = dat$fix
-  bounds = dat$bounds
-  detfn = dat$detfn
-  ss_opts = dat$ss.opts
+  model <- dat$model
+  sv <- dat$sv
+  fix <- dat$fix
+  bounds <- dat$bounds
+  detfn <- dat$detfn
+  ss_opts <- dat$ss.opts
   if (!is.null(dat$control_create_mask)){
     dat$control.mask <- dat$control_create_mask
   }
   
   dat[c('model', 'sv', 'fix', 'bounds', 'detfn', 'ss.opts', 
-        'control.capt', 'control_create_mask')] = NULL
+        'control.capt', 'control_create_mask')] <- NULL
 
-  dat_model = list()
+  dat_model <- list()
 
-  dat_model$dat = do.call('read.acre', dat)
-  dat_model$model = model
-  dat_model$detfn = detfn
-  dat_model$bounds = bounds
-  dat_model$ss.opts = ss_opts
-  dat_model$optim.opts = list(sv = sv, fix = fix, gr.skip = gradient_free)
+  dat_model$dat <- do.call('read.acre', dat)
+  dat_model$model <- model
+  dat_model$detfn <- detfn
+  dat_model$bounds <- bounds
+  dat_model$ss.opts <- ss_opts
+  dat_model$optim.opts <- list(sv = sv, fix = fix, gr.skip = gradient.free)
 
 
   if(fit){
-    model_output = do.call('fit.acre', dat_model)
+    model_output <- do.call('fit.acre', dat_model)
     return(list(read_input = dat, read_output = dat_model$dat, dat_model = dat_model, fit = model_output))
   } else {
     return(list(read_input = dat, read_output = dat_model$dat, dat_model = dat_model, fit = NULL))
   }
 }
 
-show_demo_options = function(table_return = TRUE){
-  output = c('bearing_dist_hn', 'bearing_hn', 'dist_hn', 'ihd', 'ihd_ext', 'mul_ses', 'mul_ses_ext',
+show.demo.options <- function(table.return = TRUE){
+  output <- c('bearing_dist_hn', 'bearing_hn', 'dist_hn', 'ihd', 'ihd_ext', 'mul_ses', 'mul_ses_ext',
              'simple_hhn', 'hhn_cue', 'simple_hr', 'ss', 'ss_toa',
              'ind_bearing_dist', 'ind_toa_hhn', 'ind_ss', 'ind_ss_log', 'ind_ss_sp')
 
-  if(table_return){
-    descriptions = matrix(c('hn' ,'bearing & dist' ,'NULL' ,'FALSE' ,'1',
+  if(table.return){
+    descriptions <- matrix(c('hn' ,'bearing & dist' ,'NULL' ,'FALSE' ,'1',
                             'hn' ,'bearing' ,'NULL' ,'FALSE' ,'1',
                             'hn' ,'dist' ,'NULL' ,'FALSE' ,'1',
                             'hn' ,'NULL' ,'D' ,'FALSE' ,'1',
@@ -57,10 +57,10 @@ show_demo_options = function(table_return = TRUE){
                             'ss_spherical', 'ss', 'NULL', 'TRUE', '3'),
                           nrow = 17, byrow = T)
 
-    descriptions = cbind(1:17, descriptions)
-    colnames(descriptions) = c('index', 'det_fn', 'extra_info', 'extended_par', 'individual_id', 'n_sessions')
-    rownames(descriptions) = output
-    descriptions = as.data.frame(descriptions)
+    descriptions <- cbind(1:17, descriptions)
+    colnames(descriptions) <- c('index', 'det_fn', 'extra_info', 'extended_par', 'individual_id', 'n_sessions')
+    rownames(descriptions) <- output
+    descriptions <- as.data.frame(descriptions)
 
     return(descriptions)
   } else {

@@ -1,135 +1,135 @@
-get_D_tmb = function(fit){
+get.D.tmb <- function(fit){
 
   if (isTRUE(fit$CL)) {
     stop("Density estimates are not available for conditional-likelihood fits.")
   }
 
-  #estimated population density for each mask is recorded in fit$D.mask
-  #extract the values from it and make it into a usable format data frame
-  #with session and mask indices
+  ## The estimated population density for each mask point is recorded in fit$D.mask;
+  ## extract the values from it and turn them into a usable data frame
+  ## with session and mask indices.
 
-  dims = get_dims_tmb(fit)
-  output = data.frame(session = rep(1:dims$n.sessions, dims$n.masks))
-  tem = vector('list', dims$n.sessions)
+  dims <- get.dims.tmb(fit)
+  output <- data.frame(session = rep(1:dims$n.sessions, dims$n.masks))
+  tem <- vector('list', dims$n.sessions)
   for(s in 1:dims$n.sessions){
-    tem[[s]] = data.frame(mask = 1:dims$n.masks[s], D_est = fit$D.mask[[s]])
+    tem[[s]] <- data.frame(mask = 1:dims$n.masks[s], D_est = fit$D.mask[[s]])
   }
-  tem = do.call('rbind', tem)
-  output = cbind(output, tem)
-  row.names(output) = NULL
+  tem <- do.call('rbind', tem)
+  output <- cbind(output, tem)
+  row.names(output) <- NULL
 
   return(output)
 }
 
-get_loc_cov = function(fit){
-  output = fit$arg_input$loc.cov
+get.loc.cov <- function(fit){
+  output <- fit$arg_input$loc.cov
   return(output)
 }
 
-get_data_full = function(fit){
-  output = fit$output.tmb$data.full
+get.data.full <- function(fit){
+  output <- fit$output.tmb$data.full
   return(output)
 }
 
-get_data_mask = function(fit){
-  output = fit$output.tmb$data.mask
+get.data.mask <- function(fit){
+  output <- fit$output.tmb$data.mask
   return(output)
 }
 
-get_mask = function(fit){
-  output = fit$args$mask
+get.mask <- function(fit){
+  output <- fit$args$mask
   return(output)
 }
 
-get_mask_from_data = function(dat){
-  output = dat$mask
+get.mask.from.data <- function(dat){
+  output <- dat$mask
   return(output)
 }
 
-get_data_trap = function(fit){
-  output = fit$output.tmb$data.traps
+get.data.trap <- function(fit){
+  output <- fit$output.tmb$data.traps
   return(output)
 }
 
-get_trap = function(fit){
-  df.traps = get_data_trap(fit)
-  colnames(df.traps)[1:2] = c('x', 'y')
-  n.sessions = max(df.traps$session)
-  output = vector('list', n.sessions)
+get.trap <- function(fit){
+  df.traps <- get.data.trap(fit)
+  colnames(df.traps)[1:2] <- c('x', 'y')
+  n.sessions <- max(df.traps$session)
+  output <- vector('list', n.sessions)
 
   for(s in 1:n.sessions){
-    output[[s]] = as.matrix(subset(df.traps, df.traps$session == s, select = c('x', 'y')))
+    output[[s]] <- as.matrix(subset(df.traps, df.traps$session == s, select = c('x', 'y')))
   }
 
   return(output)
 }
 
-get_trap_from_data = function(dat){
-  output = dat$traps
+get.trap.from.data <- function(dat){
+  output <- dat$traps
   return(output)
 }
 
-## Retrieve the capture data (optionally binary) for given animal_id / call_id
-get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_bincapt=F) {
+## Retrieve the capture data (optionally binary) for given animal.id / call.id.
+get.capt.by.id <- function(fit, call.id, animal.id=NULL, session=1, return.bincapt=F) {
   if (!(session %in% unique(fit$arg_input$captures$session))) {
     stop("Session ", session, " not found in fit.")
   }
 
-  animal.model <- is_animal_model(fit)
+  animal.model <- is.animal.model(fit)
   capt <- fit$arg_input$captures
   capt <- capt[capt$session == session,]
 
-  if (is.null(animal_id) & animal.model) {
-    stop("'animal_id' argument must be provided for animal id models")
+  if (is.null(animal.id) & animal.model) {
+    stop("'animal.id' argument must be provided for animal id models")
   }
-  if (!animal.model & !is.null(animal_id)) {
-    stop("'animal_id' argument should only be provided for animal id models")
+  if (!animal.model & !is.null(animal.id)) {
+    stop("'animal.id' argument should only be provided for animal id models")
   }
-  if (!is.null(animal_id) & (length(animal_id) > 1 | !is.numeric(animal_id))) {
-    stop("'animal_id' argument should be a numeric vector of length 1")
+  if (!is.null(animal.id) & (length(animal.id) > 1 | !is.numeric(animal.id))) {
+    stop("'animal.id' argument should be a numeric vector of length 1")
   }
 
-  # Make sure call_id is either numeric or exactly "all"
-  if (is.null(call_id) ||
-      !(is.numeric(call_id) || identical(call_id, "all"))) {
-    stop("'call_id' must be a numeric vector or 'all'")
+  ## Make sure call.id is either numeric or exactly "all".
+  if (is.null(call.id) ||
+      !(is.numeric(call.id) || identical(call.id, "all"))) {
+    stop("'call.id' must be a numeric vector or 'all'")
   }
-  if (any(duplicated(call_id))) {
-    warning("'call_id' argument contains duplicate values, which will be ignored")
-    call_id <- unique(call_id)
+  if (any(duplicated(call.id))) {
+    warning("'call.id' argument contains duplicate values, which will be ignored")
+    call.id <- unique(call.id)
   }
 
   if (animal.model) {
-    if (!(animal_id %in% capt$animal_ID)) {
-      stop(paste("Could not find capture history with animal id:", animal_id, "in session:", session))
+    if (!(animal.id %in% capt$animal_ID)) {
+      stop(paste("Could not find capture history with animal id:", animal.id, "in session:", session))
     }
-    # Make sure to only grab the appropriate animal's capture history
-    capt <- subset(capt, capt$animal_ID == animal_id)
+    ## Make sure to only grab the appropriate animal's capture history.
+    capt <- subset(capt, capt$animal_ID == animal.id)
   }
 
-  if (!all(call_id %in% capt$ID) & !identical(call_id, "all")) {
-    missing_calls <- call_id[which(!(call_id %in% capt$ID))]
+  if (!all(call.id %in% capt$ID) & !identical(call.id, "all")) {
+    missing_calls <- call.id[which(!(call.id %in% capt$ID))]
     missing_calls_msg <- paste(missing_calls, collapse = ", ")
     if (animal.model) {
-      stop(paste("Could not find call with 'call_id':", missing_calls_msg,
-                 ", for animal with 'animal_id':", animal_id,
+      stop(paste("Could not find call with 'call.id':", missing_calls_msg,
+                 ", for animal with 'animal.id':", animal.id,
                  "in session:", session))
     } else {
-      stop(paste("Could not find call with 'call_id':", missing_calls_msg,
+      stop(paste("Could not find call with 'call.id':", missing_calls_msg,
                  "in session:", session))
     }
   }
 
-  if (!identical(call_id, "all")) {
-    capt <- subset(capt, capt$ID %in% call_id)
+  if (!identical(call.id, "all")) {
+    capt <- subset(capt, capt$ID %in% call.id)
   }
 
-  if (return_bincapt) {
-    # Return a data frame with ID column, and 1 column for each trap
-    n.traps <- nrow(get_trap(fit)[[session]])
+  if (return.bincapt) {
+    ## Return a data frame with an ID column, and 1 column for each trap.
+    n.traps <- nrow(get.trap(fit)[[session]])
 
     bincapt <- lapply(unique(capt$ID), function(id) {
-      # Grab all rows for this ID
+      ## Grab all rows for this ID.
       sub_capt <- subset(capt, capt$ID == id)
       bincapt  <- numeric(n.traps)
       bincapt[sub_capt$trap] <- 1
@@ -137,7 +137,7 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
     })
     bincapt <- do.call(rbind, bincapt)
 
-    # Convert bincapt from matrix to data frame
+    ## Convert bincapt from matrix to data frame.
     bincapt <- as.data.frame(bincapt, stringsAsFactors = FALSE)
     colnames(bincapt) <- c("ID", paste0("trap", seq_len(n.traps)))
 
@@ -147,140 +147,140 @@ get_capt_by_id <- function(fit, call_id, animal_id=NULL, session=1, return_binca
   }
 }
 
-get_par_extend = function(fit){
-  output = fit$args$par.extend
+get.par.extend <- function(fit){
+  output <- fit$args$par.extend
   return(output)
 }
 
-get_par_extend_data = function(fit){
-  output = get_par_extend(fit)
-  output = output$data
+get.par.extend.data <- function(fit){
+  output <- get.par.extend(fit)
+  output <- output$data
   return(output)
 }
 
-get_par_extend_name = function(fit){
-  output = fit$output.tmb$param.extend
+get.par.extend.name <- function(fit){
+  output <- fit$output.tmb$param.extend
   return(output)
 }
 
-get_par_extend_covariate = function(fit){
-  ext_name = get_par_extend_name(fit)
-  #if there is no parameter be extended, just return NULL
+get.par.extend.covariate <- function(fit){
+  ext_name <- get.par.extend.name(fit)
+  ## If no parameter is extended, just return NULL.
   if(is.null(ext_name)) return(ext_name)
 
-  output = get_par_extend(fit)[['model']]
+  output <- get.par.extend(fit)[['model']]
   for(i in names(output)){
-    output[[i]] = all.vars(output[[i]])
+    output[[i]] <- all.vars(output[[i]])
   }
   return(output)
 }
 
-get_area_unit_tmb = function(fit){
-  output = fit$output.tmb$area_unit
+get.area.unit.tmb <- function(fit){
+  output <- fit$output.tmb$area_unit
   return(output)
 }
 
-get_dims_tmb = function(fit){
-  output = fit$output.tmb$dims
+get.dims.tmb <- function(fit){
+  output <- fit$output.tmb$dims
   return(output)
 }
 
-get_cue_rates = function(fit){
-  output = fit$output.tmb$avg_cue_rates
+get.cue.rates <- function(fit){
+  output <- fit$output.tmb$avg_cue_rates
   return(output)
 }
 
-get_survey_length = function(fit){
-  output = fit$args$survey.length
+get.survey.length <- function(fit){
+  output <- fit$args$survey.length
   return(output)
 }
 
-get_infotypes = function(fit){
-  output = fit$infotypes
+get.infotypes <- function(fit){
+  output <- fit$infotypes
   return(output)
 }
 
-get_dist_theta = function(fit){
-  output = fit$output.tmb$data.dists.thetas
+get.dist.theta <- function(fit){
+  output <- fit$output.tmb$data.dists.thetas
   return(output)
 }
 
-get_detfn = function(fit){
-  output = fit$output.tmb$detfn
+get.detfn <- function(fit){
+  output <- fit$output.tmb$detfn
   return(output)
 }
 
-get_DX_full = function(fit){
-  output = fit$output.tmb$DX_standardized$DX_non_mask
+get.DX.full <- function(fit){
+  output <- fit$output.tmb$DX_standardized$DX_non_mask
   return(output)
 }
 
-get_DX_mask = function(fit){
-  output = fit$output.tmb$DX_standardized$DX_mask
+get.DX.mask <- function(fit){
+  output <- fit$output.tmb$DX_standardized$DX_mask
   return(output)
 }
 
-get_data_param = function(fit){
-  output = fit$output.tmb$param.info.table
+get.data.param <- function(fit){
+  output <- fit$output.tmb$param.info.table
   return(output)
 }
 
-get_coef = function(fit){
-  output = fit$output.tmb$coef_link
+get.coef <- function(fit){
+  output <- fit$output.tmb$coef_link
   return(output)
 }
 
-get_param_og = function(fit){
-  output = fit$output.tmb$param.og
+get.param.og <- function(fit){
+  output <- fit$output.tmb$param.og
   return(output)
 }
 
-get_ss_link = function(fit){
-  output = fit$output.tmb$ss.link
+get.ss.link <- function(fit){
+  output <- fit$output.tmb$ss.link
   return(output)
 }
 
-get_cutoff = function(fit){
-  output = fit$output.tmb$cutoff
+get.cutoff <- function(fit){
+  output <- fit$output.tmb$cutoff
   return(output)
 }
 
-get_ss.opts = function(fit){
-  output = fit$args$ss.opts
+get.ss.opts <- function(fit){
+  output <- fit$args$ss.opts
   return(output)
 }
 
-get_buffer = function(fit){
-  output = numeric(fit$n.sessions)
+get.buffer <- function(fit){
+  output <- numeric(fit$n.sessions)
   for(s in 1:fit$n.sessions){
-    buffer = attr(fit$args$mask[[s]], 'buffer')
+    buffer <- attr(fit$args$mask[[s]], 'buffer')
     if(!is.null(buffer))
-      output[s] = buffer
+      output[s] <- buffer
   }
   return(output)
 }
 
-get_sound_speed = function(fit){
-  output = fit$output.tmb$sound.speed
+get.sound.speed <- function(fit){
+  output <- fit$output.tmb$sound.speed
   return(output)
 }
 
-get_fit_type = function(fit){
-  output = fit$fit.types
+get.fit.type <- function(fit){
+  output <- fit$fit.types
   return(output)
 }
 
-get_gam = function(fit, param = NULL, which.level = NULL){
+get.gam <- function(fit, param = NULL, which.level = NULL){
   if(!is.null(param)){
-    output = fit$output.tmb$gam_output[[param]]
+    output <- fit$output.tmb$gam_output[[param]]
     if(!is.null(which.level)){
-      output = output[[which.level]]
+      output <- output[[which.level]]
     }
   } else {
-    output = fit$output.tmb$gam_output
+    output <- fit$output.tmb$gam_output
     if(!is.null(which.level)){
       for(i in names(output)){
-        output[[i]] = output[[i]][[which.level]]
+        output[[i]] <- output[[i]][[which.level]]
       }
     }
   }
@@ -288,77 +288,77 @@ get_gam = function(fit, param = NULL, which.level = NULL){
   return(output)
 }
 
-get_DX_new_gam = function(mod, newdata){
-  var_names = names(mod$var.summary)
-  try({newdata = newdata[, var_names, drop = FALSE]})
-  #make sure the new data are in the right data type
+get.DX.new.gam <- function(mod, newdata){
+  var_names <- names(mod$var.summary)
+  try({newdata <- newdata[, var_names, drop = FALSE]})
+  ## Make sure the new data are in the right data type.
   for(i in var_names){
     if(is.null(newdata[[i]])) stop(paste0('covariate: ', i, " is not provided."))
-    if(is(mod$var.summary[[i]], 'factor')) newdata[[i]] = as.character(newdata[[i]])
-    if(is(mod$var.summary[[i]], 'numeric')) newdata[[i]] = as.numeric(newdata[[i]])
+    if(is(mod$var.summary[[i]], 'factor')) newdata[[i]] <- as.character(newdata[[i]])
+    if(is(mod$var.summary[[i]], 'numeric')) newdata[[i]] <- as.numeric(newdata[[i]])
   }
 
-  #construct the "old data", make sure it has all levels for all categorical variables
-  olddata = vector('list', length(var_names))
-  names(olddata) = var_names
+  ## Construct the "old data", making sure it has all levels of all categorical variables.
+  olddata <- vector('list', length(var_names))
+  names(olddata) <- var_names
   for(i in var_names){
     if(is(mod$var.summary[[i]], 'factor')){
-      #var.summary[[i]] is a factor is the explanatory variable is a categorical one
-      #and the levels() returns a character vector, just what we want
-      #one potential problem, if the gam object was built by the data which contains "factor" class
-      #column in the first place, and it contains for example 5 levels, but in the data, this column
-      #only has 4 levels. However, I guess this scenario is extremely unlikely to happen.
-      olddata[[i]] = levels(mod$var.summary[[i]])
+      ## The element var.summary[[i]] is a factor if the explanatory variable is categorical,
+      ## and levels() returns a character vector, which is just what we want.
+      ## One potential problem: if the gam object was built from data that contains a "factor" class
+      ## column in the first place, which has, for example, 5 levels, but in the data this column
+      ## only has 4 levels. However, I guess this scenario is extremely unlikely.
+      olddata[[i]] <- levels(mod$var.summary[[i]])
     } else if(is(mod$var.summary[[i]], 'numeric')){
-      olddata[[i]] = 1
+      olddata[[i]] <- 1
     } else {
-      #actually I never see any other class, just leave an "in-case" step here
+      ## Actually I have never seen any other class; just leave an "in-case" step here.
       stop(paste0('unknown data type in one of gam model objects, the variable name is: ', i,
                   ', please check the relevant data.'))
     }
   }
 
-  #adjust the length, make sure all element in this list have the same length
-  len = max(sapply(olddata, 'length'))
+  ## Adjust the lengths, making sure all elements in this list have the same length.
+  len <- max(sapply(olddata, 'length'))
 
-  for(i in var_names) olddata[[i]] = rep(olddata[[i]], length = len)
+  for(i in var_names) olddata[[i]] <- rep(olddata[[i]], length = len)
 
 
-  olddata = as.data.frame(olddata)
+  olddata <- as.data.frame(olddata)
 
-  dat = rbind(olddata, newdata)
-  dat$gam.resp = 1
-  output = mgcv::gam(mod$formula, data = dat, fit = FALSE)$X
-  output = output[(nrow(olddata) + 1):nrow(dat), , drop = FALSE]
+  dat <- rbind(olddata, newdata)
+  dat$gam.resp <- 1
+  output <- mgcv::gam(mod$formula, data = dat, fit = FALSE)$X
+  output <- output[(nrow(olddata) + 1):nrow(dat), , drop = FALSE]
   return(output)
 }
 
-get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked, new.covariates,
-                                  DX_output = FALSE, matrix_par_value = FALSE){
-  if(n_col_full > 1){
-    gam.model = gam$gam_non_mask
-    DX_full_new = get_DX_new_gam(gam.model, new.covariates)
+get.extended.par.value <- function(gam, n.col.full, n.col.mask, par.value.linked, new.covariates,
+                                  DX.output = FALSE, matrix.par.value = FALSE){
+  if(n.col.full > 1){
+    gam.model <- gam$gam_non_mask
+    DX_full_new <- get.DX.new.gam(gam.model, new.covariates)
   } else {
-    DX_full_new = matrix(1, ncol = 1, nrow = nrow(new.covariates))
+    DX_full_new <- matrix(1, ncol = 1, nrow = nrow(new.covariates))
   }
 
-  if(n_col_mask > 0){
-    gam.model = gam$gam_mask
-    DX_mask_new = get_DX_new_gam(gam.model, new.covariates)
-    # Get rid of the first column since the intercept is not here
-    DX_mask_new = DX_mask_new[, -1, drop = FALSE]
+  if(n.col.mask > 0){
+    gam.model <- gam$gam_mask
+    DX_mask_new <- get.DX.new.gam(gam.model, new.covariates)
+    ## Get rid of the first column since the intercept is not here.
+    DX_mask_new <- DX_mask_new[, -1, drop = FALSE]
   } else {
-    DX_mask_new = NULL
+    DX_mask_new <- NULL
   }
 
-  DX_new = cbind(DX_full_new, DX_mask_new)
-  if(!matrix_par_value){
-    output = as.vector(DX_new %*% as.matrix(par_value_linked, ncol = 1))
+  DX_new <- cbind(DX_full_new, DX_mask_new)
+  if(!matrix.par.value){
+    output <- as.vector(DX_new %*% as.matrix(par.value.linked, ncol = 1))
   } else {
-    output = par_value_linked %*% t(DX_new)
+    output <- par.value.linked %*% t(DX_new)
   }
 
-  if(DX_output){
+  if(DX.output){
     return(list(output = output, DX = DX_new))
   } else {
     return(output)
@@ -399,17 +399,17 @@ get_extended_par_value = function(gam, n_col_full, n_col_mask, par_value_linked,
 #' @return a list of (nmask) x (ntrap) columns, for each extended parameter.
 #'          values correspond to estimated parameter value for the given covariate values.
 #' @keywords internal
-get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
+get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
                                   warn = T) {
-  # Make sure model is parameter extended
-  par_extended <- !is.null(get_par_extend(fit))
+  ## Make sure the model has an extended parameter.
+  par_extended <- !is.null(get.par.extend(fit))
   if (!par_extended) {
     stop("Provided model is not parameter extended")
   }
 
-  # Make sure user provides all required covariates in the case of newdata
+  ## Make sure the user provides all required covariates in the case of newdata.
   if (!is.null(newdata)) {
-    all_covariates <- unlist(get_par_extend_covariate(fit))
+    all_covariates <- unlist(get.par.extend.covariate(fit))
 
     if (!all(all_covariates %in% names(newdata))) {
       if (warn) {
@@ -420,11 +420,11 @@ get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
     }
   }
 
-  ext_par_data <- get_par_extend_data(fit)
+  ext_par_data <- get.par.extend.data(fit)
   n_mask_ext <- nrow(mask)
   n_trap_ext <- nrow(traps)
 
-  # Select the appropriate session for multi-session covariate data
+  ## Select the appropriate session for multi-session covariate data.
   for (level in c("mask", "trap", "session")) {
     if (!is.null(ext_par_data[[level]]) &&
         "session" %in% names(ext_par_data[[level]])) {
@@ -439,7 +439,7 @@ get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
 
   ext_par_newdata <- NULL
 
-  # Mask-level covariates
+  ## Mask-level covariates.
   if (!is.null(ext_par_data$mask)) {
 
     if (!is.null(newdata)) {
@@ -457,7 +457,7 @@ get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
     ]
   }
 
-  # Trap-level covariates
+  ## Trap-level covariates.
   if (!is.null(ext_par_data$trap)) {
 
     if (!is.null(newdata)) {
@@ -482,7 +482,7 @@ get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
     }
   }
 
-  # Session-level covariates
+  ## Session-level covariates.
   if (!is.null(ext_par_data$session)) {
 
     session_covariates <- ext_par_data$session[
@@ -498,14 +498,14 @@ get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
     }
   }
 
-  # Calculate the coefficients. Notice this is in long format, will have to
-  # reformat before returning
+  ## Calculate the coefficients. Note that this is in long format, so it will have to be
+  ## reformatted before returning.
   ext_par_values <- predict(fit, newdata = ext_par_newdata, se.fit = F,
                             confidence = F)
 
   par_values <- list()
-  ext_par_names <- get_par_extend_name(fit)
-  # Reformat the predicted values
+  ext_par_names <- get.par.extend.name(fit)
+  ## Reformat the predicted values.
   for (par in ext_par_names) {
     ext_par_values_matrix <- matrix(
       ext_par_values[[par]]$Estimate,
@@ -519,155 +519,155 @@ get_par_extend_matrix <- function(fit, mask, traps, session=1, newdata=NULL,
   return(par_values)
 }
 
-#for numeric columns in the data frames in par.extend$data, the mean will be
-#used as the default value, and for non-numeric columns, the first element
-#will be used as the default value.
-#Actually if the argument for the fit.acre(par.extend = xxx) sets scale = TRUE
-#then the default values for numeric columns will be just 0, however, if scale = FALSE
-#this function could help
+## For numeric columns in the data frames in par.extend$data, the mean will be
+## used as the default value, and for non-numeric columns, the first element
+## will be used as the default value.
+## Actually, if the argument fit.acre(par.extend = xxx) sets scale = TRUE,
+## then the default values for numeric columns will just be 0; however, if scale = FALSE,
+## this function could help.
 
-get_default_covariates = function(fit){
-  dat = get_par_extend_data(fit)
-  dat_name = names(dat)
-  o = vector('list', length(dat_name))
-  names(o) = dat_name
+get.default.covariates <- function(fit){
+  dat <- get.par.extend.data(fit)
+  dat_name <- names(dat)
+  o <- vector('list', length(dat_name))
+  names(o) <- dat_name
 
   for(i in dat_name){
-    tem = dat[[i]]
-    tem = tem[, which(!colnames(tem) %in% c('session','ID','trap','mask')), drop = FALSE]
-    tem = as.data.frame(apply(tem, 2, mean_diy, simplify = FALSE))
-    o[[i]] = tem
+    tem <- dat[[i]]
+    tem <- tem[, which(!colnames(tem) %in% c('session','ID','trap','mask')), drop = FALSE]
+    tem <- as.data.frame(apply(tem, 2, diy.mean, simplify = FALSE))
+    o[[i]] <- tem
   }
 
-  output = o[[dat_name[1]]]
+  output <- o[[dat_name[1]]]
   if(length(dat_name) > 1){
-    for(i in 2:length(dat_name)) output = cbind(output, o[[dat_name[i]]])
+    for(i in 2:length(dat_name)) output <- cbind(output, o[[dat_name[i]]])
   }
   return(output)
 }
 
-get_fixed_par_name = function(fit){
-  output = fit$output.tmb$param.fix
-  if(length(output) == 0) output = NULL
+get.fixed.par.name <- function(fit){
+  output <- fit$output.tmb$param.fix
+  if(length(output) == 0) output <- NULL
   return(output)
 }
 
-get_sv_for_boot = function(fit){
-  #depend on whether there is any parameter be extended in this model,
-  #it can be determined whether use default covariates (mean for each covariate) values
-  is.extended = !is.null(get_par_extend_name(fit))
+get.sv.for.boot <- function(fit){
+  ## Depending on whether any parameter is extended in this model,
+  ## we can decide whether to use default covariate values (the mean of each covariate).
+  is.extended <- !is.null(get.par.extend.name(fit))
   if(is.extended){
-    covaraites_default = get_default_covariates(fit)
-    output = as.list(coef(fit, 'fitted', new.covariates = covaraites_default))
+    covaraites_default <- get.default.covariates(fit)
+    output <- as.list(coef(fit, 'fitted', new.covariates = covaraites_default))
   } else {
-    output = as.list(coef(fit, 'fitted'))
+    output <- as.list(coef(fit, 'fitted'))
   }
 
-  df_parm = get_data_param(fit)
-  fixed_par = names(fit$args$fix)
+  df_parm <- get.data.param(fit)
+  fixed_par <- names(fit$args$fix)
 
-  #avoid extreme start values if it is not fixed
+  ## Avoid extreme start values if the parameter is not fixed.
   for(i in names(output)){
     if(!i %in% fixed_par){
-      link = df_parm[which(df_parm$par == i), 'link']
-      if(link == 'logit') output[[i]] = max(min(0.95, output[[i]]), 0.05)
-      if(link == 'log') output[[i]] = max(0.05, output[[i]])
+      link <- df_parm[which(df_parm$par == i), 'link']
+      if(link == 'logit') output[[i]] <- max(min(0.95, output[[i]]), 0.05)
+      if(link == 'log') output[[i]] <- max(0.05, output[[i]])
     }
   }
 
   return(output)
 }
 
-#a simple version of "create.capt()", input is the simulated capture history if there is any,
-#which means nrow(capture) > 0
-get_capt_for_boot = function(captures, dims, infotypes, animal.model){
-  #since captures is the simulated data instead of original capture history used in the original model fitting
-  #dims$n.IDs and dims$animal_ID are not valid here, do not use it
-  n.sessions = dims$n.sessions
-  n.traps = dims$n.traps
-  #deal with irregular IDs and remove useless info types
-  captures = captures[,c('session', 'animal_ID'[animal.model], 'ID', 'trap', infotypes)]
-  #convert ID and animal_ID to natural number to make the later process to build head data easier
-  captures = convert_natural_number(captures, animal.model)
-  captures$bincapt = 1
+## A simple version of create.capt(); the input is the simulated capture history, if there is any,
+## which means nrow(capture) > 0.
+get.capt.for.boot <- function(captures, dims, infotypes, animal.model){
+  ## Since captures is the simulated data, not the original capture history used in the original model fitting,
+  ## dims$n.IDs and dims$animal_ID are not valid here, so do not use them.
+  n.sessions <- dims$n.sessions
+  n.traps <- dims$n.traps
+  ## Deal with irregular IDs and remove unused info types.
+  captures <- captures[,c('session', 'animal_ID'[animal.model], 'ID', 'trap', infotypes)]
+  ## Convert ID and animal_ID to natural numbers to make it easier to build the head data later.
+  captures <- convert.natural.number(captures, animal.model)
+  captures$bincapt <- 1
 
-  #prepare a head data which contains all combinations of session-animal_ID[animal.model]-ID-trap
+  ## Prepare head data containing all combinations of session-animal_ID[animal.model]-ID-trap.
 
 
-  tem_data_head = vector('list', n.sessions)
+  tem_data_head <- vector('list', n.sessions)
   for(s in 1:n.sessions){
-    capt_session = subset(captures, captures$session == s)
+    capt_session <- subset(captures, captures$session == s)
     if(nrow(capt_session) > 0){
       if(animal.model){
-        n.animal = max(capt_session$animal_ID)
-        tem = vector('list', n.animal)
+        n.animal <- max(capt_session$animal_ID)
+        tem <- vector('list', n.animal)
         for(a in 1:n.animal){
-          n.ID = max(subset(capt_session, capt_session$animal_ID == a)$ID)
-          tem[[a]] = data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]),
+          n.ID <- max(subset(capt_session, capt_session$animal_ID == a)$ID)
+          tem[[a]] <- data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]),
                                 trap = rep(seq(n.traps[s]), n.ID), animal_ID = a)
         }
 
-        tem_data_head[[s]] = do.call('rbind', tem)
+        tem_data_head[[s]] <- do.call('rbind', tem)
 
       } else {
-        n.ID = max(capt_session$ID)
-        tem_data_head[[s]] = data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]),
+        n.ID <- max(capt_session$ID)
+        tem_data_head[[s]] <- data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]),
                                         trap = rep(seq(n.traps[s]), n.ID))
 
       }
 
     } else {
-      tem_data_head[[s]] = data.frame(session = s, ID = NA, trap = 1:n.traps[s])
-      if(animal.model) tem_data_head[[s]]$animal_ID = NA
+      tem_data_head[[s]] <- data.frame(session = s, ID = NA, trap = 1:n.traps[s])
+      if(animal.model) tem_data_head[[s]]$animal_ID <- NA
     }
 
   }
 
-  data_head = do.call('rbind', tem_data_head)
+  data_head <- do.call('rbind', tem_data_head)
 
   if(animal.model){
-    o = merge(data_head, captures, by = c('session', 'ID', 'trap', 'animal_ID'), all.x = TRUE)
+    o <- merge(data_head, captures, by = c('session', 'ID', 'trap', 'animal_ID'), all.x = TRUE)
   } else {
-    o = merge(data_head, captures, by = c('session', 'ID', 'trap'), all.x = TRUE)
+    o <- merge(data_head, captures, by = c('session', 'ID', 'trap'), all.x = TRUE)
   }
 
-  o = sort.data(o, 'data.full')
-  for(i in c('bincapt', infotypes)) o[,i] = ifelse(is.na(o[,i]) & !is.na(o[,'ID']), 0, o[,i])
+  o <- data.sort(o, 'data.full')
+  for(i in c('bincapt', infotypes)) o[,i] <- ifelse(is.na(o[,i]) & !is.na(o[,'ID']), 0, o[,i])
 
   if(!animal.model){
-    n.IDs = numeric(n.sessions)
+    n.IDs <- numeric(n.sessions)
     for(s in 1:n.sessions){
-      tem = subset(captures, captures$session == s)
-      if(nrow(tem) > 0) n.IDs[s] = max(tem$ID)
+      tem <- subset(captures, captures$session == s)
+      if(nrow(tem) > 0) n.IDs[s] <- max(tem$ID)
     }
 
 
-    #prepare the structure of the output
+    ## Prepare the structure of the output.
     if(n.sessions == 1){
-      output = vector('list', length(infotypes) + 1)
-      names(output) = c('bincapt', infotypes)
+      output <- vector('list', length(infotypes) + 1)
+      names(output) <- c('bincapt', infotypes)
       for(i in names(output)){
-        output[[i]] = matrix(o[,i], ncol = n.traps, byrow = TRUE)
-        rownames(output[[i]]) = seq(n.IDs)
+        output[[i]] <- matrix(o[,i], ncol = n.traps, byrow = TRUE)
+        rownames(output[[i]]) <- seq(n.IDs)
       }
     } else {
-      output = vector('list', n.sessions)
+      output <- vector('list', n.sessions)
       for(s in 1:n.sessions){
-        output[[s]] = vector('list', length(infotypes) + 1)
-        names(output[[s]]) = c('bincapt', infotypes)
-        tem = subset(o, o$session == s)
+        output[[s]] <- vector('list', length(infotypes) + 1)
+        names(output[[s]]) <- c('bincapt', infotypes)
+        tem <- subset(o, o$session == s)
         for(i in names(output[[s]])){
           if(n.IDs[s] > 0){
-            output[[s]][[i]] = matrix(tem[,i], ncol = n.traps[s], byrow = TRUE)
-            rownames(output[[s]][[i]]) = seq(n.IDs[s])
+            output[[s]][[i]] <- matrix(tem[,i], ncol = n.traps[s], byrow = TRUE)
+            rownames(output[[s]][[i]]) <- seq(n.IDs[s])
           } else {
-            output[[s]][[i]] = matrix(nrow = 0, ncol = n.traps[s])
+            output[[s]][[i]] <- matrix(nrow = 0, ncol = n.traps[s])
           }
         }
       }
     }
   } else {
-    output = o
+    output <- o
   }
 
 
@@ -675,127 +675,127 @@ get_capt_for_boot = function(captures, dims, infotypes, animal.model){
 
 }
 
-#obtain capture history from the acre_data object
-get_capt_for_plot = function(dat){
+## Obtain the capture history from the acre.data object.
+get.capt.for.plot <- function(dat){
   all.types <- c("bearing", "dist", "ss", "toa")
 
-  capt = dat$capt
+  capt <- dat$capt
 
-  #according to current data conversion function, if capt is a data frame, it means
-  #the data is individual identification embedded data, or "animal_ID" is included.
+  ## According to the current data conversion function, if capt is a data frame, it means
+  ## the data are individual-identification-embedded data, i.e. "animal_ID" is included.
   if(is(capt, 'data.frame')){
-    #firstly convert animal_ID and ID to natural successive numbers
-    data.capt = convert_natural_number(capt, TRUE, "both")
+    ## First convert animal_ID and ID to successive natural numbers.
+    data.capt <- convert.natural.number(capt, TRUE, "both")
 
   } else {
     if("bincapt" %in% names(capt)){
-      n.sessions = 1
-      n.traps = ncol(capt$bincapt)
-      n.IDs = nrow(capt$bincapt)
+      n.sessions <- 1
+      n.traps <- ncol(capt$bincapt)
+      n.IDs <- nrow(capt$bincapt)
       extra_info <- all.types[all.types %in% names(capt)]
-      is.mrds = "mrds" %in% names(capt)
+      is.mrds <- "mrds" %in% names(capt)
     } else {
-      n.sessions = length(capt)
-      n.traps = sapply(capt, function(x) ncol(x$bincapt))
-      n.IDs = sapply(capt, function(x) nrow(x$bincapt))
+      n.sessions <- length(capt)
+      n.traps <- sapply(capt, function(x) ncol(x$bincapt))
+      n.IDs <- sapply(capt, function(x) nrow(x$bincapt))
       extra_info <- all.types[all.types %in% names(capt[[1]])]
-      is.mrds = "mrds" %in% names(capt[[1]])
+      is.mrds <- "mrds" %in% names(capt[[1]])
     }
 
-    tem.data.capt = vector('list', n.sessions)
+    tem.data.capt <- vector('list', n.sessions)
     for(i in 1:n.sessions){
       if(n.sessions == 1){
-        tem = capt
+        tem <- capt
       } else {
-        tem = capt[[i]]
+        tem <- capt[[i]]
       }
 
-      number.row = n.IDs[i] * n.traps[i]
-      tem.df = data.frame(session = rep(i, number.row), ID = numeric(number.row))
-      for(j in c("trap", "bincapt", extra_info)) tem.df[[j]] = numeric(number.row)
-      if(is.mrds) tem.df[,c('mrds_x', 'mrds_y')] = 0
+      number.row <- n.IDs[i] * n.traps[i]
+      tem.df <- data.frame(session = rep(i, number.row), ID = numeric(number.row))
+      for(j in c("trap", "bincapt", extra_info)) tem.df[[j]] <- numeric(number.row)
+      if(is.mrds) tem.df[,c('mrds_x', 'mrds_y')] <- 0
 
       if(number.row > 0){
-        tem.df$ID = rep(1:nrow(tem$bincapt), n.traps[i])
-        tem.df$trap = rep(1:n.traps[i], each = n.IDs[i])
-        for(k in c('bincapt', extra_info)) tem.df[[k]] = as.vector(tem[[k]])
+        tem.df$ID <- rep(1:nrow(tem$bincapt), n.traps[i])
+        tem.df$trap <- rep(1:n.traps[i], each = n.IDs[i])
+        for(k in c('bincapt', extra_info)) tem.df[[k]] <- as.vector(tem[[k]])
 
         if(is.mrds){
-          tem$mrds = as.data.frame(tem$mrds, stringsAsFactors = FALSE)
-          colnames(tem$mrds) = c('mrds_x', 'mrds_y')
-          tem$mrds$ID = 1:nrow(tem$mrds)
-          tem.df = merge(tem.df, tem$mrds, by = "ID")
+          tem$mrds <- as.data.frame(tem$mrds, stringsAsFactors = FALSE)
+          colnames(tem$mrds) <- c('mrds_x', 'mrds_y')
+          tem$mrds$ID <- 1:nrow(tem$mrds)
+          tem.df <- merge(tem.df, tem$mrds, by = "ID")
         }
 
       }
-      tem.data.capt[[i]] = tem.df
+      tem.data.capt[[i]] <- tem.df
     }
-    data.capt = do.call("rbind", tem.data.capt)
-    data.capt = convert_natural_number(data.capt, FALSE, "ID")
+    data.capt <- do.call("rbind", tem.data.capt)
+    data.capt <- convert.natural.number(data.capt, FALSE, "ID")
   }
 
-  data.capt = sort.data(data.capt, "data.full")
-  data.capt = subset(data.capt, data.capt$bincapt == 1)
-  data.capt = data.capt[, -which(colnames(data.capt) == 'bincapt')]
+  data.capt <- data.sort(data.capt, "data.full")
+  data.capt <- subset(data.capt, data.capt$bincapt == 1)
+  data.capt <- data.capt[, -which(colnames(data.capt) == 'bincapt')]
 
   return(data.capt)
 }
 
 
-get_boot_res = function(fit, pars){
-  output = fit$boot$boots
+get.boot.res <- function(fit, pars){
+  output <- fit$boot$boots
   if(!is.null(pars)){
-    name_og = ori_name(colnames(output))
-    output = output[, which(name_og %in% pars), drop = FALSE]
+    name_og <- ori.name(colnames(output))
+    output <- output[, which(name_og %in% pars), drop = FALSE]
   }
 
   return(output)
 }
 
 
-get_boot_res_esa = function(fit){
-  output = fit$boot$res_esa
-  colnames(output) = gsub("_", "\\.", colnames(output))
+get.boot.res.esa <- function(fit){
+  output <- fit$boot$res_esa
+  colnames(output) <- gsub("_", "\\.", colnames(output))
 
   return(output)
 }
 
 
-#get bias from a single bootstrapped matrix
-get_bias <- function(res, coefs){
-  f = function(x) mean(x, na.rm = T)
-  bias = apply(res, 2, f) - coefs
+## Get bias from a single bootstrapped matrix.
+get.bias <- function(res, coefs){
+  f <- function(x) mean(x, na.rm = T)
+  bias <- apply(res, 2, f) - coefs
 
   return(bias)
 }
 
-get_coef_names <- function(pars, pars_extended, data.full, data.mask) {
-  # If there are no extended parameters, just return the default parameter names
-  if (length(pars_extended) == 0) {
+get.coef.names <- function(pars, pars.extended, data.full, data.mask) {
+  ## If there are no extended parameters, just return the default parameter names.
+  if (length(pars.extended) == 0) {
     return(pars)
   }
 
   data_full_names <- strsplit(colnames(data.full), " _ ")
   data_mask_names <- strsplit(colnames(data.mask), " _ ")
 
-  # Bad code, should pre-define length and fill rather than grow with iterations
-  name_output = c()
+  ## Bad code: we should pre-define the length and fill it, rather than grow it with iterations.
+  name_output <- c()
   u_pars <- unique(pars)
 
   for (i in seq_along(u_pars)) {
-    if (u_pars[i] %in% pars_extended) {
-      index_full = which(sapply(data_full_names, function(x) x[1] == u_pars[i]))
-      index_mask = which(sapply(data_mask_names, function(x) x[1] == u_pars[i]))
+    if (u_pars[i] %in% pars.extended) {
+      index_full <- which(sapply(data_full_names, function(x) x[1] == u_pars[i]))
+      index_mask <- which(sapply(data_mask_names, function(x) x[1] == u_pars[i]))
 
       for (j in index_full) {
-        name_output = c(name_output, paste0(data_full_names[[j]], collapse = "."))
+        name_output <- c(name_output, paste0(data_full_names[[j]], collapse = "."))
       }
       for (j in index_mask) {
-        name_output = c(name_output, paste0(data_mask_names[[j]], collapse = "."))
+        name_output <- c(name_output, paste0(data_mask_names[[j]], collapse = "."))
       }
     }
     else {
-      name_output = c(name_output, u_pars[i])
+      name_output <- c(name_output, u_pars[i])
     }
   }
 
@@ -803,20 +803,20 @@ get_coef_names <- function(pars, pars_extended, data.full, data.mask) {
 }
 
 ###################################################################################
-#obtain a subset of coefs, which is generated by coef.acre(), based on "type"
-#currently is not used
-get_coef_base_type = function(coefs, type){
-  coef_name = names(coefs)
+## Obtain a subset of coefs, generated by coef.acre(), based on "type";
+## currently it is not used.
+get.coef.base.type <- function(coefs, type){
+  coef_name <- names(coefs)
 
   if(type == 'linked'){
-    output = coefs[grepl('_link$', coef_name)]
+    output <- coefs[grepl('_link$', coef_name)]
   } else if(type == 'fitted'){
-    is.link = grepl('_link$', coef_name)
-    is.derived = grepl('^esa', coef_name)
-    output = coefs[!(is.link | is.derived)]
+    is.link <- grepl('_link$', coef_name)
+    is.derived <- grepl('^esa', coef_name)
+    output <- coefs[!(is.link | is.derived)]
 
   } else {
-    output = coefs[grepl('^esa', coef_name)]
+    output <- coefs[grepl('^esa', coef_name)]
   }
 
   return(output)

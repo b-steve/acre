@@ -9,7 +9,7 @@
   types = NULL,
   pars = NULL,
   new.covariates = NULL,
-  show_fixed_par = TRUE,
+  show.fixed.par = TRUE,
   ...
 )
 }
@@ -22,7 +22,7 @@
 
 \item{new.covariates}{a data frame, the same as "coef.acre()".}
 
-\item{show_fixed_par}{a logical value. To control whether to include the fixed parameters in the covariance matrix.
+\item{show.fixed.par}{a logical value. To control whether to include the fixed parameters in the covariance matrix.
 It is TRUE by default.}
 
 \item{...}{For S3 compatibility.}

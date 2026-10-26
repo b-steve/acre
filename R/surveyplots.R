@@ -17,37 +17,37 @@
 show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NULL, ylim = NULL,
                        main = NULL, xlab = NULL, ylab = NULL, col = NULL, add = FALSE, ...){
 
-  det_fn = get_detfn(fit)
+  det_fn <- get.detfn(fit)
   
-  if(is.null(xlab)) xlab = "Distance"
+  if(is.null(xlab)) xlab <- "Distance"
   if(is.null(ylab)) {
-    if(det_fn == 'ss') ylab = "E(ss)"
-    if(det_fn != 'ss') ylab = "Detection probability"
+    if(det_fn == 'ss') ylab <- "E(ss)"
+    if(det_fn != 'ss') ylab <- "Detection probability"
   }
   
-  #get some essential component from output
-  param_name = get_param_og(fit)
-  param_name = param_name[-which(param_name == 'D')]
-  data_param = get_data_param(fit)
-  par_extend_name = get_par_extend_name(fit)
-  param_values = get_coef(fit)
-  ss_link = get_ss_link(fit)
+  ## Get some essential components from the output.
+  param_name <- get.param.og(fit)
+  param_name <- param_name[-which(param_name == 'D')]
+  data_param <- get.data.param(fit)
+  par_extend_name <- get.par.extend.name(fit)
+  param_values <- get.coef(fit)
+  ss_link <- get.ss.link(fit)
   
-  #deal with xlim and the values will be used as x-axis (distances)
+  ## Deal with xlim; the values will be used as the x-axis (distances).
   if (is.null(xlim)){
-    buffer <- get_buffer(fit)
-    #get_buffer return a vector with length of n.sessions
-    #and if the buffer for on session is not provided, corresponding element is zero
+    buffer <- get.buffer(fit)
+    ## The function get.buffer() returns a vector of length n.sessions,
+    ## and if the buffer for a session is not provided, the corresponding element is zero.
     if (!any(buffer == 0)){
       x.max <- max(buffer)
     } else {
-      x.max <- max(get_dist_theta(fit)$dx)
+      x.max <- max(get.dist.theta(fit)$dx)
     }
     xlim <- c(0, x.max)
   }
   dists <- seq(xlim[1], xlim[2], length.out = 1000)
   
-  #deal with skipped extended parameters and newdata
+  ## Deal with skipped extended parameters and newdata.
   
   if(is.null(newdata) & !is.null(skip.extend.param)){
     if(!all(skip.extend.param == par_extend_name[-which(par_extend_name == 'D')])){
@@ -55,72 +55,72 @@ show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NUL
     }
   }
   
-  #if no newdata assigned, skip all extended parameters
+  ## If no newdata are assigned, skip all extended parameters.
   if(is.null(newdata) & is.null(skip.extend.param)){
     if(length(par_extend_name) > 0){
       message('No new data of covariates provided, only the intercept will be used for all extended parameters.')
-      skip.extend.param = par_extend_name
+      skip.extend.param <- par_extend_name
     }
   }
   
   
-  #set the values of every each detection function parameters
-  det_param_input = vector('list', length(param_name))
-  names(det_param_input) = param_name
+  ## Set the values of all the detection function parameters.
+  det_param_input <- vector('list', length(param_name))
+  names(det_param_input) <- param_name
   
   for(i in param_name){
-    #get the basic information for this parameter
-    tem = data_param[which(data_param$par == i),]
-    link = tem$link
-    n_col_full = tem$n_col_full
-    n_col_mask = tem$n_col_mask
+    ## Get the basic information for this parameter.
+    tem <- data_param[which(data_param$par == i),]
+    link <- tem$link
+    n_col_full <- tem$n_col_full
+    n_col_mask <- tem$n_col_mask
     
-    values = param_values[[i]]
+    values <- param_values[[i]]
     
     if((i %in% par_extend_name) & (!i %in% skip.extend.param)){
-      gam = get_gam(fit, i)
-      det_param_input[[i]] = get_extended_par_value(gam, n_col_full, n_col_mask, values, newdata)
+      gam <- get.gam(fit, i)
+      det_param_input[[i]] <- get.extended.par.value(gam, n_col_full, n_col_mask, values, newdata)
     } else {
-      det_param_input[[i]] = values[1]
+      det_param_input[[i]] <- values[1]
     }
     
-    #use 'link' to back-transform the parameter's value
+    ## Use 'link' to back-transform the parameter's value.
     
-    det_param_input[[i]] = unlink.fun(link = link, value = det_param_input[[i]])
+    det_param_input[[i]] <- unlink.fun(link = link, value = det_param_input[[i]])
     
-    names(det_param_input[[i]]) = NULL
+    names(det_param_input[[i]]) <- NULL
   }
   
-  #be careful, each component in det_param_input may have different length
-  #but as.data.frame() will automatically solve this
-  tem = as.data.frame(det_param_input)
-  n_lines = nrow(tem)
-  for(i in param_name) det_param_input[[i]] = tem[, i]
+  ## Be careful: each component of det_param_input may have a different length,
+  ## but as.data.frame() will automatically resolve this.
+  tem <- as.data.frame(det_param_input)
+  n_lines <- nrow(tem)
+  for(i in param_name) det_param_input[[i]] <- tem[, i]
   
-  probs = vector('list', n_lines)
-  tem_det_par = vector('list', length(param_name))
-  names(tem_det_par) = param_name
+  probs <- vector('list', n_lines)
+  tem_det_par <- vector('list', length(param_name))
+  names(tem_det_par) <- param_name
   
   for(i in 1:n_lines){
-    #extract i'th value for each parameter from det_param_input
-    for(j in param_name) tem_det_par[[j]] = det_param_input[[j]][i]
-    probs[[i]] = det_prob(det_fn, tem_det_par, dists, ss_link)
+    ## Extract the i'th value of each parameter from det_param_input.
+    for(j in param_name) tem_det_par[[j]] <- det_param_input[[j]][i]
+    probs[[i]] <- det.prob(det_fn, tem_det_par, dists, ss_link)
   }
   
-  #based on all probs values, determine ylim
+  ## Determine ylim based on all the probability values.
   if(is.null(ylim)){
     if(det_fn != 'ss'){
-      ylim = c(0, 1)
+      ylim <- c(0, 1)
     } else {
-      tem = do.call('c', probs)
-      ylim = range(tem)
+      tem <- do.call('c', probs)
+      ylim <- range(tem)
     }
   }
   
   if(is.null(col)){
-    col = 1:n_lines
+    col <- 1:n_lines
   } else {
-    col = rep(col, length = n_lines)
+    col <- rep(col, length = n_lines)
   }
   
   if (!add){
@@ -190,16 +190,16 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
     stop("Density surfaces are not available for conditional-likelihood fits.")
   }
   
-  pred = predict_D_for_plot(fit, session_select = ifelse(is.null(session), 1, session), 
-                            new_data = new.data, D_cov = D.cov, xlim = xlim, ylim = ylim,
-                            x_pixels = x.pixels, y_pixels = y.pixels, se_fit = show.cv,
+  pred <- D.predict.for.plot(fit, session.select = ifelse(is.null(session), 1, session), 
+                            new.data = new.data, D.cov = D.cov, xlim = xlim, ylim = ylim,
+                            x.pixels = x.pixels, y.pixels = y.pixels, se.fit = show.cv,
                             convert.loc2mask= convert.loc2mask)
 
-  mask = as.matrix(pred[, c('x', 'y')])
+  mask <- as.matrix(pred[, c('x', 'y')])
   if(!show.cv){
-    D.mask = pred[,'est']
+    D.mask <- pred[,'est']
   } else {
-    D.mask = pred[,'std'] / pred[,'est']
+    D.mask <- pred[,'std'] / pred[,'est']
   }
   
   if (is.null(xlim)){
@@ -225,24 +225,24 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
   z[z > zlim[2]] <- zlim[2]
   levels <- pretty(zlim, 10)
 
-  # pal <- colorRampPalette(c("lightblue", "orange"))
+  ## pal <- colorRampPalette(c("lightblue", "orange"))
 
   if (!add){
     fields::imagePlot(x = unique.x, y = unique.y, z = z, zlim = zlim, 
-                      col = faded_virdis(arg.col, min_alpha = 1),
+                      col = faded.virdis(arg.col, min.alpha = 1),
                        asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y", legend.width = 2,
                        main = "Density surface", legend.line = 4, legend.lab = expression("Density per ha"),
                        legend.shrink = 1, legend.mar = 7)
   } else {
     image(x = unique.x, y = unique.y, z = z, zlim = zlim, 
-                       col = faded_virdis(arg.col, min_alpha = 0.65), add = TRUE, legend.width = 2.5)
+                       col = faded.virdis(arg.col, min.alpha = 0.65), add = TRUE, legend.width = 2.5)
   }
   
   if(!is.null(session)){
-    traps = get_trap(fit)[[session]]
-    if(is.null(trap.plot$col)) trap_col = 1
-    if(is.null(trap.plot$pch)) trap_pch = 4
-    if(is.null(trap.plot$lwd)) trap_lwd = 2
+    traps <- get.trap(fit)[[session]]
+    if(is.null(trap.plot$col)) trap_col <- 1
+    if(is.null(trap.plot$pch)) trap_pch <- 4
+    if(is.null(trap.plot$lwd)) trap_lwd <- 2
     points(traps, col = trap_col, pch = trap_pch, lwd = trap_lwd)
   }
   
@@ -274,20 +274,20 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
 #'   `"detfn"` (estimated detection functions), `"Dsurf"` (estimated
 #'   density surface), and `"locations"` (estimated call locations).
 #'   See Details below.
-#' @param call_id For `type = "capt"` or `type = "locations"`, a
+#' @param call.id For `type = "capt"` or `type = "locations"`, a
 #'   numeric vector containing the ID or IDs of the calls to plot. The
 #'   default, `NULL`, plots all calls. A value of 0 also selects all
 #'   calls. If supplied without `session`, session 1 is used.
-#' @param animal_id For `type = "capt"` or `type = "locations"` with
+#' @param animal.id For `type = "capt"` or `type = "locations"` with
 #'   capture histories that contain an `animal_ID` column, a single
-#'   animal ID to plot. This argument must be supplied when `call_id`
+#'   animal ID to plot. This argument must be supplied when `call.id`
 #'   is used with such data. Ignored for capture histories without
 #'   animal IDs and for other plot types.
 #' @param session A numeric value specifying the capture session to
 #'   plot when the survey contains multiple sessions. For `type =
 #'   "survey"` and `type = "covariates"`, the default is `1`. For
 #'   `type = "capt"` and `type = "locations"`, the default is to plot
-#'   calls from all sessions, unless `call_id` or `animal_id` is
+#'   calls from all sessions, unless `call.id` or `animal.id` is
 #'   supplied, in which case session 1 is used.
 #' @param ... Additional plotting options, including `xlim`, `ylim`,
 #'   `ask`, `newdata`, and `add`.  See Details for options specific to
@@ -306,14 +306,14 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
 #' one plot per detected call. When `type = "locations"`, the same
 #' plots are created, but with estimated call locations. By default,
 #' calls from all sessions are plotted. Use `session` to restrict the
-#' plot to a particular session and `call_id` to select the ID or IDs
+#' plot to a particular session and `call.id` to select the ID or IDs
 #' of the calls whose capture histories are to be plotted. For
-#' example, `plot(x, type = "capt", session = 1, call_id = 3)` plots
-#' call 3 from the first session. If `call_id` is supplied without
-#' `session`, the first session is used. A `call_id` value of 0, or
-#' omitting `call_id`, selects all calls.  For capture histories
-#' containing an `animal_ID` column, `animal_id` selects an individual
-#' and must be supplied when selecting a `call_id`; within such data,
+#' example, `plot(x, type = "capt", session = 1, call.id = 3)` plots
+#' call 3 from the first session. If `call.id` is supplied without
+#' `session`, the first session is used. A `call.id` value of 0, or
+#' omitting `call.id`, selects all calls.  For capture histories
+#' containing an `animal_ID` column, `animal.id` selects an individual
+#' and must be supplied when selecting a `call.id`; within such data,
 #' call IDs are interpreted within the selected animal.
 #'
 #' Capture plots display any auxiliary bearing, distance, or
@@ -370,173 +370,173 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
 #' plot(acre_dat, type = "survey", session = 1)
 #'
 #' # Plot the capture history for the first call in session 1.
-#' plot(acre_dat, type = "capt", session = 1, call_id = 1, ask = FALSE)
-plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
+#' plot(acre_dat, type = "capt", session = 1, call.id = 1, ask = FALSE)
+plot.acre.data <- function(x, type = NULL, call.id = NULL, animal.id = NULL,
                            session = NULL, ...){
   
-  extra_args = list(...)
-  ask = extra_args$ask
-  if(is.null(ask)) ask = TRUE
-  xlim = extra_args$xlim
-  ylim = extra_args$ylim
+  extra_args <- list(...)
+  ask <- extra_args$ask
+  if(is.null(ask)) ask <- TRUE
+  xlim <- extra_args$xlim
+  ylim <- extra_args$ylim
   
   if(is.null(type)) stop('argument "type" is needed, which should be either "survey", "capt" or "covariates".')
-  n.sessions = length(x$traps)
+  n.sessions <- length(x$traps)
   if(!(type %in% c('survey', 'capt', 'covariates'))) stop('invalid input for "type", which should be either "survey", "capt" or "covariates".')
   ################################################################################################
   if(type == 'survey'){
-    session_supplied = !is.null(session)
+    session_supplied <- !is.null(session)
     if(is.null(session)){
-      session = 1
+      session <- 1
     }
     
     stopifnot(session <= n.sessions)
     
-    masks = get_mask_from_data(x)[[session]]
+    masks <- get.mask.from.data(x)[[session]]
     
-    if(is.null(extra_args$pch_mask)) pch_mask = "." else pch_mask = extra_args$pch_mask
-    if(is.null(extra_args$pch_trap)) pch_trap = 16 else pch_trap = extra_args$pch_trap
-    if(is.null(extra_args$col_mask)) col_mask = 8 else col_mask = extra_args$col_mask
-    if(is.null(extra_args$col_trap)) col_trap = "red" else col_trap = extra_args$col_trap
-    if(is.null(extra_args$cex_mask)) cex_mask = 2 else cex_mask = extra_args$cex_mask
-    if(is.null(extra_args$cex_trap)) cex_trap = 1 else cex_trap = extra_args$cex_trap
+    if(is.null(extra_args$pch_mask)) pch_mask <- "." else pch_mask <- extra_args$pch_mask
+    if(is.null(extra_args$pch_trap)) pch_trap <- 16 else pch_trap <- extra_args$pch_trap
+    if(is.null(extra_args$col_mask)) col_mask <- 8 else col_mask <- extra_args$col_mask
+    if(is.null(extra_args$col_trap)) col_trap <- "red" else col_trap <- extra_args$col_trap
+    if(is.null(extra_args$cex_mask)) cex_mask <- 2 else cex_mask <- extra_args$cex_mask
+    if(is.null(extra_args$cex_trap)) cex_trap <- 1 else cex_trap <- extra_args$cex_trap
     
     plot(masks, pch = pch_mask, cex = cex_mask, asp = 1, col = col_mask)
-    points(get_trap_from_data(x)[[session]], pch = pch_trap, col = col_trap, cex = cex_trap)
+    points(get.trap.from.data(x)[[session]], pch = pch_trap, col = col_trap, cex = cex_trap)
     title(main = paste0("session: ", session))
   }
   ################################################################################################
   if(type == 'capt'){
-    # When session is not assigned, plot all capture history by default
-    if(is.null(session)) session = 0
+    ## When session is not assigned, plot all capture histories by default.
+    if(is.null(session)) session <- 0
     stopifnot(session <= n.sessions)
     
-    # In this "type", argument cex (cex_det) is used to extra_args the traps' symbol
-    # and the cex of the circle used to show the activated traps (cex_capt) should be always cex_det + 2
-    # in order to cover the symbol of detectors
+    ## For this "type", the argument cex (cex_det) is used to control the traps' symbol,
+    ## and the cex of the circle used to show the activated traps (cex_capt) should always be cex_det + 2,
+    ## in order to cover the symbol of detectors.
     if(is.null(extra_args$cex)){
-      cex_det = 3
-      cex_capt = 5
+      cex_det <- 3
+      cex_capt <- 5
     } else {
-      cex_det = extra_args$cex
+      cex_det <- extra_args$cex
       if(cex_det > 7){
         warning("The size of symbol of traps might be too big to show other information properly.")
       }
-      cex_capt = extra_args$cex + 2
+      cex_capt <- extra_args$cex + 2
     } 
     
-    # Get capture history from data
-    # Be careful that, in this function, the animal_ID and ID will be
-    # converted to natural successive numbers
-    capt = get_capt_for_plot(x)
-    c_names = colnames(capt)
-    if("bearing" %in% c_names) is.bearing = TRUE else is.bearing = FALSE
-    if("dist" %in% c_names) is.dist = TRUE else is.dist = FALSE
-    if("ss" %in% c_names) is.ss = TRUE else is.ss = FALSE
-    if("toa" %in% c_names) is.toa = TRUE else is.toa = FALSE
-    if("animal_ID" %in% c_names) animal.model = TRUE else animal.model = FALSE
+    ## Get the capture history from the data.
+    ## Be careful: in this function, animal_ID and ID will be
+    ## converted to successive natural numbers.
+    capt <- get.capt.for.plot(x)
+    c_names <- colnames(capt)
+    if("bearing" %in% c_names) is.bearing <- TRUE else is.bearing <- FALSE
+    if("dist" %in% c_names) is.dist <- TRUE else is.dist <- FALSE
+    if("ss" %in% c_names) is.ss <- TRUE else is.ss <- FALSE
+    if("toa" %in% c_names) is.toa <- TRUE else is.toa <- FALSE
+    if("animal_ID" %in% c_names) animal.model <- TRUE else animal.model <- FALSE
 
-    # When animal ID or call ID equals to zero, it means all detection
-    if(any(!is.null(animal_id), !is.null(call_id)) & session == 0){
-      session = 1
+    ## When the animal ID or call ID equals zero, it means all detections.
+    if(any(!is.null(animal.id), !is.null(call.id)) & session == 0){
+      session <- 1
     }
     
     if(animal.model){
-      if(is.null(animal_id)){
-        a_id = 0
-        # Cannot plot with call ID but without animal_ID
-        if(!is.null(call_id)) stop("Please provide information about animal_ID.")
+      if(is.null(animal.id)){
+        a_id <- 0
+        ## We cannot plot with a call ID but without animal_ID.
+        if(!is.null(call.id)) stop("Please provide information about animal_ID.")
       } else {
-        a_id = animal_id
+        a_id <- animal.id
         stopifnot(length(a_id) == 1)
       }
     }
     
-    if(is.null(call_id)){
-      c_id = 0
+    if(is.null(call.id)){
+      c_id <- 0
     } else {
-      c_id = call_id
+      c_id <- call.id
     } 
 
-    t_list = get_trap_from_data(x)
-    m_list = get_mask_from_data(x)
+    t_list <- get.trap.from.data(x)
+    m_list <- get.mask.from.data(x)
     ##################################################################################
-    # If session is 0, plot all sessions, create a vector for a sessions for plot
-    if(session == 0) session = seq(n.sessions)
+    ## If session is 0, plot all sessions: create a vector of sessions to plot.
+    if(session == 0) session <- seq(n.sessions)
     
     for(s in session){
-      traps = as.data.frame(t_list[[s]])
-      masks = m_list[[s]]
-      buffer = attr(masks, 'buffer')
-      masks = as.data.frame(masks)
-      capt_session = subset(capt, capt$session == s)
+      traps <- as.data.frame(t_list[[s]])
+      masks <- m_list[[s]]
+      buffer <- attr(masks, 'buffer')
+      masks <- as.data.frame(masks)
+      capt_session <- subset(capt, capt$session == s)
       
       if(animal.model){
         if(a_id != 0){
-          capt_session = subset(capt_session, capt_session$animal_ID %in% a_id)
+          capt_session <- subset(capt_session, capt_session$animal_ID %in% a_id)
           if(all(c_id != 0)){
-            capt_session = subset(capt_session, capt_session$ID %in% c_id)
+            capt_session <- subset(capt_session, capt_session$ID %in% c_id)
           }
         }
-        keys = paste(capt_session$animal_ID, capt_session$ID)
+        keys <- paste(capt_session$animal_ID, capt_session$ID)
       } else {
         if(all(c_id != 0)){
-          capt_session = subset(capt_session, capt_session$ID %in% c_id)
+          capt_session <- subset(capt_session, capt_session$ID %in% c_id)
         }
-        keys = capt_session$ID
+        keys <- capt_session$ID
       }
       
       if(length(keys) > 0){
       
-      u_keys = unique(keys)
+      u_keys <- unique(keys)
       
-      # Because argument of x,ylim should work for each session, we cannot override "xlim" or "ylim",
-      # so we create 2 tem variables xlim_plot and ylim_plot for each session
+      ## Because the xlim and ylim arguments should work for each session, we cannot override "xlim" or "ylim",
+      ## so we create 2 temporary variables, xlim_plot and ylim_plot, for each session.
       if(is.null(xlim)){
-        xlim_plot = range(masks$x)
+        xlim_plot <- range(masks$x)
       } else {
-        xlim_plot = xlim
+        xlim_plot <- xlim
       }
       
       if(is.null(ylim)){
-        ylim_plot = range(masks$y)
+        ylim_plot <- range(masks$y)
       } else {
-        ylim_plot = ylim
+        ylim_plot <- ylim
       }
       
-      # Plot calls one by one
+      ## Plot calls one by one.
       for(k in u_keys){
-        i_k = which(keys == k)
-        one_call = capt_session[i_k,,drop = FALSE]
+        i_k <- which(keys == k)
+        one_call <- capt_session[i_k,,drop = FALSE]
         
-        # Base plot (mask)
+        ## Base plot (mask).
         plot(NA, xlim = xlim_plot, ylim = ylim_plot, asp = 1, 
              xlab = "x", ylab = "y")
         
-        # Add title
+        ## Add title.
         if(animal.model){
-          plot_title = paste0("session: ",s, ", animal ID: ", one_call$animal_ID[1],
+          plot_title <- paste0("session: ",s, ", animal ID: ", one_call$animal_ID[1],
                               ", call ID: ", one_call$ID[1])
         } else {
-          plot_title = paste0("session: ",s, ", call ID: ", one_call$ID[1])
+          plot_title <- paste0("session: ",s, ", call ID: ", one_call$ID[1])
         }
         
         title(main = plot_title)
         
-        # Add traps
+        ## Add traps.
         points(x = traps[,1], y = traps[,2], cex = 1.2, col = "red", 
                lwd = 1.5, pch = 4)
         
-        # Circle active traps
-        activated_traps = traps[one_call$trap,]
+        ## Circle active traps.
+        activated_traps <- traps[one_call$trap,]
         points(x = activated_traps[,1], y = activated_traps[,2], 
                cex = 2, col = "red", lwd = 1.5, pch = 1)
         
         if(is.bearing){
           if(is.dist){
-            arrow_len = one_call$dist
+            arrow_len <- one_call$dist
           } else {
-            if(is.null(extra_args$arrow_len)) arrow_len = 0.382 * buffer else arrow_len = extra_args$arrow_len
+            if(is.null(extra_args$arrow_len)) arrow_len <- 0.382 * buffer else arrow_len <- extra_args$arrow_len
           }
           sinb <- sin(one_call$bearing)*arrow_len
           cosb <- cos(one_call$bearing)*arrow_len
@@ -548,22 +548,22 @@ plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
             yend = activated_traps[, 2] + cosb
           )
           
-          # Remove any NA bearing captures
+          ## Remove any NA bearing captures.
           arrows.df <- arrows.df[complete.cases(arrows.df), ]
           
           arrows(arrows.df$x, arrows.df$y, arrows.df$xend, arrows.df$yend, col="red", lwd = 1.5, length = 0.07)
-          # plot_one_call = plot_one_call + 
-          #   geom_segment(data = activated_traps, mapping = aes(x = activated_traps$x, y = activated_traps$y,
-          #                                                    xend = activated_traps$x + sin(one_call$bearing) * arrow_len,
-          #                                                    yend = activated_traps$y + cos(one_call$bearing) * arrow_len),
-          #                arrow = arrow(length = unit(0.02, "npc")), colour = "blue")
+          ## plot_one_call = plot_one_call +
+          ##   geom_segment(data = activated_traps, mapping = aes(x = activated_traps$x, y = activated_traps$y,
+          ##                                                    xend = activated_traps$x + sin(one_call$bearing) * arrow_len,
+          ##                                                    yend = activated_traps$y + cos(one_call$bearing) * arrow_len),
+          ##                arrow = arrow(length = unit(0.02, "npc")), colour = "blue")
           
         } else if(is.dist){
-          if(is.null(extra_args$circle_acc)) npoints = 50 else npoints = extra_args$circle_acc
-          # Generate circle points
-          data_cir = circle_fun(centre = activated_traps, r = one_call$dist, npoints = npoints)
+          if(is.null(extra_args$circle_acc)) npoints <- 50 else npoints <- extra_args$circle_acc
+          ## Generate circle points.
+          data_cir <- circle.fun(centre = activated_traps, r = one_call$dist, npoints = npoints)
           
-          # Plot distance circle around each trap
+          ## Plot distance circle around each trap.
           for (i in unique(data_cir$cir_index)) {
             cir <- subset(data_cir, data$cir$cir_index == i)
             polygon(cir$x, cir$y,
@@ -576,23 +576,23 @@ plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
         
         if (is.toa) {
           toa_order <- rank(one_call$toa, ties.method = "min")
-          # Annotate traps
+          ## Annotate traps.
           text(activated_traps[, "x"] + 1, activated_traps[, "y"] - 1, labels = toa_order,
                col = "black", cex = 0.6, adj = c(0, 1))
         }
         
         if (ask) {
-          # Make sure to only ask if we are plotting more than one plot, 
-          # and it is not the last plot in the list
+          ## Make sure we only ask if we are plotting more than one plot
+          ## and it is not the last plot in the list.
           if (length(u_keys) > 1 && !(k == u_keys[[length(u_keys)]] & s == session[length(session)])) {
-            prompt_user_for_next_plot()
+            ask.user.for.next.plot()
           }
         }
       }
       }
-      # End of session s 
+      ## End of session s.
     }
-  # End of type "capt"
+  ## End of type "capt".
   }
   
 
@@ -600,19 +600,19 @@ plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
 
   if(type == 'covariates'){
     if(is.null(session)){
-      session = 1
+      session <- 1
     }
     
-    masks = as.data.frame(get_mask_from_data(x)[[session]])
-    masks$mask = seq(nrow(masks))
+    masks <- as.data.frame(get.mask.from.data(x)[[session]])
+    masks$mask <- seq(nrow(masks))
     
     if(is.null(xlim)) xlim <- range(masks[, 'x'])
     if(is.null(ylim)) ylim <- range(masks[, 'y'])
     
-    masks = subset(masks, masks$x <= xlim[2] & masks$x >= xlim[1] & masks$y <= ylim[2] & masks$y >= ylim[1])
+    masks <- subset(masks, masks$x <= xlim[2] & masks$x >= xlim[1] & masks$y <= ylim[2] & masks$y >= ylim[1])
     
-    masks_mat = as.matrix(masks[, c('x', 'y'), drop = FALSE])
-    D_cov_for_model = x$par.extend$data$mask
+    masks_mat <- as.matrix(masks[, c('x', 'y'), drop = FALSE])
+    D_cov_for_model <- x$par.extend$data$mask
 
     
     if(is.null(D_cov_for_model)){
@@ -620,33 +620,33 @@ plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
     }
     
     
-    D_cov_for_model = D_cov_for_model[D_cov_for_model$session == session,
+    D_cov_for_model <- D_cov_for_model[D_cov_for_model$session == session,
                                       -which(colnames(D_cov_for_model) == 'session')]
     
     if (!is.null(extra_args$select_cov)) {
-      D_cov_for_model = D_cov_for_model[,which(colnames(D_cov_for_model) %in% c(extra_args$select_cov, "mask"))]
+      D_cov_for_model <- D_cov_for_model[,which(colnames(D_cov_for_model) %in% c(extra_args$select_cov, "mask"))]
     }
     
-    D_cov_for_model = merge(D_cov_for_model, masks, by = 'mask', all = FALSE)
-    D_cov_for_model = D_cov_for_model[order(D_cov_for_model$mask),]
-    D_cov_for_model = D_cov_for_model[, -which(colnames(D_cov_for_model) == 'mask')]
+    D_cov_for_model <- merge(D_cov_for_model, masks, by = 'mask', all = FALSE)
+    D_cov_for_model <- D_cov_for_model[order(D_cov_for_model$mask),]
+    D_cov_for_model <- D_cov_for_model[, -which(colnames(D_cov_for_model) == 'mask')]
 
-    cov_list = colnames(D_cov_for_model)
-    cov_list = cov_list[-which(cov_list == 'x' | cov_list == 'y')]
+    cov_list <- colnames(D_cov_for_model)
+    cov_list <- cov_list[-which(cov_list == 'x' | cov_list == 'y')]
 
     if (!is.null(extra_args$cov_names)){
-        cov_list = cov_list[which(cov_list %in% extra_args$cov_names)]
+        cov_list <- cov_list[which(cov_list %in% extra_args$cov_names)]
     }
     
     unique.x <- sort(unique(masks[, 'x']))
     unique.y <- sort(unique(masks[, 'y']))
     
-    if(is.null(extra_args$arg.col)) arg.col = 100 else arg.col = extra_args$arg.col
+    if(is.null(extra_args$arg.col)) arg.col <- 100 else arg.col <- extra_args$arg.col
     
     if(is.null(extra_args$plot.contours)){
-        plot.contours = FALSE
+        plot.contours <- FALSE
     } else {
-        plot.contours = extra_args$plot.contours
+        plot.contours <- extra_args$plot.contours
     }
     
     for(i in cov_list){
@@ -655,7 +655,7 @@ plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
         z <- squarify(masks_mat, D_cov_for_model[[i]])
         zlim <- range(z, na.rm = TRUE)
         
-        fields::imagePlot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = faded_virdis(arg.col, min_alpha = 1),
+        fields::imagePlot(x = unique.x, y = unique.y, z = z, zlim = zlim, col = faded.virdis(arg.col, min.alpha = 1),
                            asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y",
                            main = paste0("Plot of covariate ", i, ", for session ", session),
                            legend.width = 2, legend.shrink = 1, legend.mar = 7)
@@ -666,19 +666,19 @@ plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
         }
       } else {
         
-        v = D_cov_for_model[[i]]
-        v_num = as.numeric(as.factor(v))
+        v <- D_cov_for_model[[i]]
+        v_num <- as.numeric(as.factor(v))
         
-        match_table = data.frame(code = v_num, name = v)
-        match_table = match_table[!duplicated(match_table),,drop = FALSE]
+        match_table <- data.frame(code = v_num, name = v)
+        match_table <- match_table[!duplicated(match_table),,drop = FALSE]
         
         z <- squarify(masks_mat, v_num)
         zlim <- range(match_table$code)
         
-        col = faded_virdis(arg.col, min_alpha = 1)
-        idx = round(scale_convert(match_table$code, seq(arg.col)),0)
+        col <- faded.virdis(arg.col, min.alpha = 1)
+        idx <- round(convert.scale(match_table$code, seq(arg.col)),0)
         
-        col_leng = col[idx]
+        col_leng <- col[idx]
         
         image(x = unique.x, y = unique.y, z = z, zlim = zlim, col = col, 
               asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y",
@@ -688,14 +688,14 @@ plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
       }
       
       if (ask) {
-        # Make sure to only ask if we are plotting more than one plot, 
-        # and it is not the last plot in the list
+        ## Make sure we only ask if we are plotting more than one plot
+        ## and it is not the last plot in the list.
         if (length(cov_list) > 1 && i != cov_list[[length(cov_list)]]) {
-          prompt_user_for_next_plot()
+          ask.user.for.next.plot()
         }
       }
     }
-    #end of type == 'covariates'
+    ## End of type == 'covariates'.
   }
   
     
@@ -704,14 +704,14 @@ plot.acre_data <- function(x, type = NULL, call_id = NULL, animal_id = NULL,
 
 #' Plotting acre model objects
 #'
-#' @inheritParams plot.acre_data
+#' @inheritParams plot.acre.data
 #' 
 #' @return
 #' @export
 #' 
 #' @examples
-plot.acre = function(x, type = NULL, call_id = NULL, animal_id = NULL, session = NULL, ...){
-  extra_args = list(...)
+plot.acre <- function(x, type = NULL, call.id = NULL, animal.id = NULL, session = NULL, ...){
+  extra_args <- list(...)
   
   if(is.null(type)){
     stop('argument "type" is needed, which should be either "survey", "capt", 
@@ -719,32 +719,32 @@ plot.acre = function(x, type = NULL, call_id = NULL, animal_id = NULL, session =
   }
   
   if(type %in% c('survey', 'capt', 'covariates')){
-    plot.acre_data(x = x$args, type = type, call_id = call_id,
-                   animal_id = animal_id, session = session, ...)
+    plot.acre.data(x = x$args, type = type, call.id = call.id,
+                   animal.id = animal.id, session = session, ...)
   } else if(type == 'detfn'){
-    args_pass = list(fit = x, ...)
-    args_pass$type = NULL
-    args_pass = args_pass[sapply(args_pass, function(x) !is.null(x))]
+    args_pass <- list(fit = x, ...)
+    args_pass$type <- NULL
+    args_pass <- args_pass[sapply(args_pass, function(x) !is.null(x))]
     do.call('show.detfn', args_pass)
     
   } else if(type == 'Dsurf'){
-    args_pass = list(fit = x, session = session, ...)
-    args_pass$type = NULL
-    args_pass = args_pass[sapply(args_pass, function(x) !is.null(x))]
+    args_pass <- list(fit = x, session = session, ...)
+    args_pass$type <- NULL
+    args_pass <- args_pass[sapply(args_pass, function(x) !is.null(x))]
     do.call('show.Dsurf', args_pass)
 
   } else if(type == 'locations'){
-    args_pass = list(fit = x, call_id = call_id, animal_id = animal_id,
+    args_pass <- list(fit = x, call.id = call.id, animal.id = animal.id,
                      session = session, ...)
-    args_pass$type = NULL
-    args_pass = args_pass[sapply(args_pass, function(x) !is.null(x))]
-    do.call('plot_locations', args_pass)
+    args_pass$type <- NULL
+    args_pass <- args_pass[sapply(args_pass, function(x) !is.null(x))]
+    do.call('locations.plot', args_pass)
     
   } else if(type == 'dev') {
-    args_pass = list(fit = x, ...)
-    args_pass$type = NULL
-    args_pass = args_pass[sapply(args_pass, function(x) !is.null(x))]
-    do.call('plot_dev', args_pass)
+    args_pass <- list(fit = x, ...)
+    args_pass$type <- NULL
+    args_pass <- args_pass[sapply(args_pass, function(x) !is.null(x))]
+    do.call('dev.plot', args_pass)
     
   } else {
     stop('invalid input for "type", which should be either "survey", "capt", 
@@ -753,7 +753,7 @@ plot.acre = function(x, type = NULL, call_id = NULL, animal_id = NULL, session =
 }
 
 
-prompt_user_for_next_plot <- function() {
+ask.user.for.next.plot <- function() {
   if (isRStudio <- Sys.getenv("RSTUDIO") == "1") {
     input <- readline(prompt = "Hit <Return> to see next plot or <Esc> to cancel:")
   } else {
@@ -761,12 +761,12 @@ prompt_user_for_next_plot <- function() {
   }
 }
 
-# Empty plot with mask limits and traps
-# Call with traps = NULL explicitly to plot without traps
-plot_dev <- function(fit, session = 1, 
-                     mask = get_mask(fit)[[session]], 
-                     traps = get_trap(fit)[[session]],
-                     call_id = NULL, ...) {
+## Empty plot with mask limits and traps.
+## Call with traps = NULL explicitly to plot without traps.
+dev.plot <- function(fit, session = 1, 
+                     mask = get.mask(fit)[[session]], 
+                     traps = get.trap(fit)[[session]],
+                     call.id = NULL, ...) {
   plot(NA, 
        xlim = range(mask[,1]), 
        ylim = range(mask[,1]),
@@ -776,38 +776,38 @@ plot_dev <- function(fit, session = 1,
   grid(col = "grey85", lty = 1, lwd = 0.7)
   
   if (!is.null(traps)) {
-    plot_traps(fit, call_id = call_id)
+    traps.plot(fit, call.id = call.id)
   }
 }
 
-plot_traps <- function(fit, call_id=NULL, animal_id=NULL, session=1) {
-  traps <- get_trap(fit)[[session]]
+traps.plot <- function(fit, call.id=NULL, animal.id=NULL, session=1) {
+  traps <- get.trap(fit)[[session]]
   
-  # Plot the trap array
+  ## Plot the trap array.
   points(x = traps[,1], y = traps[,2], cex = 1.2, col = "red", 
          lwd = 1.5, pch = 4)
   
-  if (!is.null(call_id)) {
-    if (length(call_id) > 1 | !is.numeric(call_id)) {
-      stop(paste("'call_id' must be a single numeric value.", 
+  if (!is.null(call.id)) {
+    if (length(call.id) > 1 | !is.numeric(call.id)) {
+      stop(paste("'call.id' must be a single numeric value.", 
                  "Plotting traps is only supported for single calls."))
     }
     
-    # Grab appropriate capture data
-    bincapt <- get_capt_by_id(fit, call_id, animal_id, session, 
-                              return_bincapt = T)[,-1]
+    ## Grab appropriate capture data.
+    bincapt <- get.capt.by.id(fit, call.id, animal.id, session, 
+                              return.bincapt = T)[,-1]
     
     active_traps <- subset(traps, bincapt == 1)
-    # Circle the activated traps
+    ## Circle the activated traps.
     points(x = active_traps[,1], y = active_traps[,2], 
            cex = 2, col = "red", lwd = 1.5, pch = 1)
   }
 }
 
-plot_bearing_arrows <- function(fit, call_id, animal_id=NULL, session=1) {
-  # Make sure call_id is a single numeric
-  if (length(call_id) > 1 | !is.numeric(call_id)) {
-    stop(paste("'call_id' must be a single numeric value.", 
+bearing.arrows.plot <- function(fit, call.id, animal.id=NULL, session=1) {
+  ## Make sure call.id is a single number.
+  if (length(call.id) > 1 | !is.numeric(call.id)) {
+    stop(paste("'call.id' must be a single numeric value.", 
                "Plotting bearing arrows is only supported for single calls."))
   }
   
@@ -815,20 +815,20 @@ plot_bearing_arrows <- function(fit, call_id, animal_id=NULL, session=1) {
     stop("'fit' does not contain bearing information.")
   }
   
-  # Grab appropriate capture data
-  capt <- get_capt_by_id(fit, call_id, animal_id, session)
-  bincapt <- get_capt_by_id(fit, call_id, animal_id, session, return_bincapt=T)[,-1]
+  ## Grab appropriate capture data.
+  capt <- get.capt.by.id(fit, call.id, animal.id, session)
+  bincapt <- get.capt.by.id(fit, call.id, animal.id, session, return.bincapt=T)[,-1]
   
   is.dist <- "dist" %in% fit$infotypes
-  traps <- get_trap(fit)[[session]]
+  traps <- get.trap(fit)[[session]]
   activated_traps <- subset(traps, bincapt == 1)
   bearing <- capt$bearing
   dist <- capt$dist
   
-  # Set appropriate arrow length. Default to 1/3 buffer radius.
-  arrow_len <- rep(0.333 * get_buffer(fit)[session], length(capt$bearing))
+  ## Set the appropriate arrow length. The default is 1/3 of the buffer radius.
+  arrow_len <- rep(0.333 * get.buffer(fit)[session], length(capt$bearing))
   if (is.dist) {
-    # Account for the possibility that dist may be NA for some captures
+    ## Account for the possibility that dist may be NA for some captures.
     arrow_len[!is.na(capt$dist)] <- capt$dist[!is.na(capt$dist)]
   }
   
@@ -842,16 +842,16 @@ plot_bearing_arrows <- function(fit, call_id, animal_id=NULL, session=1) {
     yend = activated_traps[, 2] + cosb
   )
   
-  # Remove any NA bearing captures
+  ## Remove any NA bearing captures.
   arrows.df <- arrows.df[complete.cases(arrows.df), ]
   
   arrows(arrows.df$x, arrows.df$y, arrows.df$xend, arrows.df$yend, col="red", lwd = 1.5, length = 0.07)
 }
 
-plot_distance_circles <- function(fit, call_id, animal_id=NULL, session=1) {
-  # Make sure call_id is a single numeric
-  if (length(call_id) > 1 | !is.numeric(call_id)) {
-    stop(paste("'call_id' must be a single numeric value.", 
+distance.circles.plot <- function(fit, call.id, animal.id=NULL, session=1) {
+  ## Make sure call.id is a single number.
+  if (length(call.id) > 1 | !is.numeric(call.id)) {
+    stop(paste("'call.id' must be a single numeric value.", 
                "Plotting distance circles is only supported for single calls."))
   }
   
@@ -859,22 +859,22 @@ plot_distance_circles <- function(fit, call_id, animal_id=NULL, session=1) {
     stop("'fit' does not contain distance information.")
   }
   
-  # Grab appropriate capture data
-  capt <- get_capt_by_id(fit, call_id, animal_id, session)
-  bincapt <- get_capt_by_id(fit, call_id, animal_id, session, return_bincapt=T)[,-1]
+  ## Grab appropriate capture data.
+  capt <- get.capt.by.id(fit, call.id, animal.id, session)
+  bincapt <- get.capt.by.id(fit, call.id, animal.id, session, return.bincapt=T)[,-1]
   dist <- capt$dist
-  traps <- get_trap(fit)[[session]]
+  traps <- get.trap(fit)[[session]]
   activated_traps <- subset(traps, bincapt == 1)
   
-  # Remove NA distances
+  ## Remove NA distances.
   keep <- !is.na(capt$dist)
-  # Note the drop=FALSE keeps the data structure; makes easier to loop over
+  ## Note that drop = FALSE keeps the data structure, which makes it easier to loop over.
   activated_traps <- activated_traps[keep, ,drop = FALSE]
   dists <- capt$dist[keep]
   
   for (i in seq_len(nrow(activated_traps))) {
     
-    coords <- circle_fun(centre = activated_traps[i, ,drop = FALSE],
+    coords <- circle.fun(centre = activated_traps[i, ,drop = FALSE],
                          r = dists[i])
     
     polygon(coords$x, coords$y,
@@ -885,9 +885,9 @@ plot_distance_circles <- function(fit, call_id, animal_id=NULL, session=1) {
   }
 }
 
-plot_toa_order <- function(fit, call_id, animal_id=NULL, session=1) {
-  if (length(call_id) != 1L || !is.numeric(call_id)) {
-    stop("'call_id' must be a single numeric value; ",
+toa.order.plot <- function(fit, call.id, animal.id=NULL, session=1) {
+  if (length(call.id) != 1L || !is.numeric(call.id)) {
+    stop("'call.id' must be a single numeric value; ",
          "plotting TOA order is only supported for a single call.")
   }
   
@@ -895,19 +895,19 @@ plot_toa_order <- function(fit, call_id, animal_id=NULL, session=1) {
     stop("'fit' does not contain time-of-arrival information.")
   }
   
-  # Grab appropriate capture data
-  capt <- get_capt_by_id(fit, call_id, animal_id, session)
+  ## Grab appropriate capture data.
+  capt <- get.capt.by.id(fit, call.id, animal.id, session)
   
-  # Remove NA distances
+  ## Remove NA distances.
   capt <- capt[complete.cases(capt), ]
   
   toa <- capt$toa
   
-  # Figure out the order of arrival
-  traps <- get_trap(fit)[[session]][capt$trap, ,drop = FALSE]
+  ## Figure out the order of arrival.
+  traps <- get.trap(fit)[[session]][capt$trap, ,drop = FALSE]
   toa_order <- rank(toa, ties.method = "min")
 
-  # Annotate traps
+  ## Annotate traps.
   text(traps[, 1] + 1, traps[, 2] - 1, labels = toa_order,
        col = "black", cex = 0.6, adj = c(0, 1))
 }
