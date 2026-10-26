@@ -877,16 +877,33 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
     data.ss = subset(data.ss, !is.na(data.ss$keep))
     
     data.ss = data.ss[,-which(colnames(data.ss) == "keep")]
+
+    #sessions whose detections are all below the cutoff become sessions with no detection,
+    #so they need the same placeholder rows (one per trap, with NA 'ID') as the original ones
+    lost.sessions = setdiff(unique(data.full$session[!is.na(data.full$ID)]), unique(data.ss$session))
+    for(s in lost.sessions){
+      tem = data.full[which(data.full$session == s), ]
+      tem = tem[!duplicated(tem$trap), ]
+      for(i in c("animal_ID"[animal.model], "ID", "bincapt", "bearing", "dist", "ss", "toa", "mrds_x", "mrds_y")){
+        if(!is.null(tem[[i]])) tem[[i]] = NA
+      }
+      data.no.det.session = rbind(data.no.det.session, tem)
+    }
+
+    #IDs were converted to successive natural numbers before the cutoff was applied, removing
+    #some of them leaves gaps, but TMB uses the ID to index data.full, so convert them again
+    data.ss = convert_natural_number(data.ss, animal.model, 'both')
     data.ss = sort.data(data.ss, "data.full")
     data.full = rbind(data.ss, data.no.det.session)
     data.full = sort.data(data.full, "data.full")
-    
-    #refresh "dims"
+
+    #refresh "dims", sessions without any remaining detection should have zero IDs
     if(animal.model){
       new.n.animals = agg_sort(data.ss, 'animal_ID', 'session', function(x) length(unique(x)))
       new.n.IDs = agg_sort(data.ss, c('animal_ID', 'ID'), 'session', function(x) length(unique(x)))
       new.n.animal.call = agg_sort(data.ss, 'ID', c('session', 'animal_ID'), function(x) length(unique(x)))
 
+      dims$n.animals[] = 0
       dims$n.animals[new.n.animals$session] = new.n.animals$x
       dims$n.animal.call = new.n.animal.call$x
     } else {
@@ -902,17 +919,20 @@ ss.fun = function(ss.opts, data.full, data.ID_mask, animal.model, dims, bucket_i
       ID.removed = TRUE
     } else ID.removed = FALSE
     
+    dims$n.IDs[] = 0
     dims$n.IDs[new.n.IDs$session] = new.n.IDs$x
-    
+
     if(ID.removed){
-      #when any ID is deleted due to the cut off of ss
+      #when any ID is deleted due to the cut off of ss, keep the remaining ones (matched on the IDs
+      #before re-conversion), then convert them in the same way as data.full so the two still match
       if("animal_ID" %in% colnames(data.full)){
         data.ID_mask = subset(data.ID_mask, paste(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$ID, sep = "-") %in%
-                                unique(paste(data.full$session, data.full$animal_ID,data.full$ID, sep = "-")))
+                                unique(paste(keep$session, keep$animal_ID, keep$ID, sep = "-")))
       } else {
         data.ID_mask = subset(data.ID_mask, paste(data.ID_mask$session, data.ID_mask$ID, sep = "-") %in%
-                                unique(paste(data.full$session, data.full$ID, sep = "-")))
+                                unique(paste(keep$session, keep$ID, sep = "-")))
       }
+      data.ID_mask = convert_natural_number(data.ID_mask, animal.model, 'both')
       data.ID_mask = sort.data(data.ID_mask, "data.ID_mask")
     }
     

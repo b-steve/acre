@@ -55,6 +55,12 @@ convert_natural_number = function(dat, is.animalID, which.convert = 'both'){
     stop('Invalid input.')
   }
 
+  #rows from sessions without detections have NA 'ID' (and 'animal_ID'), but the column may still be
+  #character; if so, rbind() would turn the converted IDs back to character, which are then sorted
+  #lexicographically ("1", "10", "2", ...) and no longer match the numeric ID used to index data_full in TMB
+  if(which.convert %in% c('ID', 'both')) dat.na$ID = as.numeric(dat.na$ID)
+  if(is.animalID & which.convert %in% c('animal_ID', 'both')) dat.na$animal_ID = as.numeric(dat.na$animal_ID)
+
   output = rbind(output, dat.na)
   return(output)
 
@@ -1267,7 +1273,6 @@ location_cov_to_mask = function(mask, loc.cov, control_nn2 = NULL, control_weigh
     name_cov = do.call('c', name_cov)
     index_name_cov = do.call('c', index_name_cov)
   }
-
 
 
   if(any(duplicated(name_cov))) stop('duplicated covariates found.')
