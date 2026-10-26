@@ -964,15 +964,13 @@ Type acreTMB(objective_function<Type>* obj)
               fy_bear_log += kappa_tem * cos(capt_bearing(row) - theta(dt)) - log(bessi0(kappa_tem));
             }
 
-            //the animal model also skips recorded values of exactly zero
-            if(is_dist == 1 && !std::isnan(asDouble(capt_dist(row))) &&
-               (is_animalID == 0 || asDouble(capt_dist(row)) != 0)){
+            if(is_dist == 1 && !std::isnan(asDouble(capt_dist(row)))){
               Type alpha_tem = linked(alpha_vec_full(row) + alpha_vec_mask(mrow), par_link(13));
               fy_dist_log += ((-1) * (alpha_tem * (log(dx(dt)) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) *
                 log(capt_dist(row)) - alpha_tem * capt_dist(row) / dx(dt));
             }
 
-            if(is_ss_origin == 1 && (is_animalID == 0 || asDouble(capt_ss(row)) != 0)){
+            if(is_ss_origin == 1){
               Type sigma_ss_tem = linked(sigma_ss_vec_full(row) + sigma_ss_vec_mask(mrow), par_link(11));
               fy_ss_log += dnorm(capt_ss(row), essx(dt), sigma_ss_tem, true);
             }
@@ -993,20 +991,18 @@ Type acreTMB(objective_function<Type>* obj)
         }
       }
 
-      //the conditional likelihood conditions on the number of detected groups in the
-      //session, so each contribution is normalised by the session's ESA
+      //the call model's group-level factor includes the expected number of calls per
+      //animal, cue_rates * survey_len
       if(is_animalID == 0){
-        if(is_conditional == 0){
-          nll -= multiplicity * log(l_i * area_unit * survey_len * cue_rates);
-        } else {
-          nll -= multiplicity * log(l_i * area_unit * survey_len * cue_rates * (1 / esa(s)));
-        }
+        l_i *= survey_len * cue_rates;
+      }
+      //the conditional likelihood conditions on the number of detected groups in the
+      //session, so each contribution is normalised by the session's ESA; DBL_MIN keeps
+      //the log finite if the integral underflows
+      if(is_conditional == 0){
+        nll -= multiplicity * log((l_i * area_unit) + std::numeric_limits<double>::min());
       } else {
-        if(is_conditional == 0){
-          nll -= log((l_i * area_unit) + std::numeric_limits<double>::min());
-        } else {
-          nll -= log((l_i * area_unit / esa(s)) + std::numeric_limits<double>::min());
-        }
+        nll -= multiplicity * log((l_i * area_unit / esa(s)) + std::numeric_limits<double>::min());
       }
       c0 += n_cg;
     }

@@ -107,7 +107,15 @@ capture.fun <- function(capt, animal.model){
   }
   
   data.capt$ID <- as.character(data.capt$ID)
-  
+
+  ## The distance model is a gamma distribution, so recorded distances must be positive.
+  if("dist" %in% bucket_info){
+    detected <- !is.na(data.capt$bincapt) & data.capt$bincapt == 1
+    if(any(detected & !is.na(data.capt$dist) & data.capt$dist <= 0)){
+      stop("Recorded distances must be positive; use NA for a missing distance.")
+    }
+  }
+
   return(list(data.capt = data.capt, dims = list(n.sessions = n.sessions, n.traps = n.traps,
                                                  n.IDs = n.IDs, n.animals = n.animals),
               bucket_info = c(bucket_info, "mrds"[is.mrds])))
@@ -181,11 +189,17 @@ mask.fun <- function(mask, dims, animal.model, data.traps, data.full, bucket.inf
 
     thetas[[i]] <- bearings(as.matrix(traps), mask[[i]])
     
+    ## A mask point exactly on a detector has a distance of zero, which the distance density
+    ## cannot use, and an undefined bearing; as in the location densities, use the smallest
+    ## positive distance, and a bearing of zero.
+    dx <- as.vector(dists[[i]])
+    theta <- as.vector(thetas[[i]])
+    theta[dx == 0] <- 0
+    dx[dx == 0] <- .Machine$double.eps
     data.dists.thetas[[i]] <- data.frame(session = rep(i, n.masks[i] * n.traps[i]),
                                         mask = rep(1:n.masks[i], each = n.traps[i]),
                                         trap = rep(1:n.traps[i], n.masks[i]),
-                                        dx = as.vector(dists[[i]]),
-                                        theta = as.vector(thetas[[i]]))
+                                        dx = dx, theta = theta)
     
     
     ## Fill in the area and buffer, if missing.
