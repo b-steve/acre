@@ -275,18 +275,21 @@ mask.fun <- function(mask, dims, animal.model, data.traps, data.full, bucket.inf
     }
   }
 
-  ## Prepare a data set for ID * mask.
+  ## Prepare a data set for ID * mask. It holds the times-of-arrival sums of squares and the local
+  ## mask points, so it is only needed with times of arrival or local integration; it has one row
+  ## per call and mask point, so it can be large.
   
   data.ID_mask <- vector('list', n.sessions)
   if(local) {
     bucket.info <- c(bucket.info, "local")
     tem.df <- vector('list', n.sessions)
   }
+  need.ID_mask <- local || 'toa' %in% bucket.info
   
   ## To avoid confusion, u.id is animal_ID-ID if animal.model, and the "ID" column is
   ## temporarily animal_ID-ID as well, until the later step where we restore it.
   for(i in 1:n.sessions){
-    if(n.IDs[i] > 0){
+    if(n.IDs[i] > 0 && need.ID_mask){
       tem <- subset(data.full, data.full$session == i)
 
       if(animal.model){
@@ -342,7 +345,7 @@ mask.fun <- function(mask, dims, animal.model, data.traps, data.full, bucket.inf
   
   data.ID_mask <- do.call('rbind', data.ID_mask)
   
-  if(animal.model){
+  if(animal.model && need.ID_mask){
     data.ID_mask[['animal_ID']] <- gsub("---(.+)", "", data.ID_mask[['ID']])
     data.ID_mask[['ID']] <- gsub("^(.+)---", "", data.ID_mask[["ID"]])
   }
@@ -939,7 +942,7 @@ ss.fun <- function(ss.opts, data.full, data.ID.mask, animal.model, dims, bucket.
     dims$n.IDs[] <- 0
     dims$n.IDs[new.n.IDs$session] <- new.n.IDs$x
 
-    if(ID.removed){
+    if(ID.removed && !is.null(data.ID.mask)){
       ## When any ID is deleted due to the ss cutoff, keep the remaining ones (matched on the IDs
       ## before re-conversion), then convert them in the same way as data.full so the two still match.
       if("animal_ID" %in% colnames(data.full)){

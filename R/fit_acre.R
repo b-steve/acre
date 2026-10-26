@@ -615,14 +615,14 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
   ## sort these two data sets first, so they have the same content in the same order; then there is no
   ## possibility of a different result.
   data.full <- data.sort(data.full, 'data.full')
-  data.ID_mask <- data.sort(data.ID_mask, 'data.ID_mask')
-
   data.full <- convert.natural.number(data.full, animal.model, 'both')
-  data.ID_mask <- convert.natural.number(data.ID_mask, animal.model, 'both')
-
-  ## Because convert.natural.number() uses rbind(), sort them again.
+  ## Because convert.natural.number() uses rbind(), sort again.
   data.full <- data.sort(data.full, 'data.full')
-  data.ID_mask <- data.sort(data.ID_mask, 'data.ID_mask')
+  if(!is.null(data.ID_mask)){
+    data.ID_mask <- data.sort(data.ID_mask, 'data.ID_mask')
+    data.ID_mask <- convert.natural.number(data.ID_mask, animal.model, 'both')
+    data.ID_mask <- data.sort(data.ID_mask, 'data.ID_mask')
+  }
 
   if(animal.model){
     ## The vector n.animal.call has length sum(n.animals), and each element is the number of calls
@@ -695,8 +695,9 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
   ## capt_dist = ifelse(is.na(data.full$dist), 0, data.full$dist)
   ## capt_dist = ifelse(capt_dist == 0, 1e-20, capt_dist)
 
-  if(!any(c('local', 'toa') %in% bucket_info)){
-    data.ID_mask <- data.ID_mask[1,, drop = FALSE]
+  if(is.null(data.ID_mask)){
+    ## Not used without times of arrival or local integration, but TMB needs the inputs.
+    data.ID_mask <- data.frame(local = 1, toa_ssq = 0)
   } else {
     if(!'local' %in% bucket_info){
       data.ID_mask <- data.ID_mask[,-which(colnames(data.ID_mask) == 'local'), drop = FALSE]
