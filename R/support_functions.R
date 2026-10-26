@@ -418,25 +418,21 @@ default.sv <- function(param, info){
     } else {
       tem <- data.full[!duplicated(data.full[,c("session", "animal_ID"[is.animal_ID], "ID", "trap")]), ]
       tem <- subset(tem, !is.na(tem$bincapt) & tem$bincapt == 1)
-      u.id <- unique(tem[, c('session', "animal_ID"[is.animal_ID], "ID")])
-      u.id <- paste(u.id$session, u.id$animal_ID[is.animal_ID], u.id$ID, sep = "_")
+      call.key <- paste(tem$session, tem$animal_ID[is.animal_ID], tem$ID, sep = "_")
 
-      mean.dists <- data.frame(avg_dist = numeric(0), weight = numeric(0))
-      j <- 1
-      for(i in 1:length(u.id)){
-        tem1 <- subset(tem, paste(tem$session, tem$animal_ID[is.animal_ID], tem$ID, sep = "_") == u.id[i],
-                      select = c("trap_x", "trap_y"))
+      ## The average distance between pairs of detectors that detected the same call, over all
+      ## calls detected more than once. The detections are grouped once, keeping the calls in
+      ## their order of appearance.
+      trap.locs <- as.matrix(tem[, c("trap_x", "trap_y")])
+      rows.by.call <- split(seq_len(nrow(tem)), factor(call.key, levels = unique(call.key)))
+      rows.by.call <- rows.by.call[lengths(rows.by.call) > 1]
+      mean.dists <- vapply(rows.by.call, function(rows){
+        rc.dists <- distances(trap.locs[rows, , drop = FALSE], trap.locs[rows, , drop = FALSE])
+        c(mean(rc.dists[rc.dists > 0]), length(rc.dists[rc.dists > 0]))
+      }, numeric(2))
 
-        if(nrow(tem1) > 1){
-          rc.dists <- distances(as.matrix(tem1), as.matrix(tem1))
-          mean.dists[j, 1] <- mean(rc.dists[rc.dists > 0])
-          mean.dists[j, 2] <- length(rc.dists[rc.dists > 0])
-          j <- j + 1
-        }
-      }
-
-      if(nrow(mean.dists) > 0){
-        out <- sum(mean.dists$avg_dist * mean.dists$weight)/sum(mean.dists$weight)
+      if(length(rows.by.call) > 0){
+        out <- sum(mean.dists[1, ] * mean.dists[2, ])/sum(mean.dists[2, ])
       } else {
         out <- easy.out
       }
