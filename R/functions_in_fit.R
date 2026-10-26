@@ -384,9 +384,6 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
     }
   }
   
-  ## The object fgam is for compatibility with the ADMB model.
-  fgam <- NULL
-  
   ## Scaling is TRUE by default;
   ## create a list to store the mean and standard deviation of each
   ## component in the formula.
@@ -645,7 +642,6 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
         ## Delete the first column, which is the intercept.
         tem_model <- mgcv::gam(foo_mask, data = tem.data, fit = FALSE)
         gam_output[[i]][['gam_mask']] <- tem_model
-        if(i == 'D') fgam <- tem_model
         design.matrix <- tem_model$X[, -1, drop = FALSE]
         n_col_mask <- ncol(design.matrix)
         design.matrix <- as.data.frame(design.matrix, stringsAsFactors = FALSE)
@@ -756,18 +752,10 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
   
   data.mask <- data.sort(data.mask, "data.mask")
   
-  ## The object fgam is only valid when 'D' is extended at the mask level;
-  ## this component is for compatibility with the ADMB model.
-  if(is.null(fgam)){
-    tem <- data.frame(gam.resp = rep(1, sum(n.masks)))
-    fgam <- mgcv::gam(gam.resp~1, data = tem, fit = FALSE)
-  }
-  
-  
   data.trap <- data.trap[order(data.trap$session, data.trap$trap), , drop = FALSE]
 
   return(list(data.full = data.full, data.trap = data.trap, data.mask = data.mask, data.par = df.par, is.scale = is.scale,
-              name.extend.par = name.extend.par, fgam = fgam, gam_output= gam_output,
+              name.extend.par = name.extend.par, gam_output= gam_output,
               lst_mean_std = lst_mean_std))
 }
 
@@ -1333,16 +1321,13 @@ gr.free.o.restore <- function(fn, opt, H, parameters, param.og.4cpp, n.sessions)
 
 outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.dists.thetas, detfn, param.og, param.og.4cpp, o, tmb.output.og, opt,
                   name.fixed.par, name.extend.par, dims, DX.full, DX.mask, fix.input, bucket.info, cue.rates, mean.cue.rates, A,
-                  survey.length, sound.speed, par.extend, arg.input, fgam, gam.output, lst.mean.std, is.scale, ss.link, cutoff,
+                  survey.length, sound.speed, par.extend, arg.input, gam.output, lst.mean.std, is.scale, ss.link, cutoff,
                   CL, esa.partial.derivatives){
   ###################################################################################################################
   ## Sort out the output for the function.
-  out <- vector('list', 36)
-  names(out) <- c("fn", "coefficients", "coeflist", "se", "loglik", "opt_output", "maxgrad", "cor", "vcov", "npar", "npar_re",
-                 "npar_sdrpt", "npar_rep", "npar_total", "hes", "eratio", "D.mask", "mm.ihd", "args", "n.sessions",
-                 "fit.types", "infotypes", "detpars", "suppars", "D.betapars", "phases", "par.links", "par.unlinks",
-                 "fit.ihd", "re.detfn", "fit.freqs", "first.calls", "model.formula", "fgam", "all.covariates",
-                 "output.tmb")
+  out <- vector('list', 14)
+  names(out) <- c("fn", "coefficients", "se", "loglik", "maxgrad", "cor", "vcov", "D.mask", "args", "n.sessions",
+                  "fit.types", "infotypes", "fit.ihd", "output.tmb")
   ## Create the output for the TMB model.
   out[['output.tmb']] <- vector('list', 22)
   names(out[['output.tmb']]) <- c('coef_link', 'se_link', 'DX_standardized', 'detfn', 'param.og', 'param.extend', 'param.fix',
@@ -1367,12 +1352,12 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   
   
   ############################################################################################################
-  ## The 1st component: "fn".
+  ## Component: "fn".
   out$fn <- 'secr_tmb'
   
   
   #############################################################################################################
-  ## The 2nd component: "coefficients"; "esa.[session]" is not included yet.
+  ## Component: "coefficients"; "esa.[session]" is not included yet.
   ## This can be generated from "name.fited.pars", "name.fixed.par" and "name.extend.par".
   
   ## Create a vector of parameter names used in various output components,
@@ -1458,51 +1443,16 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   names(out$coefficients) <- do.call('c', lapply(out_coef, function(x) names(x)))
   out[['output.tmb']][['coef_link']] <- coef_link_tmb
   #######################################################################################################
-  ## The 3rd component: "coeflist".
+  ## The density at each mask point, per session, for "D.mask".
   
-  out$coeflist <- vector('list', 0)
-  
-  D_pars <- name_output$D
-  det_pars <- name.fited.pars[which(!name.fited.pars %in% c('D', 'kappa', 'alpha', 'sigma.toa', 'esa'))]
-  sup_pars <- name.fited.pars[which(name.fited.pars %in% c('kappa', 'alpha', 'sigma.toa'))]
-  
-  tem <- val(o_value[['D']])
-  for(i in 1:length(name_output$D)){
-    tem_name <- paste0('D_betapars_link[', i, ']')
-    out$coeflist[[tem_name]] <- tem[i]
-  }
-  
-  for(i in 1:length(det_pars)){
-    if(!det_pars[i] %in% name.fixed.par){
-      tem <- val(o_value[[det_pars[i]]])
-      tem_name <- paste0('detpars_link[', i, ']')
-      out$coeflist[[tem_name]] <- tem
-    }
-  }
-  
-  if(length(sup_pars) > 0){
-    for(i in 1:length(sup_pars)){
-      if(!sup_pars[i] %in% name.fixed.par){
-        tem <- val(o_value[[sup_pars[i]]])
-        tem_name <- paste0('suppars_link[', i, ']')
-        out$coeflist[[tem_name]] <- tem
-      }
-    }
-  }
-  
-  
-  for(i in 1:dims$n.sessions){
-    tem <- val(o_value[['esa']][i])
-    tem_name <- paste0('esa[', i, ']')
-    out$coeflist[[tem_name]] <- tem
-  }
-  
+  coeflist <- vector('list', 0)
+
   ## Deal with "D" and "D.mask[s]".
   if(!'D' %in% name.extend.par){
-    out$coeflist[['D']] <- unlink.fun(data.par[par.id['D'], 'link'], val(o_value[['D']]))
+    coeflist[['D']] <- unlink.fun(data.par[par.id['D'], 'link'], val(o_value[['D']]))
     for(i in 1:dims$n.sessions){
       tem_name <- paste0('D_mask[', i, ']')
-      out$coeflist[[tem_name]] <- rep(out$coeflist[['D']], dims$n.masks[i])
+      coeflist[[tem_name]] <- rep(coeflist[['D']], dims$n.masks[i])
     }
   } else {
     tem_n_col <- data.par[par.id['D'], c('n_col_full', 'n_col_mask')]
@@ -1518,17 +1468,17 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
       tem_name <- paste0('D_mask[', i, ']')
       ## D is only extendable at the session level, not the trap level, so we can take the first row of each session
       ## in 'data.trap', which is tem_full below.
-      out$coeflist[[tem_name]] <- tem_full[which(data.trap$session == i)[1]] +
+      coeflist[[tem_name]] <- tem_full[which(data.trap$session == i)[1]] +
         tem_mask[which(data.mask$session == i)]
-      out$coeflist[[tem_name]] <- unlink.fun(data.par[par.id['D'], 'link'],
-                                            out$coeflist[[tem_name]])
+      coeflist[[tem_name]] <- unlink.fun(data.par[par.id['D'], 'link'],
+                                            coeflist[[tem_name]])
     }
   }
   
   
   
   ####################################################################################################
-  ## The 4th component: "se".
+  ## Component: "se".
   
   out_se <- vector('list', length(name.fited.pars))
   names(out_se) <- name.fited.pars
@@ -1617,17 +1567,16 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   out[['output.tmb']][['mean_std_for_standardizing']] <- lst.mean.std
   
   ######################################################################################################
-  ## The 5th component: "loglik".
+  ## Component: "loglik".
   out$loglik <- -1 * opt$objective
   
-  out$opt_output <- opt
   
   #####################################################################################################
-  ## The 6th component: "maxgrad".
+  ## Component: "maxgrad".
   out$maxgrad <- max(abs(o$gradient.fixed))
   
   #####################################################################################################
-  ## The 7th and 8th components: "cor" and "vcov"; after discussion, it is fine to
+  ## Component: "cor" and "vcov"; after discussion, it is fine to
   ## use the output from TMB directly.
   tem <- name_output_tmb
   
@@ -1652,30 +1601,12 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   
   
   ######################################################################################################
-  ## The 9th component: "npar".
-  
-  out$npar <- sum(sapply(name_output, length))
-  
-  ######################################################################################################
-  ## The 10th to 14th components: not sure what they are, so skip them for now.
-  
-  
-  
-  
-  ######################################################################################################
-  ## The 15th component: 'eratio';
-  ## obtain all estimated values excluding 'esa'.
-  tem <- o$value[which(!names(o$value) %in% c('esa', name.fixed.par))]
-  out$eratio <- max(abs(o$gradient.fixed) / abs(tem))
-  
-  
-  ######################################################################################################
-  ## The 16th component: "D.mask".
+  ## Component: "D.mask".
   out$D.mask <- vector('list', dims$n.sessions)
   
   for(s in 1:dims$n.sessions){
     tem <- paste0("D_mask[", s, "]")
-    out$D.mask[[s]] <- out$coeflist[[tem]]
+    out$D.mask[[s]] <- coeflist[[tem]]
     tem <- stringr::str_pad(as.character(1:dims$n.masks[s]), nchar(as.character(dims$n.masks[s])),
                            pad = '0', side = 'left')
     names(out$D.mask[[s]]) <- paste(paste0('D_mask[', s, ']'), tem, sep = ".")
@@ -1683,40 +1614,16 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   
   
   
-  ########################################################################################################
-  ## The 17th component: "mm.ihd".
-  
-  out$mm.ihd <- vector('list', dims$n.sessions)
-  
-  for(s in 1:dims$n.sessions){
-    ## First get the first row of this session in data.trap.
-    tem <- min(which(data.trap$session == s))
-    ## Then get the data from DX.full, the design matrix for data.trap.
-    tem <- DX.full$D[tem,]
-    ## Finally, generate a matrix with n.masks rows that contains the information
-    ## on "D" at the session level.
-    tem <- matrix(rep(tem, dims$n.masks[s]), nrow = dims$n.masks[s], byrow = T)
-    
-    if(data.par[par.id['D'], 'n_col_mask'] > 0){
-      out$mm.ihd[[s]] <- cbind(tem, DX.mask$D[data.mask$session == s,])
-    } else {
-      out$mm.ihd[[s]] <- tem
-    }
-    colnames(out$mm.ihd[[s]]) <- gsub("D\\.", "", name_output$D)
-    rownames(out$mm.ihd[[s]]) <- NULL
-  }
-  
-  
   ######################################################################################################
-  ## The 18th component: "args".
+  ## Component: "args".
   
   out$args <- arg.input
   
   ######################################################################################################
-  ## The 19th component: 'n.sessions'.
+  ## Component: 'n.sessions'.
   out$n.sessions <- dims$n.sessions
   #####################################################################################################
-  ## The 20th component: 'fit.types'.
+  ## Component: 'fit.types'.
   tem <- logical(5)
   names(tem) <- c('bearing', 'dist', 'ss', 'toa', 'mrds')
   
@@ -1729,69 +1636,13 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   out$fit.types <- tem
   
   #####################################################################################################
-  ## The 21st component: 'infotypes'.
+  ## Component: 'infotypes'.
   
   out$infotypes <- bucket.info[which(bucket.info %in% c('bearing', 'dist', 'ss', 'toa', 'mrds'))]
   
   
-  #####################################################################################################
-  ## The 22nd component: 'detpars'.
-  out$detpars <- param.og[which(!param.og %in% c('kappa', 'alpha', 'sigma.toa', 'D'))]
-  
-  
   ######################################################################################################
-  ## The 23rd component: 'suppars'.
-  out$suppars <- param.og[which(param.og %in% c('kappa', 'alpha', 'sigma.toa'))]
-  if(length(out$suppars) == 0) out$suppars <- NULL
-  
-  ######################################################################################################
-  ## The 24th component: 'D.betapars'.
-  out$D.betapars <- name_output$D
-  
-  ######################################################################################################
-  ## The 25th component: 'phases'.
-  all.pars <- c(out$detpars, out$suppars, out$D.betapars)
-  
-  out$phases <- ifelse(all.pars %in% names(out$args$fix), -1, 1)
-  names(out$phases) <- all.pars
-  out$phases <- as.list(out$phases)
-  
-  #####################################################################################################
-  ## The 26th component: 'par.links';
-  ## the 27th component: 'par.unlinks'.
-  
-  out$par.links <- vector('list', length(all.pars))
-  names(out$par.links) <- all.pars
-  
-  out$par.unlinks <- vector('list', length(all.pars))
-  names(out$par.unlinks) <- all.pars
-  
-  for(i in c(out$detpars, out$suppars)){
-    if(!i %in% name.extend.par){
-      if(data.par[par.id[i], 'link'] == 'log'){
-        out$par.links[[i]] <- cus.log
-        out$par.unlinks[[i]] <- cus_log_unlink
-      } else if(data.par[par.id[i], 'link'] == 'logit'){
-        out$par.links[[i]] <- cus.logit
-        out$par.unlinks[[i]] <- cus.logit.unlink
-      } else {
-        out$par.links[[i]] <- cus.identity
-        out$par.unlinks[[i]] <- cus.identity
-      }
-    } else {
-      out$par.link[[i]] <- cus.identity
-      out$par.unlinks[[i]] <- cus.identity
-    }
-  }
-  
-  for(i in out$D.betapars){
-    out$par.links[[i]] <- cus.identity
-    out$par.unlinks[[i]] <- cus.identity
-  }
-  
-  
-  ######################################################################################################
-  ## The 28th component: 'fit.ihd'.
+  ## Component: 'fit.ihd'.
   ## Only if the model is 'D' extended and the extension is a "mask" extension only
   ## (in other words, the model is equivalent to the incumbent "inhomo" model)
   ## is this 'ihd' set to TRUE.
@@ -1803,61 +1654,8 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   }
   
   
-  #####################################################################################################
-  ## The 29th component: 're.detfn'. Not sure what this is;
-  ## in all of the tested sample data it is FALSE, so set it to FALSE for now.
-  
-  out$re.detfn <- FALSE
-  
-  
-  #####################################################################################################
-  ## The 30th component: 'fit.freqs';
-  ## this is not included in the TMB template yet.
-  
-  out$fit.freqs <- !is.null(cue.rates)
-  
-  ######################################################################################################
-  ## The 31st component: 'first.calls';
-  ## based on the instructions, set it to FALSE.
-  
-  out$first.calls <- FALSE
-  
-  
-  
-  #######################################################################################################
-  ## The 32nd component: 'model.formula'.
-  if('D' %in% name.extend.par){
-    out$model.formula <- stats::as.formula(paste(c('gam.resp', as.character(par.extend$model$D)), collapse = ''))
-  } else {
-    out$model.formula <- stats::as.formula('gam.resp~1')
-  }
-  
-  ########################################################################################################
-  ## The 33rd component: 'fgam'.
-  out$fgam <- fgam
-  
-  ########################################################################################################
-  ## The 34th component: 'all.covariates'.
-  if(is(out$args$mask, 'list')){
-    out$all.covariates <- do.call('rbind', out$args$mask)
-  } else {
-    out$all.covariates <- out$args$mask
-  }
-  
-  if(is.scale){
-    for(i in 1:ncol(out$all.covariates)){
-      tem <- out$all.covariates[, i]
-      out$all.covariates[, i] <- (tem - mean(tem)) / sd(tem)
-    }
-  }
-  
-  if(ncol(fgam$X) > 1){
-    out$all.covariates <- cbind(out$all.covariates, fgam$X[,-1])
-  }
-  out$all.covariates <- as.data.frame(out$all.covariates)
-  
   ###########################################################################################################
-  ## The 35th/36th components: conditional likelihood and partial derivatives.
+  ## Components: conditional likelihood and partial derivatives.
   out$CL <- CL
   out$esa_partial_derivatives <- esa.partial.derivatives
   

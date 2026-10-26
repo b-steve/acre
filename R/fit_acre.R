@@ -598,8 +598,6 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
   data.mask <- o.par.extend$data.mask
   data.par <- o.par.extend$data.par
   name.extend.par <- o.par.extend$name.extend.par
-  ## The object fgam is for compatibility with the ADMB model.
-  fgam <- o.par.extend$fgam
   gam_output <- o.par.extend$gam_output
   lst_mean_std <- o.par.extend$lst_mean_std
   is.scale <- o.par.extend$is.scale
@@ -861,7 +859,6 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
        sound.speed = sound.speed,
        par.extend = par.extend,
        arg.input = arg.input,
-       fgam = fgam,
        gam_output = gam_output,
        lst_mean_std = lst_mean_std,
        is.scale = is.scale,
@@ -1035,7 +1032,6 @@ build.fit <- function(spec, tmb){
                sound.speed = spec$sound.speed,
                par.extend = spec$par.extend,
                arg.input = spec$arg.input,
-               fgam = spec$fgam,
                gam.output = spec$gam_output,
                lst.mean.std = spec$lst_mean_std,
                is.scale = spec$is.scale,

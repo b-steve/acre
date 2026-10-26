@@ -783,7 +783,9 @@ AIC.acre <- function(..., k = 2) {
   for (i in seq_along(models)) {
     model <- models[[i]]
     
-    if (model$fit.freqs) {
+    ## A call model fitted with known cue rates.
+    fit.freqs <- !is.null(model$args$cue.rates) && !"animal_ID" %in% colnames(model$args$capt)
+    if (fit.freqs) {
       message(sprintf("NOTE: AIC for model '%s' relies on independence between locations of calls from the same animal, which may not be appropriate.", names(aic_values)[i]))
       aic_values[i] <- NA
     } else {
@@ -1169,6 +1171,39 @@ logLik.acre <- function(object, ...) {
 #' @export
 esa <- function(fit){
   fit$esa
+}
+
+#' Estimated density at each mask point
+#'
+#' Extracts the estimated animal (or call) density at each mask point, for each session.
+#'
+#' @param fit A fitted model from [fit.acre()].
+#' @param session The session to extract. If `NULL`, the default, all sessions are returned.
+#'
+#' @return For one session, a vector with the estimated density at each mask point; otherwise, a
+#'         list of such vectors, one for each session.
+#' @export
+mask.density <- function(fit, session = NULL){
+  if(is.null(session)){
+    fit$D.mask
+  } else {
+    fit$D.mask[[session]]
+  }
+}
+
+#' @export
+print.acre <- function(x, ...){
+  cat("Acoustic spatial capture-recapture model\n")
+  if(!is.null(x$call)){
+    cat("\nCall:\n")
+    print(x$call)
+  }
+  est <- coef(x, types = "fitted")
+  se <- stdEr(x, types = "fitted")
+  cat("\nEstimates:\n")
+  print(cbind(Estimate = unclass(est), "Std. Error" = unclass(se)[names(est)]), ...)
+  cat("\nLog-likelihood:", format(x$loglik), "\n")
+  invisible(x)
 }
 
 
