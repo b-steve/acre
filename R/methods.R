@@ -1196,7 +1196,17 @@ print.acre <- function(x, ...){
   cat("Acoustic spatial capture-recapture model\n")
   if(!is.null(x$call)){
     cat("\nCall:\n")
-    print(x$call)
+    ## With do.call(), the call contains the data themselves, so long arguments are abbreviated.
+    call.args <- as.list(x$call)[-1]
+    arg.text <- vapply(call.args, function(a){
+      d <- paste(deparse(a), collapse = " ")
+      if(nchar(d) > 60) "..." else d
+    }, character(1))
+    arg.names <- names(call.args)
+    if(is.null(arg.names)) arg.names <- rep("", length(call.args))
+    arg.text <- ifelse(nzchar(arg.names), paste(arg.names, "=", arg.text), arg.text)
+    call.text <- paste0(deparse(x$call[[1]]), "(", paste(arg.text, collapse = ", "), ")")
+    cat(strwrap(call.text, exdent = 4), sep = "\n")
   }
   est <- coef(x, types = "fitted")
   se <- stdEr(x, types = "fitted")
