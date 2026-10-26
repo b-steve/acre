@@ -629,9 +629,7 @@ data.sort <- function(dat,  name){
 
   if(name == "data.ID_mask"){
     if(is.animal_ID){
-      ## The data.ID_mask in the C++ template will be sorted as
-      ## session - animal_ID - mask - ID, which differs from this,
-      ## but in the data preparation process, we use this order.
+      ## Calls are ordered as in data.full, so the TMB template can index both models' data the same way.
       dat <- dat[order(dat$session, dat$animal_ID, dat$ID, dat$mask),]
     } else {
       dat <- dat[order(dat$session, dat$ID, dat$mask), ]
@@ -640,18 +638,6 @@ data.sort <- function(dat,  name){
 
   if(name == "data.mask"){
     dat <- dat[order(dat$session, dat$mask),]
-  }
-
-  if(name == "u_id_match"){
-    dat <- dat[order(dat$session, dat$u_id, dat$ID),]
-  }
-
-  if(name == "index_traps_uid"){
-    dat <- dat[order(dat$session, dat$u_id),]
-  }
-
-  if(name == "data_u_bin"){
-    dat <- dat[order(dat$session, dat$u_id, dat$trap),]
   }
 
   return(dat)
@@ -680,74 +666,6 @@ numeric.detfn <- function(detfn){
   if(detfn == 'th') return(4)
   if(detfn == 'lth') return(5)
   if(detfn == 'ss') return(6)
-}
-
-cal.n.det <- function(data, is.uid = FALSE){
-  if(is.uid){
-    data <- subset(data, !is.na(data$u_id))
-  } else {
-    data <- subset(data, !is.na(data$ID))
-  }
-
-  if("animal_ID" %in% colnames(data)){
-    tem <- aggregate(data$bincapt, list(session = data$session,
-                                       animal_ID = data$animal_ID,
-                                       ID = data$ID), sum)
-    tem <- tem[order(tem$session, tem$animal_ID, tem$ID),]
-    return(tem$x)
-  } else {
-    if(is.uid){
-      tem <- aggregate(data$bincapt, list(session = data$session,
-                                         u_id = data$u_id), sum)
-      tem <- tem[order(tem$session, tem$u_id),]
-    } else {
-      tem <- aggregate(data$bincapt, list(session = data$session,
-                                         ID = data$ID), sum)
-      tem <- tem[order(tem$session, tem$ID),]
-    }
-    return(tem$x)
-  }
-
-}
-
-
-extract.unique.id <- function(data.full, dims){
-  dat <- subset(data.full,!is.na(data.full$ID))
-  data.u.id.match <- data.frame(session = numeric(0), ID = numeric(0), u_id = numeric(0))
-  n.u.id <- numeric(0)
-  n.u.id.session <- numeric(dims$n.sessions)
-  for(s in 1:dims$n.sessions){
-    tem <- subset(dat, dat$session == s)
-    if(nrow(tem) > 0){
-      tem <- aggregate(tem$bincapt, list(ID = tem$ID), function(x) t(x))
-      u.bin <- unique(tem$x)
-      n.u.id.session[s] <- nrow(u.bin)
-      tem$u_id <- 0
-      for(i in 1:nrow(tem)){
-        captbin <- as.vector(tem[i,'x'])
-        tem$u_id[i] <- which(apply(u.bin, 1, function(x) all(as.vector(x) == captbin)))
-      }
-      tem <- tem[, c('ID', 'u_id')]
-      tem$session <- s
-      n.u.id <- c(n.u.id, as.vector(table(tem$u_id)))
-      data.u.id.match <- rbind(data.u.id.match, tem)
-      u.bin <- data.frame(session = s, u_id = rep(1:nrow(u.bin), each = dims$n.traps[s]),
-                         trap = rep(1:dims$n.traps[s], nrow(u.bin)), bincapt = as.vector(t(u.bin)))
-    }
-  }
-
-  data.u.bin <- merge(data.full, data.u.id.match, by = c('session', "ID"))
-  ## First sort it as data.full and record the duplicated indices based on "session-uid-trap";
-  ## this logical vector will be used outside of this function to create design matrices from the ones we have
-  ## already built from data.full.
-  data.u.bin <- data.sort(data.u.bin, "data.full")
-  dup <- duplicated(data.u.bin[,c('session', 'u_id', 'trap')])
-
-  data.u.bin <- data.u.bin[!dup, -which(colnames(data.u.bin) %in% c('bearing','dist','ss',
-                                                                   'toa', "ID", 'mrds_x', 'mrds_y'))]
-
-  return(list(data_u_bin = data.u.bin, uid_dup_data_full = dup, u_id_match = data.u.id.match,
-              n_id_uid = n.u.id, n_uids = n.u.id.session))
 }
 
 cus.log <- function(x){

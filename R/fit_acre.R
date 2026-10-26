@@ -682,64 +682,6 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
   ## follows the order of fulllist.par.
   param.og <- fulllist.par[which(fulllist.par %in% param.og)]
 
-  #############################################################################################################
-  ## Unique capture history set-up.
-
-  ## The element dims$n.detection records the number of detectors with a detection for each 'ID' or 'animal_ID-ID',
-  ## so it is a vector of length sum(n.animal.call) or sum(n.IDs).
-  dims$n.detection <- cal.n.det(data.full)
-
-  if(!animal.model){
-
-    tem <- extract.unique.id(data.full, dims)
-    ## These two dimensions are a little ambiguous.
-    ## The vector n.id.uid holds the number of IDs under each unique capture history; it simply
-    ## concatenates these numbers for all unique capture histories in all sessions.
-    ## For example, if there are 3 sessions, the 1st session has 3 unique capture histories, the 2nd has no detections
-    ## and the 3rd session has 2 unique capture histories,
-    ## then n.id.uid will be a vector of length 3 + 0 + 2 = 5.
-
-    dims$n.id.uid <- tem$n_id_uid
-
-    ## The vector n.uids holds the number of unique capture histories in each session; it is a vector
-    ## of length n.sessions.
-
-    dims$n.uids <- tem$n_uids
-
-    ## Each unique capture history.
-    data_u_bin <- tem$data_u_bin
-    uid_dup_data_full <- tem$uid_dup_data_full
-
-    DX.full.uid <- lapply(DX.full,
-                         function(x) {x <- x[!uid_dup_data_full,,drop = FALSE]; x <- x[order(data_u_bin$session, data_u_bin$u_id, data_u_bin$trap),,drop = FALSE]; return(x)})
-
-    data_u_bin <- data.sort(data_u_bin, "data_u_bin")
-
-    ## This is like the number of detections for each uid, as in 'n.detection'; it is a plain vector:
-    ## if there are 3 sessions, and their n.uid values are 3, 0, 2, then "n.detection.uid" is a vector of length 5.
-    dims$n.detection.uid <- cal.n.det(data_u_bin, is.uid = TRUE)
-
-    ## This is a plain vector as well; "n.detection.uid" must be used to extract the indices of traps for one uid.
-    index_traps_uid <- agg.sort(data_u_bin, 'bincapt', c('session', 'u_id'), function(x) which(x == 1))
-    index_traps_uid <- do.call('c', index_traps_uid$x)
-
-
-    ## Table matching IDs to unique capture histories.
-    u_id_match <- tem$u_id_match
-    u_id_match <- data.sort(u_id_match, "u_id_match")
-  } else {
-    ## For animal.model, we do not use the unique capture history trick, so set these related variables to zero.
-    dims$n.id.uid <- 0
-    dims$n.uids <- numeric(dims$n.sessions)
-    dims$n.detection.uid <- 0
-    data_u_bin <- data.frame(bincapt = 0)
-    DX.full.uid <- vector('list', length(fulllist.par))
-    names(DX.full.uid) <- fulllist.par
-    for(i in fulllist.par) DX.full.uid[[i]] <- matrix(0, ncol = 2, nrow = 2)
-    index_traps_uid <- 0
-    u_id_match <- data.frame(ID = 0)
-  }
-
   if(is.null(ss.opts)){
     cutoff <- 0
   } else {
@@ -752,10 +694,6 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
   ## capt_dist = ifelse(is.na(data.full$dist), 0, data.full$dist)
   ## capt_dist = ifelse(capt_dist == 0, 1e-20, capt_dist)
 
-  if(animal.model){
-    ## Due to the order of the loops in the C++ template, re-order this data set.
-    data.ID_mask <- data.ID_mask[order(data.ID_mask$session, data.ID_mask$animal_ID, data.ID_mask$mask, data.ID_mask$ID), ]
-  }
   if(!any(c('local', 'toa') %in% bucket_info)){
     data.ID_mask <- data.ID_mask[1,, drop = FALSE]
   } else {
@@ -776,12 +714,7 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
                n_IDs_for_datafull = ifelse(dims$n.IDs == 0, 1, dims$n.IDs),
                n_traps = dims$n.traps,
                n_masks = dims$n.masks,
-               n_detection = dims$n.detection,
-               n_detection_uid = dims$n.detection.uid,
                n_calls_each_animal = dims$n.animal.call,
-               n_uid_session = dims$n.uids,
-               n_ids_each_uid = dims$n.id.uid,
-               index_traps_uid = index_traps_uid,
 
 
                nrow_data_full = nrow(data.full),
@@ -824,8 +757,6 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
                is_local = as.numeric("local" %in% bucket_info),
                is_freqs = as.numeric("freqs" %in% bucket_info),
 
-               u_id_match = as.numeric(u_id_match$ID),
-               capt_bin_uid = as.numeric(data_u_bin$bincapt),
 
                capt_bin = ifelse(is.na(data.full$bincapt), NA_real_, data.full$bincapt),
                capt_bearing = ifelse(is.na(data.full$bearing), NA_real_, data.full$bearing),
@@ -861,7 +792,6 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
     data[[paste0(name.cpp, "_DX")]][,1] <- ifelse(data[[paste0(name.cpp, "_DX")]][,1] == 0, 1,
                                                  data[[paste0(name.cpp, "_DX")]][,1])
     data[[paste0(name.cpp, "_DX_mask")]] <- ifelse(is.na(DX.mask[[name.r]]), 0, DX.mask[[name.r]])
-    data[[paste0(name.cpp, "_DX_uid")]] <- ifelse(is.na(DX.full.uid[[name.r]]), 0, DX.full.uid[[name.r]])
     data[[paste0(name.cpp, "_bound")]] <- bounds.input[[name.r]]
     parameters[[name.cpp]] <- sv.input[[name.r]]
   }
