@@ -13,7 +13,7 @@
 boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   stopifnot(N > 2)
   if(n.cores != 1) stop('Parallel computing is not available yet; use n.cores = 1.')
-  fit.og <- fit
+  fit.original <- fit
   arguments <- fit$args
 
   ## Deal with infotypes.
@@ -120,7 +120,7 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
     for (i in seq(from = 1, by = 1, along.with = infotypes)){
       new_args <- arguments
       new_args$capt <- arguments$capt[c("bincapt", infotypes[[i]])]
-      new_fit <- suppressWarnings(do.call("fit.og", new_args))
+      new_fit <- suppressWarnings(do.call("fit.from.settings", new_args))
       tem <- coef(new_fit, 'linked')
       new_ncol_res <- length(tem) + 1 + dims$n.sessions
       new_colnames_res <- c(names(tem), 'maxgrad')
@@ -151,7 +151,7 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   maxgrads <- tem$maxgrads
   res_esa <- tem$res_esa
 
-  out <- fit.og
+  out <- fit.original
   boot <- list(boots = res, maxgrads = maxgrads, res_esa = res_esa, extra.boots = extra.res)
   out$boot <- boot
   class(out) <- c("acreboot", class(fit))
@@ -171,11 +171,11 @@ boot.step <- function(seed, N, fit, arguments, dims, infotypes, len.output, name
     if(nrow(capture_sim[[n]]) > 0){
       arguments$capt <- get.capt.for.boot(capture_sim[[n]], dims, infotypes, animal.model)
       arguments$cue.rates <- cue_rates_sim[[n]]
-      fit_boot <- suppressWarnings(try(do.call('fit.og', arguments), silent = TRUE))
+      fit_boot <- suppressWarnings(try(do.call("fit.from.settings", arguments), silent = TRUE))
       ## If not converged, refit the model with the default start values.
       if ("try-error" %in% class(fit_boot) || fit_boot$maxgrad < -0.01){
         arguments$sv <- NULL
-        fit_boot <- suppressWarnings(try(do.call("fit.og", arguments), silent = TRUE))
+        fit_boot <- suppressWarnings(try(do.call("fit.from.settings", arguments), silent = TRUE))
       }
       ## If it still has not converged, give up and report NA, which is the default value of the output,
       ## so nothing needs to be done. If it converged, assign the result to the output.

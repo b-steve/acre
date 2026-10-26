@@ -231,7 +231,7 @@ read.acre <- function(captures, traps, mask = NULL,
   output$survey.length <- survey.length
   output$sound.speed <- sound.speed
 
-  ## The object arg.input is not used by fit.og, but it needs to be passed to the final model fit object.
+  ## The object arg.input is not used by fit.from.settings(), but it needs to be passed to the final model fit object.
   output$arg.input <- arg.input
   class(output) <- "acre.data"
   return(output)
@@ -471,7 +471,7 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
   dat$CL <- CL
   dat$two.stage <- two.stage
 
-  output <- do.call("fit.og", dat)
+  output <- do.call("fit.from.settings", dat)
   output$arg_input <- arg.input
   output$call <- match.call()
   output$CL <- CL
@@ -479,7 +479,12 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
   return(output)
 }
 
-#' Original fit function from ascr
+#' Fit a model from a list of settings
+#'
+#' The model-fitting engine used by `fit.acre()`, `boot.acre()` and `sim.study()`. It takes the
+#' settings that `fit.acre()` builds from its arguments, which are also stored in a fitted object
+#' as `fit$args`, so a model can be refitted to new capture data. Fitting has three stages:
+#' `prepare.fit()`, `run.tmb()` and `build.fit()`.
 #'
 #' @param capt a list or a data frame with capture data. Columns named `session`, `ID` and `trap` are required, with
 #'                 each row being regarded as one detection. Extra information can be provided as columns `bearing`, `dist`
@@ -513,9 +518,9 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
 #'
 #' @param ...
 #' @keywords internal
-fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL, cue.rates = NULL,
-                  survey.length = NULL, sound.speed = 331, local = FALSE, par.extend = NULL, tracing = TRUE, gr.skip = FALSE,
-                  sv.link = NULL, CL = FALSE, two.stage = FALSE, ...){
+fit.from.settings <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
+                              cue.rates = NULL, survey.length = NULL, sound.speed = 331, local = FALSE, par.extend = NULL,
+                              tracing = TRUE, gr.skip = FALSE, sv.link = NULL, CL = FALSE, two.stage = FALSE, ...){
   ## Keep all original input arguments.
   arg.names <- names(as.list(environment()))
   arg.input <- vector('list', length(arg.names))
@@ -526,7 +531,18 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
     }
   }
 
-  extra_args <- list(...)
+  spec <- prepare.fit(capt = capt, traps = traps, mask = mask, detfn = detfn, sv = sv, bounds = bounds, fix = fix,
+                      ss.opts = ss.opts, cue.rates = cue.rates, survey.length = survey.length,
+                      sound.speed = sound.speed, local = local, par.extend = par.extend, sv.link = sv.link, CL = CL,
+                      arg.input = arg.input, extra.args = list(...))
+  tmb <- run.tmb(spec, tracing = tracing, gr.skip = gr.skip, two.stage = two.stage)
+  build.fit(spec, tmb)
+}
+
+## Prepares a fit: the data, design matrices, start values, bounds and fixed parameters, and the
+## data, parameters and map for TMB. Returns everything run.tmb() and build.fit() need.
+prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.rates, survey.length, sound.speed,
+                        local, par.extend, sv.link, CL, arg.input, extra.args){
 
   ####################################################################################################
   ## There are two kinds of models (with or without individual identification), so sort this out first.
@@ -586,7 +602,7 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
 
   o.par.extend <- par.extend.fun(par.extend = par.extend, data.full = data.full, data.traps = data.traps, data.mask = data.mask,
                                 animal.model = animal.model, dims = dims, fulllist.par = fulllist.par,
-                                extra.args = extra_args)
+                                extra.args = extra.args)
 
   data.full <- o.par.extend$data.full
   data.trap <- o.par.extend$data.trap
@@ -828,6 +844,57 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
   G_lst <- construct.G.matrix.list(TMB_par_names, name.extend.par, lst_mean_std,
                                    is.scale)
 
+  list(data = data,
+       parameters = parameters,
+       map = map,
+       G_lst = G_lst,
+       name.extend.par = name.extend.par,
+       data.trap = data.trap,
+       data.mask = data.mask,
+       param.og = param.og,
+       param.og.4cpp = param.og.4cpp,
+       name.fixed.par = name.fixed.par,
+       name.fixed.par.4cpp = name.fixed.par.4cpp,
+       dims = dims,
+       data.par = data.par,
+       data.full = data.full,
+       data.traps = data.traps,
+       data.dists.thetas = data.dists.thetas,
+       detfn = detfn,
+       DX.full = DX.full,
+       DX.mask = DX.mask,
+       fix.input = fix.input,
+       bucket_info = bucket_info,
+       cue.rates = cue.rates,
+       mean.cue.rates = mean.cue.rates,
+       A = A,
+       survey.length = survey.length,
+       sound.speed = sound.speed,
+       par.extend = par.extend,
+       arg.input = arg.input,
+       fgam = fgam,
+       gam_output = gam_output,
+       lst_mean_std = lst_mean_std,
+       is.scale = is.scale,
+       ss.link = ss.link,
+       cutoff = cutoff,
+       CL = CL)
+}
+
+## Builds the TMB objective, maximises the likelihood, and computes standard errors; the estimates
+## and their covariance matrix are back-transformed to the original scale of any scaled covariates.
+run.tmb <- function(spec, tracing, gr.skip, two.stage){
+  data <- spec$data
+  parameters <- spec$parameters
+  map <- spec$map
+  G_lst <- spec$G_lst
+  name.extend.par <- spec$name.extend.par
+  data.trap <- spec$data.trap
+  data.mask <- spec$data.mask
+  param.og.4cpp <- spec$param.og.4cpp
+  name.fixed.par.4cpp <- spec$name.fixed.par.4cpp
+  dims <- spec$dims
+
   if(!gr.skip) {
     ## Have TMB build the likelihood function.
     obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map,
@@ -948,43 +1015,47 @@ fit.og <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fi
   o$cov <- G %*% o$cov %*% t(G)
   o$sd <- sqrt(diag(o$cov))
 
-  out <- outFUN(data.par = data.par,
-               data.full = data.full,
-               data.trap = data.trap,
-               data.traps = data.traps,
-               data.mask = data.mask,
-               data.dists.thetas = data.dists.thetas,
-               detfn = detfn,
-               param.og = param.og,
-               param.og.4cpp = param.og.4cpp,
-               o = o,
-               tmb.output.og = tmb_output_og,
-               opt = opt,
-               name.fixed.par = name.fixed.par,
-               name.extend.par = name.extend.par,
-               dims = dims,
-               DX.full = DX.full,
-               DX.mask = DX.mask,
-               fix.input = fix.input,
-               bucket.info = bucket_info,
-               cue.rates = cue.rates,
-               mean.cue.rates = mean.cue.rates,
-               A = A,
-               survey.length = survey.length,
-               sound.speed = sound.speed,
-               par.extend = par.extend,
-               arg.input = arg.input,
-               fgam = fgam,
-               gam.output = gam_output,
-               lst.mean.std = lst_mean_std,
-               is.scale = is.scale,
-               ss.link = ss.link,
-               cutoff = cutoff,
-               CL = CL,
-               esa.partial.derivatives = esa_partial_derivatives)
+  list(o = o, opt = opt, tmb.output.og = tmb_output_og, esa.partial.derivatives = esa_partial_derivatives)
+}
+
+## Builds the fitted object from the prepared fit and the TMB results.
+build.fit <- function(spec, tmb){
+  out <- outFUN(data.par = spec$data.par,
+               data.full = spec$data.full,
+               data.trap = spec$data.trap,
+               data.traps = spec$data.traps,
+               data.mask = spec$data.mask,
+               data.dists.thetas = spec$data.dists.thetas,
+               detfn = spec$detfn,
+               param.og = spec$param.og,
+               param.og.4cpp = spec$param.og.4cpp,
+               o = tmb$o,
+               tmb.output.og = tmb$tmb.output.og,
+               opt = tmb$opt,
+               name.fixed.par = spec$name.fixed.par,
+               name.extend.par = spec$name.extend.par,
+               dims = spec$dims,
+               DX.full = spec$DX.full,
+               DX.mask = spec$DX.mask,
+               fix.input = spec$fix.input,
+               bucket.info = spec$bucket_info,
+               cue.rates = spec$cue.rates,
+               mean.cue.rates = spec$mean.cue.rates,
+               A = spec$A,
+               survey.length = spec$survey.length,
+               sound.speed = spec$sound.speed,
+               par.extend = spec$par.extend,
+               arg.input = spec$arg.input,
+               fgam = spec$fgam,
+               gam.output = spec$gam_output,
+               lst.mean.std = spec$lst_mean_std,
+               is.scale = spec$is.scale,
+               ss.link = spec$ss.link,
+               cutoff = spec$cutoff,
+               CL = spec$CL,
+               esa.partial.derivatives = tmb$esa.partial.derivatives)
 
   class(out) <- "acre"
-
-  return(out)
+  out
 }
 

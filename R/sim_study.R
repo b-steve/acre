@@ -145,7 +145,7 @@ sim.study <- function(sim.name, n.rand, fit=NULL, n.cores=NULL, save=T, plot=T,
     fit_args$tracing <- FALSE
     
     sim_fit <- tryCatch({
-      fit <- do.call('fit.og', fit_args)
+      fit <- do.call('fit.from.settings', fit_args)
       fit$error <- FALSE
       fit
     }, error = function(e) {
