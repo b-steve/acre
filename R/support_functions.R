@@ -135,7 +135,6 @@ extend.dat.check <- function(dat, check.var, ori.dat, n.sessions, n.var, identic
 }
 
 
-
 covariates.mask.check <- function(dat, n.sessions, n.masks, identical.flag){
   stopifnot(is(dat, 'list') | is(dat, 'data.frame'))
 
@@ -198,7 +197,6 @@ default.link <- function(i){
   if(i == "sigma.toa") return('log')
   if(i == "sigma.b0.ss") return('log')
 }
-
 
 
 detfn.params <- function(detfn){
@@ -451,7 +449,6 @@ default.sv <- function(param, info){
 
     detpar.names <- param.og[which(!(param.og %in% c('kappa', 'alpha', 'sigma.toa', 'D')))]
     pars <- sv[detpar.names]
-
 
 
     if(detfn == 'ss'){
@@ -749,7 +746,6 @@ item.split <- function(dat, item){
 }
 
 
-
 list.2vector.4value <- function(param){
   tem <- sapply(param, length)
   output <- do.call('c', param)
@@ -770,8 +766,6 @@ ext.par.in.new.df <- function(par.ext, new.covariates, extend.par.covariates){
 
   return(output)
 }
-
-
 
 
 delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, new.covariates = NULL,
@@ -978,11 +972,6 @@ fixed.par.vcov.add <- function(m, p, type){
   return(output)
 
 }
-
-
-
-
-
 
 
 vector.to.df <- function(vec){
@@ -1295,8 +1284,6 @@ location.cov.to.mask <- function(mask, loc.cov, control.nn2 = NULL, control.weig
     }
 
 
-
-
     for(j in name_cov){
       ## First, locate the index of the element we got this covariate from.
       i <- index_name_cov[which(j == name_cov)]
@@ -1395,7 +1382,6 @@ par.extend.create <- function(loc.cov = NULL, mask = NULL, convert.loc2mask = li
     } else {
       mask_cov <- NULL
     }
-
 
 
     par.extend$data <- list()
@@ -1749,24 +1735,6 @@ circle.fun <- function(centre = data.frame(x = 0, y = 0), r = 0.5, npoints = 50)
 }
 
 
-homo.digit <- function(x){
-  x <- as.character(x)
-  n_digit <- nchar(x)
-  max_digit <- max(n_digit)
-
-  n_zero <- max_digit - n_digit
-
-  y <- character(length(x))
-  for(i in 1:length(x)){
-    y[i] <- paste(rep('0', n_zero[i]), collapse = "")
-  }
-  output <- paste(y, x, sep = "")
-  return(output)
-}
-
-
-
-
 ## Predict density using location coordinates; currently only used in the plot.
 
 D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
@@ -2035,7 +2003,6 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
 }
 
 
-
 res.split <- function(res, n.sessions){
   n_pars <- ncol(res) - 1 - n.sessions
   ## Extract and remove the maximum gradient component.
@@ -2080,36 +2047,6 @@ var.from.res <- function(res, fixed = NULL){
 
   return(vcov)
 
-}
-
-
-mce.from.res <- function(res, coefs, M, seed.mce){
-  n_pars <- ncol(res)
-  par_names <- colnames(res)
-  bias <- apply(res, 2, "mean", na.rm = TRUE) - as.vector(coefs)
-  ## Bootstrap to calculate the MCE for the bias and standard errors.
-  bias.mce <- numeric(n_pars)
-  se.mce <- numeric(n_pars)
-  names(bias.mce) <- par_names
-  names(se.mce) <- par_names
-  if (M > 0){
-    set.seed(seed.mce)
-    converged <- which(!is.na(res[, 1]))
-    n.converged <- length(converged)
-    mce.boot <- matrix(sample(converged, size = n.converged*M,
-                              replace = TRUE), nrow = M,
-                       ncol = n.converged)
-    for (i in par_names){
-      par.boot <- matrix(res[mce.boot, i], nrow = M, ncol = n.converged)
-      bias.mce[i] <- sd(apply(par.boot, 1, mean) - coefs[i] - bias[i])
-      se.mce[i] <- sd(apply(par.boot, 1, sd))
-    }
-  } else {
-    bias.mce <- NA
-    se.mce <- NA
-  }
-
-  return(list(bias = bias, bias.mce = bias.mce, se.mce = se.mce))
 }
 
 
@@ -2254,7 +2191,6 @@ res.mod.for.CI <- function(res, est, correct.bias){
   }
   return(res)
 }
-
 
 
 erf <- function(x){
@@ -2415,36 +2351,6 @@ conf.int.column.can.be.non.scientific <- function(x) {
   all(abs(x) >= 1e-6 & abs(x) <= 1e6, na.rm = TRUE)
 }
 
-conf.int.matrix.format <- function(mat) {
-  ## Format the matrix according to the desired behaviour:
-  ##
-  ## First two columns: if ALL values in that column can be printed as
-  ## non-scientific, print as such for that column, else print in scientific.
-  ##
-  ## Second two columns: if ALL values ACROSS BOTH columns can be printed as
-  ## non-scientific, print as such for both columns, else print in scientific.
-  ##
-  ## This is a little hacky; there is definitely a better way.
-
-  formatted_mat <- mat
-  ## Format the first two columns independently.
-  for (col in 1:2) {
-    if (conf.int.column.can.be.non.scientific(mat[, col])) {
-      formatted_mat[, col] <- format(mat[, col], scientific = FALSE, trim=T)
-    } else {
-      formatted_mat[, col] <- format(mat[, col], scientific = TRUE, trim=T)
-    }
-  }
-
-  ## Format the last two columns together.
-  if (all(sapply(mat[, 3:4], conf.int.column.can.be.non.scientific))) {
-    formatted_mat[, 3:4] <- format(mat[, 3:4], scientific = FALSE, trim=T)
-  } else {
-    formatted_mat[, 3:4] <- format(mat[, 3:4], scientific = TRUE, trim=T)
-  }
-
-  return(formatted_mat)
-}
 
 is.animal.model <- function(fit) {
   return(ifelse(is.null(fit$arg_input$captures$animal_ID), FALSE, TRUE))

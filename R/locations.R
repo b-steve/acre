@@ -74,27 +74,6 @@ location.density <- function(fit, call.id, animal.id=NULL, session=1,
   return(merged_densities)
 }
 
-#' Calculate density breaks for given probabilities
-#'
-#' Calculates appropriate breaks for given density from provided probability
-#' bins.
-#'
-#' @param dens a numeric vector of densities.
-#' @param probability.breaks the probabilities at which to calculate density
-#'    breaks.
-#' @keywords internal
-get.density.breaks.from.probability <- function(dens, probability.breaks) {
-  dens.sort <- sort(dens, decreasing = TRUE)
-  probs.sort <- cumsum(dens.sort)/sum(dens.sort)
-  prob.levels <- probability.breaks
-  levels <- numeric(length(prob.levels))
-  for (i in 1:length(prob.levels)){
-    levels[i] <- dens.sort[which(abs(probs.sort - prob.levels[i]) ==
-                                   min(abs(probs.sort - prob.levels[i])))[1]]
-  }
-
-  return(levels)
-}
 
 dist.density <- function(fit, call.id, animal.id=NULL, session=1,
                          mask=get.mask(fit)[[session]]) {

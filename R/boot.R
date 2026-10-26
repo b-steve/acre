@@ -12,6 +12,7 @@
 #' @export
 boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   stopifnot(N > 2)
+  if(n.cores != 1) stop('Parallel computing is not available yet; use n.cores = 1.')
   fit.og <- fit
   arguments <- fit$args
 
@@ -77,14 +78,6 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
 
   fit$fit.types['mrds'] <- FALSE
   ##############################################################################
-  is.mrds <- fit$fit.types['mrds']
-  if(is.mrds){
-    if(fit$n.sessions == 1){
-      mrds.loc <- arguments$capt[['mrds']]
-    } else {
-      mrds.loc <- lapply(arguments$capt, function(x) x[['mrds']])
-    }
-  }
 
 
 
@@ -103,59 +96,54 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   seed_boot <- sample(1:1e8, size = N)
 
 
-  if(n.cores == 1){
-    ncol_res <- n_pars + 1 + dims$n.sessions
-    colnames_res <- c(par_names, 'maxgrad', paste('esa', seq(dims$n.sessions), sep = "_"))
+  ncol_res <- n_pars + 1 + dims$n.sessions
+  colnames_res <- c(par_names, 'maxgrad', paste('esa', seq(dims$n.sessions), sep = "_"))
 
 
-    ########################################################
-    res <- boot.step(seed = seed_boot,
-                    N = N,
-                    fit = fit,
-                    arguments = arguments,
-                    dims = dims,
-                    infotypes = fit$infotypes,
-                    len.output = ncol_res,
-                    name.output = colnames_res)
-    ########################################################
+  ########################################################
+  res <- boot.step(seed = seed_boot,
+                  N = N,
+                  fit = fit,
+                  arguments = arguments,
+                  dims = dims,
+                  infotypes = fit$infotypes,
+                  len.output = ncol_res,
+                  name.output = colnames_res)
+  ########################################################
 
 
-    ## Additional bootstraps.
-    if(!is.null(infotypes)){
-      extra.res <- vector(mode = "list", length = length(infotypes))
-      names(extra.res) <- names(infotypes)
+  ## Additional bootstraps.
+  if(!is.null(infotypes)){
+    extra.res <- vector(mode = "list", length = length(infotypes))
+    names(extra.res) <- names(infotypes)
 
-      for (i in seq(from = 1, by = 1, along.with = infotypes)){
-        new_args <- arguments
-        new_args$capt <- arguments$capt[c("bincapt", infotypes[[i]])]
-        new_fit <- suppressWarnings(do.call("fit.og", new_args))
-        tem <- coef(new_fit, 'linked')
-        new_ncol_res <- length(tem) + 1 + dims$n.sessions
-        new_colnames_res <- c(names(tem), 'maxgrad')
+    for (i in seq(from = 1, by = 1, along.with = infotypes)){
+      new_args <- arguments
+      new_args$capt <- arguments$capt[c("bincapt", infotypes[[i]])]
+      new_fit <- suppressWarnings(do.call("fit.og", new_args))
+      tem <- coef(new_fit, 'linked')
+      new_ncol_res <- length(tem) + 1 + dims$n.sessions
+      new_colnames_res <- c(names(tem), 'maxgrad')
 
-        ####################################################################################
-        extra.res[[i]] <- suppressWarnings(boot.step(seed = seed_boot,
-                                                     N = N,
-                                                     fit = new_fit,
-                                                     arguments = new_args,
-                                                     dims = dims,
-                                                     infotypes = infotypes[[i]],
-                                                     len.output = new_ncol_res,
-                                                     name.output = new_colnames_res))
-        ####################################################################################
-        colnames(extra.res[[i]]) <- new_colnames_res
+      ####################################################################################
+      extra.res[[i]] <- suppressWarnings(boot.step(seed = seed_boot,
+                                                   N = N,
+                                                   fit = new_fit,
+                                                   arguments = new_args,
+                                                   dims = dims,
+                                                   infotypes = infotypes[[i]],
+                                                   len.output = new_ncol_res,
+                                                   name.output = new_colnames_res))
+      ####################################################################################
+      colnames(extra.res[[i]]) <- new_colnames_res
 
-      }
-
-      ## End of if(!is.null(infotypes)).
-    } else {
-      extra.res <- NULL
     }
 
-    ## End of n.cores == 1.
+    ## End of if(!is.null(infotypes)).
   } else {
-    stop('parallel computing is not avaiable yet.')
+    extra.res <- NULL
   }
+
 
   ## The object "res" contains all coefficients on the "link" scale.
   tem <- res.split(res, dims$n.sessions)

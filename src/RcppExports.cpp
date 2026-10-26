@@ -11,65 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// find_incomplete_blocks
-IntegerVector find_incomplete_blocks(const LogicalMatrix& mat);
-RcppExport SEXP _acre_find_incomplete_blocks(SEXP matSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const LogicalMatrix& >::type mat(matSEXP);
-    rcpp_result_gen = Rcpp::wrap(find_incomplete_blocks(mat));
-    return rcpp_result_gen;
-END_RCPP
-}
-// blockify
-LogicalMatrix blockify(const LogicalMatrix& block, const NumericMatrix& reqss);
-RcppExport SEXP _acre_blockify(SEXP blockSEXP, SEXP reqssSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const LogicalMatrix& >::type block(blockSEXP);
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type reqss(reqssSEXP);
-    rcpp_result_gen = Rcpp::wrap(blockify(block, reqss));
-    return rcpp_result_gen;
-END_RCPP
-}
-// detection_dists
-NumericMatrix detection_dists(const NumericMatrix& trap_dists, const NumericVector& traps);
-RcppExport SEXP _acre_detection_dists(SEXP trap_distsSEXP, SEXP trapsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type trap_dists(trap_distsSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type traps(trapsSEXP);
-    rcpp_result_gen = Rcpp::wrap(detection_dists(trap_dists, traps));
-    return rcpp_result_gen;
-END_RCPP
-}
-// detection_timediffs
-NumericMatrix detection_timediffs(const NumericVector& times, const NumericVector& traps);
-RcppExport SEXP _acre_detection_timediffs(SEXP timesSEXP, SEXP trapsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericVector& >::type times(timesSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type traps(trapsSEXP);
-    rcpp_result_gen = Rcpp::wrap(detection_timediffs(times, traps));
-    return rcpp_result_gen;
-END_RCPP
-}
-// min_skip_matrix
-int min_skip_matrix(const IntegerMatrix& skip, const LogicalMatrix& allocated);
-RcppExport SEXP _acre_min_skip_matrix(SEXP skipSEXP, SEXP allocatedSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type skip(skipSEXP);
-    Rcpp::traits::input_parameter< const LogicalMatrix& >::type allocated(allocatedSEXP);
-    rcpp_result_gen = Rcpp::wrap(min_skip_matrix(skip, allocated));
-    return rcpp_result_gen;
-END_RCPP
-}
 // distances
 NumericMatrix distances(const NumericMatrix& a, const NumericMatrix& b);
 RcppExport SEXP _acre_distances(SEXP aSEXP, SEXP bSEXP) {
