@@ -4,14 +4,7 @@
 \alias{create.capt}
 \title{Create captures object}
 \usage{
-create.capt(
-  captures,
-  traps = NULL,
-  ind.model = NULL,
-  n.sessions = NULL,
-  n.traps = NULL,
-  mrds.locs = NULL
-)
+create.capt(captures, traps)
 }
 \arguments{
 \item{captures}{a data frame with capture data. Columns named "session", "ID" and "trap" are required, with
@@ -22,25 +15,10 @@ each row being regarded as one detection. Extra information can be provided as c
 Each row in a matrix/data frame provides Cartesian coordinates (in metres) for the location of a detector.
 In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
 If the detector locations stayed the same across all sessions, only one matrix/data frame is required.}
-
-\item{ind.model}{a logical value indicates whether to include individual identification which should be recorded as "animal_ID",
-a column in the argument "captures". By default, it will be NULL, so the model will determine it automatically
-depending on whether this information is provided in "captures".}
-
-\item{n.sessions}{a numeric value denotes the number of sessions. It will only be used when the argument "traps" is not provided,
-or it is a list with one element, or it is a data frame, or it is a matrix.}
-
-\item{n.traps}{a numeric vector denotes the number of traps in each session. It will only be used when the argument "traps" is not provided.
-If its length is 1, its value will be used for each session when we have multiple sessions. If its length is greater than 1,
-the length of it must match the number of sessions.}
-
-\item{mrds.locs}{a list with length of n.sessions with data frames or matrices as components, each data.frame or matrix
-contains two columns record the Cartesian coordinates of each call. If a session has no detection,
-keep the corresponding component as NULL. If animal.model, then each component must be a data.frame
-with 4 columns: "animal_ID", "ID", "mrds_x" and "mrds_y".}
 }
 \value{
-A capture history object for model fitting.
+A data frame of the detections, one row per detection, with the auxiliary data that were
+recorded; it is checked, and sorted by session, animal (if any), call and detector.
 }
 \description{
 Create a captures object to use with the function read.acre
