@@ -12,11 +12,14 @@ expected.fast <- list(
     fitted = c(`g0` = 1, `sigma.(Intercept)` = 2.015201369, `sigma.brandsony` = -0.2685835651, `D.(Intercept)` = 5.802687553, `D.noise` = 0.1195906146),
     se.linked = c(`g0_link` = 0, `sigma.(Intercept)_link` = 0.1340566375, `sigma.brandsony_link` = 0.0689811146, `D.(Intercept)_link` = 2.052882277, `D.noise_link` = 0.2094313595),
     se.fitted = c(`g0` = 0, `sigma.(Intercept)` = 0.1340566375, `sigma.brandsony` = 0.0689811146, `D.(Intercept)` = 2.052882277, `D.noise` = 0.2094313595)),
+  ## On this mask (nx = 15) a mask point lies exactly on a detector in the second session,
+  ## which previously broke the distance and bearing densities.
   mul_ses_ext = list(
-    linked = c(`g0.(Intercept)_link` = 1.25359777, `g0.weathersunny_link` = -0.8911804938, `sigma.(Intercept)_link` = 1.100837189, `sigma.brandsony_link` = 0.1752579176, `kappa_link` = 2.576412486, `alpha_link` = 0.9306624646, `D_link` = 7.881289518),
-    fitted = c(`g0.(Intercept)` = 1.25359777, `g0.weathersunny` = -0.8911804938, `sigma.(Intercept)` = 1.100837189, `sigma.brandsony` = 0.1752579176, `kappa` = 13.14987806, `alpha` = 2.536188757, `D` = 2647.284081),
-    se.linked = c(`g0.(Intercept)_link` = 1.249589952, `g0.weathersunny_link` = 1.056282017, `sigma.(Intercept)_link` = 0.08094759863, `sigma.brandsony_link` = 0.07862947605, `kappa_link` = 0.2832507518, `alpha_link` = 0.1819861236, `D_link` = 0.1821153843),
-    se.fitted = c(`g0.(Intercept)` = 1.249589952, `g0.weathersunny` = 1.056282017, `sigma.(Intercept)` = 0.08094759863, `sigma.brandsony` = 0.07862947605, `kappa` = 3.724712848, `alpha` = 0.4615511606, `D` = 482.1111577)),
+    nx = 15,
+    linked = c(`g0.(Intercept)_link` = 1.122406117, `g0.weathersunny_link` = -0.7984000535, `sigma.(Intercept)_link` = 1.135135126, `sigma.brandsony_link` = 0.1610688124, `kappa_link` = 2.437759552, `alpha_link` = 0.7636746358, `D_link` = 7.853962712),
+    fitted = c(`g0.(Intercept)` = 1.122406117, `g0.weathersunny` = -0.7984000535, `sigma.(Intercept)` = 1.135135126, `sigma.brandsony` = 0.1610688124, `kappa` = 11.44736476, `alpha` = 2.146148061, `D` = 2575.921754),
+    se.linked = c(`g0.(Intercept)_link` = 1.124427029, `g0.weathersunny_link` = 0.9465556007, `sigma.(Intercept)_link` = 0.08169213277, `sigma.brandsony_link` = 0.07905177388, `kappa_link` = 0.4132375784, `alpha_link` = 0.1599511853, `D_link` = 0.1823255466),
+    se.fitted = c(`g0.(Intercept)` = 1.124427029, `g0.weathersunny` = 0.9465556007, `sigma.(Intercept)` = 0.08169213277, `sigma.brandsony` = 0.07905177388, `kappa` = 4.730481294, `alpha` = 0.3432789261, `D` = 469.6563416)),
   hhn_cue = list(
     linked = c(`sigma_link` = 1.395335085, `lambda0_link` = 1.514337902, `D_link` = 6.218601322),
     fitted = c(`sigma` = 4.036326857, `lambda0` = 4.546409963, `D` = 502.0006038),
@@ -53,7 +56,8 @@ expect.fit.matches <- function(fit, expected, tolerance = 1e-4){
 
 for(data.name in names(expected.fast)){
   test_that(paste0("fast fit on coarse mask -- ", data.name), {
-    fit <- fit.demo.coarse(data.name)
+    nx <- if(is.null(expected.fast[[data.name]]$nx)) 16 else expected.fast[[data.name]]$nx
+    fit <- fit.demo.coarse(data.name, nx = nx)
     expect.fit.matches(fit, expected.fast[[data.name]])
   })
 }
