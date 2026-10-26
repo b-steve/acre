@@ -418,7 +418,10 @@ create.capt <- function(captures, traps = NULL, ind.model = NULL, n.sessions = N
         captures <- merge(head_data, captures, by = c('session', 'animal_ID', 'ID','trap'), all.x = TRUE)
         captures <- captures[,which(colnames(captures) %in% c('session', 'animal_ID', 'ID', 'trap', 'bincapt',
                                                              'bearing', 'toa', 'dist', 'ss', 'mrds_x', 'mrds_y'))]
-        for(i in colnames(captures)) captures[,i] <- ifelse(is.na(captures[,i]) & !is.na(captures[,'ID']), 0, captures[,i])
+        ## Rows added for traps that did not detect a call get zeros, as for the non-animal model; a missing
+        ## value recorded for an actual detection stays NA, so the likelihood can skip it.
+        undetected <- is.na(captures$bincapt) & !is.na(captures$ID)
+        for(i in colnames(captures)) captures[undetected & is.na(captures[, i]), i] <- 0
         captures <- data.sort(captures, 'data.full')
         return(captures)
     }

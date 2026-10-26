@@ -1080,6 +1080,7 @@ Type acreTMB(objective_function<Type>* obj)
   int index_n_det_and_id_uid;
   int n_det;
   int index_data_full_initial;
+  bool detected;
 
   //essentially this is "Type *pointer_g0_vec_full;" below are the same
   Type *p_g0_full;
@@ -1852,9 +1853,11 @@ Type acreTMB(objective_function<Type>* obj)
 				}
 
 				for(t = 1; t <= n_t; t++){
+				  //only detections carry auxiliary data; undetected traps hold placeholder zeros
+				  detected = capt_bin[index_data_full] == 1;
 				  //bearing
 				  if(is_bearing == 1){
-				    if (std::isnan(asDouble(*p_capt_bearing))) {
+				    if (!detected || std::isnan(asDouble(*p_capt_bearing))) {
 				      //
 				    } else {
 				      *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
@@ -1871,7 +1874,7 @@ Type acreTMB(objective_function<Type>* obj)
 
 				  //dist
 				  if(is_dist == 1){
-				    if (std::isnan(asDouble(*p_capt_dist))) {
+				    if (!detected || std::isnan(asDouble(*p_capt_dist))) {
 				      //
 				    } else {
 				      if(*p_capt_dist != 0){
@@ -1892,7 +1895,7 @@ Type acreTMB(objective_function<Type>* obj)
 
 				  //ss_origin
 				  if(is_ss_origin == 1){
-					if(*p_capt_ss != 0){
+					if(detected && *p_capt_ss != 0){
 					  *p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
 					  trans(p_sigma_ss_tem, par_link(11));
 					  
@@ -1911,6 +1914,8 @@ Type acreTMB(objective_function<Type>* obj)
 					p_essx++;
 				}
 
+				  index_data_full++;
+
 				  //end of trap 't'
 				}
 				//end of call 'i'
@@ -1927,7 +1932,7 @@ Type acreTMB(objective_function<Type>* obj)
 			  //}
 			  
 			  
-			  l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w *
+			  l_i += (is_conditional == 0 ? (*p_D_tem) : Type(1.0)) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w *
 				  exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * 
 				  exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
 
@@ -2009,9 +2014,11 @@ Type acreTMB(objective_function<Type>* obj)
 				  }
 
 				  for(t = 1; t <= n_t; t++){
+					//only detections carry auxiliary data; undetected traps hold placeholder zeros
+					detected = capt_bin[index_data_full] == 1;
 					//bearing
 					if(is_bearing == 1){
-					  if (std::isnan(asDouble(*p_capt_bearing))) {
+					  if (!detected || std::isnan(asDouble(*p_capt_bearing))) {
 					    //
 					  } else {
 					    *p_kappa_tem = *p_kappa_full + *p_kappa_mask;
@@ -2028,7 +2035,7 @@ Type acreTMB(objective_function<Type>* obj)
 
 					//dist
 					if(is_dist == 1){
-					  if (std::isnan(asDouble(*p_capt_dist))) {
+					  if (!detected || std::isnan(asDouble(*p_capt_dist))) {
 					    //
 					  } else {
 					    if(*p_capt_dist != 0){
@@ -2047,7 +2054,7 @@ Type acreTMB(objective_function<Type>* obj)
 
 					//ss_origin
 					if(is_ss_origin == 1){
-					  if(*p_capt_ss != 0){
+					  if(detected && *p_capt_ss != 0){
 						*p_sigma_ss_tem = *p_sigma_ss_full + *p_sigma_ss_mask;
 						trans(p_sigma_ss_tem, par_link(11));
 
@@ -2059,12 +2066,14 @@ Type acreTMB(objective_function<Type>* obj)
 					  p_essx++;
 					}
 
+					index_data_full++;
+
 					//end of trap 't'
 				  }
 				  //end of call 'i'
 				}
 
-			  l_i += (*p_D_tem) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w *
+			  l_i += (is_conditional == 0 ? (*p_D_tem) : Type(1.0)) * dpois(Type(ci), Type((*p_mu_tem) * servey_len)) * l_w *
 				  exp((*p_mu_tem) * servey_len * (1 - p_dot[m - 1])) * 
 				  exp(fy_toa_log + fy_bear_log + fy_dist_log + fy_ss_log);
 
@@ -2094,7 +2103,13 @@ Type acreTMB(objective_function<Type>* obj)
 			//end of 'is_local == 1'
 		  }
 		  
-		  *pointer_nll -= log((l_i * area_unit) + std::numeric_limits<double>::min());
+		  //the conditional likelihood conditions on the number of detected animals in this session,
+		  //so each animal's contribution is normalised by the session's ESA
+		  if(is_conditional == 0){
+		    *pointer_nll -= log((l_i * area_unit) + std::numeric_limits<double>::min());
+		  } else {
+		    *pointer_nll -= log((l_i * area_unit / esa(s - 1)) + std::numeric_limits<double>::min());
+		  }
 		  //end of animal 'a'
         }
         //end of if(n_a > 0)
