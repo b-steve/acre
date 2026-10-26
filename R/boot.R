@@ -62,11 +62,7 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   ## Temporarily force it to be FALSE, since it is not yet clear how to deal with it.
   if(fit$fit.types['mrds']){
     fit$infotypes <- fit$infotypes[which(fit$infotypes!='mrds')]
-    if(fit$n.sessions == 1){
-      arguments$capt[['mrds']] <- NULL
-    } else {
-      for(s in 1:fit$n.sessions) arguments$capt[[s]][['mrds']] <- NULL
-    }
+    arguments$capt <- arguments$capt[, !colnames(arguments$capt) %in% c('mrds_x', 'mrds_y'), drop = FALSE]
   }
 
   if(!is.null(infotypes)){
@@ -119,11 +115,12 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
 
     for (i in seq(from = 1, by = 1, along.with = infotypes)){
       new_args <- arguments
-      new_args$capt <- arguments$capt[c("bincapt", infotypes[[i]])]
+      base_cols <- intersect(c('session', 'animal_ID', 'ID', 'trap'), colnames(arguments$capt))
+      new_args$capt <- arguments$capt[, c(base_cols, infotypes[[i]]), drop = FALSE]
       new_fit <- suppressWarnings(do.call("fit.from.settings", new_args))
       tem <- coef(new_fit, 'linked')
       new_ncol_res <- length(tem) + 1 + dims$n.sessions
-      new_colnames_res <- c(names(tem), 'maxgrad')
+      new_colnames_res <- c(names(tem), 'maxgrad', paste('esa', seq(dims$n.sessions), sep = "_"))
 
       ####################################################################################
       extra.res[[i]] <- suppressWarnings(boot.step(seed = seed_boot,
@@ -169,7 +166,7 @@ boot.step <- function(seed, N, fit, arguments, dims, infotypes, len.output, name
   cue_rates_sim <- tem$sim_cue_rates
   for(n in 1:N){
     if(nrow(capture_sim[[n]]) > 0){
-      arguments$capt <- get.capt.for.boot(capture_sim[[n]], dims, infotypes, animal.model)
+      arguments$capt <- get.capt.for.boot(capture_sim[[n]], infotypes, animal.model)
       arguments$cue.rates <- cue_rates_sim[[n]]
       fit_boot <- suppressWarnings(try(do.call("fit.from.settings", arguments), silent = TRUE))
       ## If not converged, refit the model with the default start values.

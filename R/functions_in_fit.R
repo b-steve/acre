@@ -1,111 +1,77 @@
-capture.fun <- function(capt, animal.model){
+## Builds the capture data used for fitting: one row per call and detector, with bincapt = 1 for the
+## detectors that detected the call, and the auxiliary data at those detectors (zero at the others).
+## The detections come from create.capt(), and the numbers of sessions and detectors from the traps.
+capture.fun <- function(capt, traps, animal.model){
   all.types <- c("bearing", "dist", "ss", "toa")
-  
+
   ## If covariate data are included, make sure the data are not all NA.
   ## If we attempt to fit a model where ALL the covariate data are missing
   ## (set to NA), then TMB will provide NaNs for the standard errors.
   for (type in all.types) {
     if (type %in% names(capt)) {
-      if (all(is.na(unlist(capt[type])) | (unlist(capt[type])) == 0)) {
-        stop(paste0("All the covariate data for \"", type, "\" is NA. Please remove 
+      if (all(is.na(capt[[type]]) | capt[[type]] == 0)) {
+        stop(paste0("All the covariate data for \"", type, "\" is NA. Please remove
                   this covariate before converting the data and attempting to fit
                   a model."))
       }
     }
   }
-  
-  if(!animal.model){
-            if("bincapt" %in% names(capt)){
-              n.sessions <- 1
-              n.traps <- ncol(capt$bincapt)
-              n.IDs <- nrow(capt$bincapt)
-              bucket_info <- all.types[all.types %in% names(capt)]
-              is.mrds <- "mrds" %in% names(capt)
-              
-            } else {
-              n.sessions <- length(capt)
-              n.traps <- sapply(capt, function(x) ncol(x$bincapt))
-              
-              n.IDs <- sapply(capt, function(x) nrow(x$bincapt))
-              bucket_info <- all.types[all.types %in% names(capt[[1]])]
-              is.mrds <- "mrds" %in% names(capt[[1]])
-              
-            }
-            
-            tem.data.capt <- vector('list', n.sessions)
-            for(i in 1:n.sessions){
-              if(n.sessions == 1){
-                tem <- capt
-              } else {
-                tem <- capt[[i]]
-              }
-              
-              number.row <- n.IDs[i] * n.traps[i]
-              tem.df <- data.frame(session = rep(i, number.row), ID = numeric(number.row))
-              for(j in c("trap", "bincapt", all.types, "mrds_x", "mrds_y")) tem.df[[j]] <- numeric(number.row)
-              
-              if(number.row > 0){
-                tem.df$ID <- rep(1:nrow(tem$bincapt), n.traps[i])
-                tem.df$trap <- rep(1:n.traps[i], each = n.IDs[i])
-                for(k in c('bincapt', bucket_info)) tem.df[[k]] <- as.vector(tem[[k]])
-                
-                if(is.mrds){
-                  tem$mrds <- as.data.frame(tem$mrds, stringsAsFactors = FALSE)
-                  colnames(tem$mrds) <- c('mrds_x', 'mrds_y')
-                  tem$mrds$ID <- 1:nrow(tem$mrds)
-                  tem.df <- merge(tem.df, tem$mrds, by = "ID")
-                }
-                
-              }
-              tem.data.capt[[i]] <- tem.df
-            }
-            data.capt <- do.call("rbind", tem.data.capt)
-            ## The variable n.animals is not used in this case, so just use 0 as a placeholder.
-            n.animals <- numeric(n.sessions)
-  #####################################################################################################          
-  } else {
-  #####################################################################################################
-            
-            
-            base_cols <- c('session', 'animal_ID', 'ID', 'trap', 'bincapt')
-            all_cols <- c(base_cols, 'mrds_x', 'mrds_y', all.types)
-            
-            if(any(!base_cols %in% colnames(capt))){
-              stop(paste0('columns: ', paste(base_cols, collapse = ", "), ", must be included."))
-            }
-    
-            ## For the animal-included model, since there is no compatibility concern, create.capt() has
-            ## already sorted out the data structure; here we just need to extract some basic information.
-            
-            ## Because of the data cleaning in create.capt(), session and trap will be
-            ## successive natural numbers, so taking the max is equivalent to taking length(unique(xxx)).
-            n.sessions <- max(capt$session)
-            n.traps <- agg.sort(capt, 'trap', 'session', max)$x
-            
-            n.animals <- agg.sort(capt, 'animal_ID', 'session', function(x) length(unique(x)))$x
 
-            no.det <- agg.sort(capt, 'animal_ID', 'session', function(x) any(is.na(x)))$x
+  n.sessions <- length(traps)
+  n.traps <- sapply(traps, nrow)
+  bucket_info <- all.types[all.types %in% colnames(capt)]
+  is.mrds <- animal.model && "mrds_x" %in% colnames(capt)
+  ## The animal model keeps only the auxiliary data types that were recorded; the call model has
+  ## columns for all of them.
+  types <- if(animal.model) bucket_info else all.types
+  key.cols <- c("animal_ID"[animal.model], "ID")
 
-            
-            n.animals <- ifelse(no.det, 0, n.animals)
-            
-            ## The variable n.IDs becomes length(unique(animal_ID, ID)) for each session.
-            n.IDs <- agg.sort(capt, c('animal_ID', 'ID'), 'session', function(x) length(unique(x)))$x
-            n.IDs <- ifelse(no.det, 0, n.IDs)
-            
-            is.mrds <- "mrds_x" %in% colnames(capt)
-            bucket_info <- all.types[all.types %in% colnames(capt)]
-            
-            data.capt <- capt[, colnames(capt) %in% all_cols]
-            for(i in c('mrds_x', 'mrds_y', all.types)){
-              if(!i %in% colnames(data.capt)) data.capt[[i]] <- 0
-            }
+  n.IDs <- numeric(n.sessions)
+  n.animals <- numeric(n.sessions)
+  data.capt <- vector('list', n.sessions)
+  for(s in 1:n.sessions){
+    det <- capt[capt$session == s, , drop = FALSE]
+    if(nrow(det) == 0) next
+    ## The calls in this session, in the order of the (sorted) detections.
+    call.key <- do.call(paste, c(det[key.cols], sep = "\r"))
+    calls <- det[!duplicated(call.key), key.cols, drop = FALSE]
+    n.calls <- nrow(calls)
+    n.IDs[s] <- n.calls
+    if(animal.model) n.animals[s] <- length(unique(calls$animal_ID))
+    ## Each call at each detector; the call model numbers its calls 1, 2, ... within the session.
+    tem <- data.frame(session = rep(s, n.calls * n.traps[s]))
+    if(animal.model){
+      tem$animal_ID <- rep(calls$animal_ID, each = n.traps[s])
+      tem$ID <- rep(calls$ID, each = n.traps[s])
+    } else {
+      tem$ID <- rep(seq_len(n.calls), each = n.traps[s])
+    }
+    tem$trap <- rep(seq_len(n.traps[s]), n.calls)
+    tem$bincapt <- 0
+    for(j in types) tem[[j]] <- 0
+    tem$mrds_x <- 0
+    tem$mrds_y <- 0
+    row <- (match(call.key, unique(call.key)) - 1) * n.traps[s] + det$trap
+    tem$bincapt[row] <- 1
+    for(j in bucket_info) tem[[j]][row] <- det[[j]]
+    if(is.mrds){
+      tem$mrds_x[row] <- det$mrds_x
+      tem$mrds_y[row] <- det$mrds_y
+    }
+    data.capt[[s]] <- tem
   }
-  
+  data.capt <- do.call("rbind", data.capt)
+  if(is.null(data.capt)){
+    data.capt <- data.frame(session = numeric(0), animal_ID = character(0)[animal.model], ID = character(0),
+                            trap = numeric(0), bincapt = numeric(0))
+  }
+  for(j in c(all.types, "mrds_x", "mrds_y")){
+    if(!j %in% colnames(data.capt)) data.capt[[j]] <- 0
+  }
+
   if(animal.model){
     data.capt$animal_ID <- as.character(data.capt$animal_ID)
   }
-  
   data.capt$ID <- as.character(data.capt$ID)
 
   ## The distance model is a gamma distribution, so recorded distances must be positive.
@@ -119,7 +85,6 @@ capture.fun <- function(capt, animal.model){
   return(list(data.capt = data.capt, dims = list(n.sessions = n.sessions, n.traps = n.traps,
                                                  n.IDs = n.IDs, n.animals = n.animals),
               bucket_info = c(bucket_info, "mrds"[is.mrds])))
-  
 }
 
 

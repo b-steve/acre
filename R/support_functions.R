@@ -6,17 +6,6 @@ fulllist.par.generator <- function(){
             "sigma.b0.ss", 'D', 'mu'))
 }
 
-natural.number.check <- function(session, key){
-  output <- TRUE
-  for(s in unique(session)){
-    tem_key <- key[which(session == s)]
-    seq_key <- seq(length(unique(tem_key)))
-    if(any(!tem_key %in% seq_key)) output <- FALSE
-  }
-
-  return(output)
-}
-
 convert.natural.number <- function(dat, is.animalID, which.convert = 'both'){
 
   dat.na <- subset(dat, is.na(dat$ID))

@@ -183,17 +183,12 @@ read.acre <- function(captures, traps, mask = NULL,
   output <- list()
   capt <- create.capt(captures, traps)
 
-  ## Obtain n.sessions; the output of create.capt differs with the model type: if individual ID is included,
-  ## it is a data frame, otherwise it is a list.
-  if(is(capt, 'data.frame')){
-    n.sessions <- max(capt$session)
+  ## The number of sessions: from 'traps' when it has a set of detectors for each session, otherwise
+  ## from the captures, as in create.capt().
+  if(is(traps, 'list') && !is.data.frame(traps) && length(traps) > 1){
+    n.sessions <- length(traps)
   } else {
-    if("bincapt" %in% names(capt)){
-      n.sessions <- 1
-    } else {
-      n.sessions <- length(capt)
-    }
-
+    n.sessions <- max(capt$session)
   }
 
   traps <- df.to.list(traps, n.sessions)
@@ -545,28 +540,22 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
                         local, par.extend, sv.link, CL, arg.input, extra.args){
 
   ####################################################################################################
-  ## There are two kinds of models (with or without individual identification), so sort this out first.
-  if(is(capt, 'data.frame')){
-    if('animal_ID' %in% colnames(capt)){
-      animal.model <- TRUE
-
-      if(!is.null(cue.rates)){
-        cue.rates <- NULL
-        warning('argument "cue.rates" is ignored since "animal.model" is TRUE.')
-      }
-
-    } else {
-      stop('information about "animal_ID" is not provided.')
-    }
-  } else {
-    animal.model <- FALSE
-    if(!is(capt, 'list')) stop('invalid input "capt", "create.capt()" is recommended for obtaining valid input object.')
+  ## The captures are one row per detection (see create.capt()); with an "animal_ID" column, the
+  ## animal model is fitted.
+  if(!is.data.frame(capt)) stop('invalid input "capt", "create.capt()" is recommended for obtaining valid input object.')
+  animal.model <- 'animal_ID' %in% colnames(capt)
+  if(animal.model && !is.null(cue.rates)){
+    cue.rates <- NULL
+    warning('argument "cue.rates" is ignored since "animal.model" is TRUE.')
   }
 
+  ## The detectors in each session; a single set of detectors is used in every session.
+  if(!is(traps, 'list') || is.data.frame(traps)) traps <- list(traps)
+  if(length(traps) == 1 && nrow(capt) > 0 && max(capt$session) > 1) traps <- rep(traps, max(capt$session))
 
   ####################################################################################################
   ## Beginning of fit.acre().
-  o <- capture.fun(capt = capt, animal.model = animal.model)
+  o <- capture.fun(capt = capt, traps = traps, animal.model = animal.model)
   dims <- o$dims
   data.full <- o$data.capt
   bucket_info <- o$bucket_info

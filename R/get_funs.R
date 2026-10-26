@@ -526,169 +526,23 @@ get.sv.for.boot <- function(fit){
   return(output)
 }
 
-## A simple version of create.capt(); the input is the simulated capture history, if there is any,
-## which means nrow(capture) > 0.
-get.capt.for.boot <- function(captures, dims, infotypes, animal.model){
-  ## Since captures is the simulated data, not the original capture history used in the original model fitting,
-  ## dims$n.IDs and dims$animal_ID are not valid here, so do not use them.
-  n.sessions <- dims$n.sessions
-  n.traps <- dims$n.traps
-  ## Deal with irregular IDs and remove unused info types.
-  captures <- captures[,c('session', 'animal_ID'[animal.model], 'ID', 'trap', infotypes)]
-  ## Convert ID and animal_ID to natural numbers to make it easier to build the head data later.
-  captures <- convert.natural.number(captures, animal.model)
-  captures$bincapt <- 1
-
-  ## Prepare head data containing all combinations of session-animal_ID[animal.model]-ID-trap.
-
-
-  tem_data_head <- vector('list', n.sessions)
-  for(s in 1:n.sessions){
-    capt_session <- subset(captures, captures$session == s)
-    if(nrow(capt_session) > 0){
-      if(animal.model){
-        n.animal <- max(capt_session$animal_ID)
-        tem <- vector('list', n.animal)
-        for(a in 1:n.animal){
-          n.ID <- max(subset(capt_session, capt_session$animal_ID == a)$ID)
-          tem[[a]] <- data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]),
-                                trap = rep(seq(n.traps[s]), n.ID), animal_ID = a)
-        }
-
-        tem_data_head[[s]] <- do.call('rbind', tem)
-
-      } else {
-        n.ID <- max(capt_session$ID)
-        tem_data_head[[s]] <- data.frame(session = s, ID = rep(seq(n.ID), each = n.traps[s]),
-                                        trap = rep(seq(n.traps[s]), n.ID))
-
-      }
-
-    } else {
-      tem_data_head[[s]] <- data.frame(session = s, ID = NA, trap = 1:n.traps[s])
-      if(animal.model) tem_data_head[[s]]$animal_ID <- NA
-    }
-
-  }
-
-  data_head <- do.call('rbind', tem_data_head)
-
-  if(animal.model){
-    o <- merge(data_head, captures, by = c('session', 'ID', 'trap', 'animal_ID'), all.x = TRUE)
-  } else {
-    o <- merge(data_head, captures, by = c('session', 'ID', 'trap'), all.x = TRUE)
-  }
-
-  o <- data.sort(o, 'data.full')
-  for(i in c('bincapt', infotypes)) o[,i] <- ifelse(is.na(o[,i]) & !is.na(o[,'ID']), 0, o[,i])
-
-  if(!animal.model){
-    n.IDs <- numeric(n.sessions)
-    for(s in 1:n.sessions){
-      tem <- subset(captures, captures$session == s)
-      if(nrow(tem) > 0) n.IDs[s] <- max(tem$ID)
-    }
-
-
-    ## Prepare the structure of the output.
-    if(n.sessions == 1){
-      output <- vector('list', length(infotypes) + 1)
-      names(output) <- c('bincapt', infotypes)
-      for(i in names(output)){
-        output[[i]] <- matrix(o[,i], ncol = n.traps, byrow = TRUE)
-        rownames(output[[i]]) <- seq(n.IDs)
-      }
-    } else {
-      output <- vector('list', n.sessions)
-      for(s in 1:n.sessions){
-        output[[s]] <- vector('list', length(infotypes) + 1)
-        names(output[[s]]) <- c('bincapt', infotypes)
-        tem <- subset(o, o$session == s)
-        for(i in names(output[[s]])){
-          if(n.IDs[s] > 0){
-            output[[s]][[i]] <- matrix(tem[,i], ncol = n.traps[s], byrow = TRUE)
-            rownames(output[[s]][[i]]) <- seq(n.IDs[s])
-          } else {
-            output[[s]][[i]] <- matrix(nrow = 0, ncol = n.traps[s])
-          }
-        }
-      }
-    }
-  } else {
-    output <- o
-  }
-
-
-  return(output)
-
+## The simulated detections in a bootstrap, keeping only the auxiliary data used in the fit.
+get.capt.for.boot <- function(captures, infotypes, animal.model){
+  captures <- captures[, c('session', 'animal_ID'[animal.model], 'ID', 'trap', infotypes), drop = FALSE]
+  captures <- data.sort(captures, 'data.full')
+  rownames(captures) <- NULL
+  captures
 }
 
-## Obtain the capture history from the acre.data object.
+## Obtain the detections from the acre.data object, with calls (and animals) numbered from 1 within
+## each session.
 get.capt.for.plot <- function(dat){
-  all.types <- c("bearing", "dist", "ss", "toa")
-
   capt <- dat$capt
-
-  ## According to the current data conversion function, if capt is a data frame, it means
-  ## the data are individual-identification-embedded data, i.e. "animal_ID" is included.
-  if(is(capt, 'data.frame')){
-    ## First convert animal_ID and ID to successive natural numbers.
-    data.capt <- convert.natural.number(capt, TRUE, "both")
-
-  } else {
-    if("bincapt" %in% names(capt)){
-      n.sessions <- 1
-      n.traps <- ncol(capt$bincapt)
-      n.IDs <- nrow(capt$bincapt)
-      extra_info <- all.types[all.types %in% names(capt)]
-      is.mrds <- "mrds" %in% names(capt)
-    } else {
-      n.sessions <- length(capt)
-      n.traps <- sapply(capt, function(x) ncol(x$bincapt))
-      n.IDs <- sapply(capt, function(x) nrow(x$bincapt))
-      extra_info <- all.types[all.types %in% names(capt[[1]])]
-      is.mrds <- "mrds" %in% names(capt[[1]])
-    }
-
-    tem.data.capt <- vector('list', n.sessions)
-    for(i in 1:n.sessions){
-      if(n.sessions == 1){
-        tem <- capt
-      } else {
-        tem <- capt[[i]]
-      }
-
-      number.row <- n.IDs[i] * n.traps[i]
-      tem.df <- data.frame(session = rep(i, number.row), ID = numeric(number.row))
-      for(j in c("trap", "bincapt", extra_info)) tem.df[[j]] <- numeric(number.row)
-      if(is.mrds) tem.df[,c('mrds_x', 'mrds_y')] <- 0
-
-      if(number.row > 0){
-        tem.df$ID <- rep(1:nrow(tem$bincapt), n.traps[i])
-        tem.df$trap <- rep(1:n.traps[i], each = n.IDs[i])
-        for(k in c('bincapt', extra_info)) tem.df[[k]] <- as.vector(tem[[k]])
-
-        if(is.mrds){
-          tem$mrds <- as.data.frame(tem$mrds, stringsAsFactors = FALSE)
-          colnames(tem$mrds) <- c('mrds_x', 'mrds_y')
-          tem$mrds$ID <- 1:nrow(tem$mrds)
-          tem.df <- merge(tem.df, tem$mrds, by = "ID")
-        }
-
-      }
-      tem.data.capt[[i]] <- tem.df
-    }
-    data.capt <- do.call("rbind", tem.data.capt)
-    data.capt <- convert.natural.number(data.capt, FALSE, "ID")
-  }
-
+  animal.model <- "animal_ID" %in% colnames(capt)
+  data.capt <- convert.natural.number(capt, animal.model, if(animal.model) "both" else "ID")
   data.capt <- data.sort(data.capt, "data.full")
-  data.capt <- subset(data.capt, data.capt$bincapt == 1)
-  data.capt <- data.capt[, -which(colnames(data.capt) == 'bincapt')]
-
   return(data.capt)
 }
-
 
 get.boot.res <- function(fit, pars){
   output <- fit$boot$boots
