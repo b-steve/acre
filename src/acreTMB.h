@@ -626,17 +626,53 @@ Type acreTMB(objective_function<Type>* obj)
       for(int m = 0; m < n_m; m++){
         fw(u, m) = Type(1.0);
         for(int t = 0; t < n_t; t++){
-          Type w = Type(uid_hist[u][t]);
-          if(is_ss == 0){
-            fw(u, m) *= pow(p_k(m, t), w) * pow((1 - p_k(m, t)), (1 - w));
+          if(uid_hist[u][t] == 1){
+            //for signal strengths, the detection terms are replaced by the signal strength
+            //densities
+            if(is_ss == 0) fw(u, m) *= p_k(m, t);
           } else {
-            //the detection terms are replaced by the signal strength densities
-            fw(u, m) *= pow((1 - p_k(m, t)), (1 - w));
+            fw(u, m) *= 1 - p_k(m, t);
           }
         }
       }
     }
     std::vector<int> uid_done(n_uid, 0);
+
+    //the parts of the time-of-arrival, bearing, distance and signal strength densities that
+    //depend only on the parameters, the detector and the mask point; computing them here,
+    //rather than for every detection, keeps the tape much smaller
+    vector<Type> log_sigma_toa_m(n_m), half_prec_toa_m(n_m);
+    std::vector<int> toa_ok(n_m, 0);
+    matrix<Type> kappa_mt(n_m, n_t), log_i0_mt(n_m, n_t);
+    matrix<Type> alpha_mt(n_m, n_t), dist_const_mt(n_m, n_t);
+    matrix<Type> log_sigma_ss_mt(n_m, n_t), half_prec_ss_mt(n_m, n_t);
+    for(int m = 0; m < n_m; m++){
+      int mrow = off_mask + m;
+      if(is_toa == 1 && !(std::isnan(asDouble(sigma_toa_vec_full(off_trap))) || std::isnan(asDouble(sigma_toa_vec_mask(mrow))))){
+        Type sigma_toa_tem = linked(sigma_toa_vec_full(off_trap) + sigma_toa_vec_mask(mrow), par_link(14));
+        log_sigma_toa_m(m) = log(sigma_toa_tem);
+        half_prec_toa_m(m) = 0.5 / pow(sigma_toa_tem, 2);
+        toa_ok[m] = 1;
+      }
+      for(int t = 0; t < n_t; t++){
+        int trow = off_trap + t;
+        if(is_bearing == 1){
+          kappa_mt(m, t) = linked(kappa_vec_full(trow) + kappa_vec_mask(mrow), par_link(12));
+          log_i0_mt(m, t) = log(bessi0(kappa_mt(m, t)));
+        }
+        if(is_dist == 1){
+          //the gamma log-density, with shape alpha and mean dx, is
+          //alpha * (log(y) - log(dx) - y / dx) - log(y) + alpha * log(alpha) - log(Gamma(alpha))
+          alpha_mt(m, t) = linked(alpha_vec_full(trow) + alpha_vec_mask(mrow), par_link(13));
+          dist_const_mt(m, t) = alpha_mt(m, t) * log(alpha_mt(m, t)) - log(Gamma(alpha_mt(m, t)));
+        }
+        if(is_ss == 1){
+          Type sigma_ss_tem = linked(sigma_ss_vec_full(trow) + sigma_ss_vec_mask(mrow), par_link(11));
+          log_sigma_ss_mt(m, t) = log(sigma_ss_tem);
+          half_prec_ss_mt(m, t) = 0.5 / pow(sigma_ss_tem, 2);
+        }
+      }
+    }
 
     //the contribution of each group
     int c0 = 0;
@@ -670,34 +706,30 @@ Type acreTMB(objective_function<Type>* obj)
 
           //times of arrival
           if(is_toa == 1){
-            if(!(std::isnan(asDouble(sigma_toa_vec_full(off_trap))) || std::isnan(asDouble(sigma_toa_vec_mask(mrow))))){
-              Type sigma_toa_tem = linked(sigma_toa_vec_full(off_trap) + sigma_toa_vec_mask(mrow), par_link(14));
+            if(toa_ok[m] == 1){
               int n_det = uid_n_det[call_uid[c]];
-              fy_toa_log += (1 - n_det) * log(sigma_toa_tem) + (-0.5) * toa_ssq(off_idmask + c * n_m + m) / pow(sigma_toa_tem, 2);
+              fy_toa_log += (1 - n_det) * log_sigma_toa_m(m) - toa_ssq(off_idmask + c * n_m + m) * half_prec_toa_m(m);
             }
           }
 
           //bearings, distances and signal strengths exist only for detections
           for(int t = 0; t < n_t; t++){
             int row = off_full + c * n_t + t;
-            int trow = off_trap + t;
             if(uid_hist[call_uid[c]][t] != 1) continue;
             int dt = off_dt + m * n_t + t;
 
             if(is_bearing == 1 && !std::isnan(asDouble(capt_bearing(row)))){
-              Type kappa_tem = linked(kappa_vec_full(trow) + kappa_vec_mask(mrow), par_link(12));
-              fy_bear_log += kappa_tem * cos(capt_bearing(row) - theta(dt)) - log(bessi0(kappa_tem));
+              fy_bear_log += kappa_mt(m, t) * cos(capt_bearing(row) - theta(dt)) - log_i0_mt(m, t);
             }
 
             if(is_dist == 1 && !std::isnan(asDouble(capt_dist(row)))){
-              Type alpha_tem = linked(alpha_vec_full(trow) + alpha_vec_mask(mrow), par_link(13));
-              fy_dist_log += ((-1) * (alpha_tem * (log(dx(dt)) - log(alpha_tem)) + log(Gamma(alpha_tem))) + (alpha_tem - 1) *
-                log(capt_dist(row)) - alpha_tem * capt_dist(row) / dx(dt));
+              Type y = capt_dist(row);
+              fy_dist_log += alpha_mt(m, t) * (log(y) - log(dx(dt)) - y / dx(dt)) - log(y) + dist_const_mt(m, t);
             }
 
             if(is_ss == 1){
-              Type sigma_ss_tem = linked(sigma_ss_vec_full(trow) + sigma_ss_vec_mask(mrow), par_link(11));
-              fy_ss_log += dnorm(capt_ss(row), essx(dt), sigma_ss_tem, true);
+              Type resid = capt_ss(row) - essx(dt);
+              fy_ss_log += -log_sigma_ss_mt(m, t) - 0.5 * log(2 * M_PI) - resid * resid * half_prec_ss_mt(m, t);
             }
           }
         }
