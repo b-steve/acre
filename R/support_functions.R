@@ -1955,7 +1955,7 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
                                from.boot = control.boot$from.boot, show.fixed.par = FALSE))
 
       } else {
-        vcov_matrix <- vcov(fit, types = 'linked', pars = 'D', show.fixed.par = FALSE)
+        vcov_matrix <- vcov(fit, types = 'linked', pars = 'D')
         D.se <- sqrt(delta.for.pred(DX, values_link_og, vcov_matrix, log.scale))
       }
 

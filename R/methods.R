@@ -135,13 +135,13 @@ print.coef.acre <- function(x, ...){
 #' @param types a character vector, the same as "coef.acre()".
 #' @param pars a character vector, the same as "coef.acre()".
 #' @param new.covariates a data frame, the same as "coef.acre()".
-#' @param show.fixed.par a logical value. To control whether to include the fixed parameters in the covariance matrix.
-#'                       It is TRUE by default.
 #' @param ... For S3 compatibility.
+#'
+#' @details Fixed parameters are not included, as they have no variance.
 #'
 #' @return a list with matrices as its elements if multiple 'types'. a matrix if only one 'types'.
 #' @export
-vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, show.fixed.par = TRUE, ...){
+vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, ...){
   
   ## Deal with the default setting for 'types'.
   tem <- types.pars.sol(types, pars, new.covariates)
@@ -205,13 +205,7 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
   cov_linked <- cov_linked[index_par, index_par, drop = FALSE]
   link_funs <- link_funs[index_par]
   param_values <- param_values[index_par]
-  fixed_par <- get.fixed.par.name(object)
-  
-  ## Suppress "D" if the conditional likelihood was fitted.
-  if (object$CL) {
-    fixed_par <- setdiff(fixed_par, "D")
-  }
-  
+
   output <- vector('list', length(types))
   names(output) <- types
   for(type in types){
@@ -244,11 +238,6 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
         dimnames(output[[type]]) <- list(new_name, new_name)
         
       }
-      
-      
-      if(show.fixed.par){
-        output[[type]] <- fixed.par.vcov.add(output[[type]], fixed_par, type)
-      }
 
     } else if(type == 'derived'){
       output[[type]] <- cov_derived
@@ -256,7 +245,7 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
       ## If 'new.covariates' is not provided, just keep the extended covariates as parameters with an identity link function.
       if(is.null(new.covariates)){
         output[[type]] <- delta.method.acre(cov_linked, param_values, link.funs = link_funs, back.trans = TRUE)
-        dimnames(output[[type]]) <- list(name_dim, name_dim)
+        dimnames(output[[type]]) <- list(unname(name_dim), unname(name_dim))
       } else {
         gam.output <- get.gam(object)
         output[[type]] <- delta.method.acre(cov_linked, param_values, new.covariates = new.covariates,
@@ -281,10 +270,6 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
         dimnames(output[[type]]) <- list(new_name, new_name)
       }
       
-      if(show.fixed.par){
-        output[[type]] <- fixed.par.vcov.add(output[[type]], fixed_par, type)
-      }
-      
     }
   }
   
@@ -304,14 +289,14 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 #' @param new.covariates a data frame, the same as "coef.acre()".
 #' @param from.boot a logical value, TRUE by default, to control whether the covariance matrix is calculated
 #'                  from the bootstrap results. If FALSE, the method "vcov.acre()" will be called.
-#' @param show.fixed.par a logical value, the same as "vcov.acre()".
 #' @param ... For S3 compatibility.
+#' @details Fixed parameters are not included, as they have no variance.
 #' @return (Still to write)
 #' @export
-vcov.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, from.boot = TRUE, show.fixed.par = TRUE, ...){
+vcov.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, from.boot = TRUE, ...){
   
   if(!from.boot){
-    output <- vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates, show.fixed.par = show.fixed.par)
+    output <- vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates)
     return(output)
   }
   
@@ -331,22 +316,12 @@ vcov.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NU
     if(i == 'linked'){
       res_linked <- res.transform(res, new.covariates, pars, object, back.trans = FALSE)
       output[[i]] <- var.from.res(res_linked, fixed_par)
-      
-      if(show.fixed.par){
-        output[[i]] <- fixed.par.vcov.add(output[[i]], fixed_par, i)
-      }
-      
     } else if(i == 'derived'){
       res_esa <- get.boot.res.esa(object)
       output[[i]] <- var.from.res(res_esa)
     } else {
       res_fitted <- res.transform(res, new.covariates, pars, object, back.trans = TRUE)
       output[[i]] <- var.from.res(res_fitted, fixed_par)
-      
-      if(show.fixed.par){
-        output[[i]] <- fixed.par.vcov.add(output[[i]], fixed_par, i)
-      }
-      
     }
   }
   
@@ -380,14 +355,15 @@ stdEr <- function(object, ...){
 #' @param types a character vector, the same as "coef.acre()".
 #' @param pars a character vector, the same as "coef.acre()".
 #' @param new.covariates a data frame, the same as "coef.acre()".
-#' @param show.fixed.par a logical value, the same as "vcov.acre()".
+#' @param show.fixed.par a logical value. If TRUE, the default, fixed parameters are included with
+#'                       standard errors of zero.
 #' @param ... For S3 compatibility.
 #'
 #' @return a named numeric vector
 #' @export
 stdEr.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, show.fixed.par = TRUE, ...){
-  std.from.vcov(vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates,
-                          show.fixed.par = show.fixed.par))
+  output.vcov <- vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates)
+  std.from.vcov(output.vcov, object, types, pars, new.covariates, show.fixed.par)
 }
 
 
@@ -398,13 +374,14 @@ stdEr.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL,
 #' @param pars a character vector, the same as "coef.acre()".
 #' @param new.covariates a data frame, the same as "coef.acre()".
 #' @param from.boot a logical value, the same as "vcov.acreboot()".
-#' @param show.fixed.par a logical value, the same as "vcov.acre()".
+#' @param show.fixed.par a logical value, the same as "stdEr.acre()".
 #' @param ... For S3 compatibility.
 #' @return (Still to write)
 #' @export
 stdEr.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, from.boot = TRUE, show.fixed.par = TRUE, ...){
-  std.from.vcov(vcov.acreboot(object = object, types = types, pars = pars, new.covariates = new.covariates,
-                              from.boot = from.boot, show.fixed.par = show.fixed.par))
+  output.vcov <- vcov.acreboot(object = object, types = types, pars = pars, new.covariates = new.covariates,
+                               from.boot = from.boot)
+  std.from.vcov(output.vcov, object, types, pars, new.covariates, show.fixed.par)
 }
 
 #' @export
@@ -918,8 +895,20 @@ par.estimates <- function(object, name, values.link, type, new.covariates, name.
   unlink.fun(link = link, value = values)
 }
 
-## Standard errors from the output of vcov(), which is a matrix, or a list of matrices for several types.
-std.from.vcov <- function(output.vcov){
+## Standard errors from the output of vcov(), which is a matrix, or a list of matrices for several types,
+## optionally with fixed parameters added.
+std.from.vcov <- function(output.vcov, object, types, pars, new.covariates, show.fixed.par){
+  ## Fixed parameters are not in the covariance matrices, so they are added with zero variance.
+  if(show.fixed.par){
+    types <- types.pars.sol(types, pars, new.covariates)$types
+    fixed.par <- get.fixed.par.name(object)
+    ## Density is not a parameter of a conditional-likelihood fit.
+    if(object$CL) fixed.par <- setdiff(fixed.par, "D")
+    if(!is(output.vcov, 'list')) output.vcov <- structure(list(output.vcov), names = types)
+    for(i in setdiff(names(output.vcov), 'derived')){
+      output.vcov[[i]] <- fixed.par.vcov.add(output.vcov[[i]], fixed.par, i)
+    }
+  }
   if(is(output.vcov, 'list')){
     output <- NULL
     for(i in names(output.vcov)){
