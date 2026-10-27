@@ -976,7 +976,12 @@ run.tmb <- function(spec, tracing, gr.skip, two.stage){
     ## Extracting the names using pd_object$fn() means that in the future, new
     ## ADREPORT()'s won't mess things up (i.e. if we extracted positionally instead).
     log_esa_pd_rows <- which(names(pd_object$fn()) == "log_esa")
-    esa_partial_derivatives <- partial_derivative_matrix[log_esa_pd_rows,]
+    esa_partial_derivatives <- partial_derivative_matrix[log_esa_pd_rows, , drop = FALSE]
+    ## These are derivatives with respect to the coefficients for the standardised covariates. The
+    ## coefficients for the original covariates are G times these, so the derivatives with respect
+    ## to them are obtained by multiplying by the inverse of G.
+    G <- diag.block.combine(G_lst[unique(names(opt$par))])
+    esa_partial_derivatives <- drop(esa_partial_derivatives %*% solve(G))
   }
 
   tmb_output_og <- list(est = o$value, vcov = o$cov)
