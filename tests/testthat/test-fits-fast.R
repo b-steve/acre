@@ -81,6 +81,14 @@ test_that("estimates, standard errors and intervals with new covariate values", 
   expect_error(stdEr(fit, par = 'g0'))
 })
 
+test_that("sigma.toa cannot depend on detector-level covariates", {
+  d <- ind_toa_hhn
+  dat <- read.acre(d$capt, d$traps, control.mask = list(buffer = 15, nx = 8),
+                   trap.cov = data.frame(height = seq_len(nrow(d$traps))))
+  expect_error(fit.acre(dat, detfn = d$detfn, model = list(sigma.toa = ~ height), tracing = FALSE),
+               "'sigma.toa' is not extendable in 'trap' level.")
+})
+
 test_that("confidence intervals are consistent with estimates and standard errors", {
   fit <- fit.demo.coarse('hhn_cue')
   ci <- confint(fit, types = 'linked', level = 0.9)
@@ -89,4 +97,46 @@ test_that("confidence intervals are consistent with estimates and standard error
   expect_equal(unname(ci[, 1]), unname(est + stats::qnorm(0.05) * se), tolerance = 1e-6)
   expect_equal(unname(ci[, 2]), unname(est + stats::qnorm(0.95) * se), tolerance = 1e-6)
   expect_equal(colnames(ci), c('5 %', '95 %'))
+})
+
+test_that("a model with every parameter depending on session matches separate fits to each session", {
+  d <- ind_toa_hhn
+  control.mask <- list(buffer = 15, nx = 10)
+  pars <- c('sigma', 'lambda0', 'sigma.toa', 'D', 'mu')
+  model <- sapply(pars, function(p) ~ site, simplify = FALSE)
+  dat <- read.acre(d$capt, d$traps, control.mask = control.mask,
+                   session.cov = data.frame(session = 1:2, site = c('a', 'b')))
+  joint <- fit.quietly(dat, list(detfn = d$detfn, model = model))
+  est <- coef(joint, types = 'linked')
+  loglik <- 0
+  for(s in 1:2){
+    capt <- d$capt[d$capt$session == s, ]
+    capt$session <- 1
+    separate <- fit.quietly(read.acre(capt, d$traps, control.mask = control.mask), list(detfn = d$detfn))
+    joint.est <- est[paste0(pars, '.(Intercept)_link')] + (s == 2) * est[paste0(pars, '.siteb_link')]
+    expect_equal(unname(joint.est), unname(coef(separate, types = 'linked')[paste0(pars, '_link')]), tolerance = 1e-4)
+    loglik <- loglik + separate$loglik
+  }
+  expect_equal(joint$loglik, loglik, tolerance = 1e-6)
+})
+
+test_that("coefficients are reported on the scale of the covariates", {
+  ## Covariates are standardised before fitting, so this checks the back-transformation, for a
+  ## parameter with a dot in its name and one without.
+  d <- ind_ss
+  fit.transformed <- function(shift, scale){
+    dat <- read.acre(d$capt, d$traps, control.mask = list(buffer = d$control.mask$buffer, nx = 10),
+                     trap.cov = data.frame(height = shift + scale * seq_len(nrow(d$traps))),
+                     loc.cov = transform(d$loc.cov, noise = shift + scale * noise))
+    fit.quietly(dat, list(detfn = d$detfn, ss.opts = d$ss.opts, model = list(b0.ss = ~ height, D = ~ noise)))
+  }
+  fit <- fit.transformed(0, 1)
+  fit.shifted <- fit.transformed(5, 10)
+  est <- coef(fit, types = 'linked')
+  est.shifted <- coef(fit.shifted, types = 'linked')
+  slopes <- c('b0.ss.height_link', 'D.noise_link')
+  intercepts <- c('b0.ss.(Intercept)_link', 'D.(Intercept)_link')
+  expect_equal(est.shifted[slopes], est[slopes] / 10, tolerance = 1e-4)
+  expect_equal(unname(est.shifted[intercepts]), unname(est[intercepts] - 5 * est[slopes] / 10), tolerance = 1e-4)
+  expect_equal(fit.shifted$loglik, fit$loglik, tolerance = 1e-6)
 })

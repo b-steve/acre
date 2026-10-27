@@ -36,12 +36,12 @@ test_that("animal model fits are invariant to rotating the survey", {
 test_that("conditional likelihood matches the full likelihood for one session", {
   ## With one session and homogeneous density, the full likelihood factorises as
   ## Pois(n; D * ESA) * f(captures | n), so both give the same estimates of the other parameters,
-  ## and n / ESA from the conditional fit equals the full-likelihood estimate of D.
+  ## and the Horvitz-Thompson estimate n / ESA from the conditional fit, which boot.acre()
+  ## simulates from, equals the full-likelihood estimate of D.
   fit.cl <- fit.quietly(animal.data(), list(detfn = "hn", CL = TRUE))
   pars <- setdiff(names(coef(fit.animal, types = 'linked')), "D_link")
   expect_equal(coef(fit.cl, types = 'linked')[pars], coef(fit.animal, types = 'linked')[pars], tolerance = 1e-4)
-  n.animals <- length(unique(ind_bearing_dist$capt$animal_ID[ind_bearing_dist$capt$session == 1]))
-  expect_equal(unname(n.animals / esa(fit.cl)$value), unname(coef(fit.animal, types = 'fitted')['D']), tolerance = 1e-4)
+  expect_equal(ht.density(fit.cl), unname(coef(fit.animal, types = 'fitted')['D']), tolerance = 1e-4)
 })
 
 test_that("conditional likelihood matches the full likelihood for the call model", {
@@ -51,6 +51,5 @@ test_that("conditional likelihood matches the full likelihood for the call model
   fit.cl <- fit.quietly(dat, list(detfn = d$detfn, CL = TRUE))
   pars <- setdiff(names(coef(fit, types = 'linked')), "D_link")
   expect_equal(coef(fit.cl, types = 'linked')[pars], coef(fit, types = 'linked')[pars], tolerance = 1e-4)
-  n.calls <- length(unique(d$capt$ID))
-  expect_equal(unname(n.calls / esa(fit.cl)$value), unname(coef(fit, types = 'fitted')['D']), tolerance = 1e-4)
+  expect_equal(ht.density(fit.cl), unname(coef(fit, types = 'fitted')['D']), tolerance = 1e-4)
 })
