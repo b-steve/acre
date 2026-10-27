@@ -25,7 +25,7 @@
 
 \item{from.boot}{a logical value, the same as "vcov.acreboot()".}
 
-\item{show.fixed.par}{a logical value, the same as "vcov.acre()".}
+\item{show.fixed.par}{a logical value, the same as "stdEr.acre()".}
 
 \item{...}{For S3 compatibility.}
 }

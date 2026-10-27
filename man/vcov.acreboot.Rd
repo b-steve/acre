@@ -10,7 +10,6 @@
   pars = NULL,
   new.covariates = NULL,
   from.boot = TRUE,
-  show.fixed.par = TRUE,
   ...
 )
 }
@@ -26,8 +25,6 @@
 \item{from.boot}{a logical value, TRUE by default, to control whether the covariance matrix is calculated
 from the bootstrap results. If FALSE, the method "vcov.acre()" will be called.}
 
-\item{show.fixed.par}{a logical value, the same as "vcov.acre()".}
-
 \item{...}{For S3 compatibility.}
 }
 \value{
@@ -35,4 +32,7 @@ from the bootstrap results. If FALSE, the method "vcov.acre()" will be called.}
 }
 \description{
 Title
+}
+\details{
+Fixed parameters are not included, as they have no variance.
 }

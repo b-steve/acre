@@ -4,14 +4,7 @@
 \alias{vcov.acre}
 \title{Extract variance covariance matrix of the estimated parameters from acre models}
 \usage{
-\method{vcov}{acre}(
-  object,
-  types = NULL,
-  pars = NULL,
-  new.covariates = NULL,
-  show.fixed.par = TRUE,
-  ...
-)
+\method{vcov}{acre}(object, types = NULL, pars = NULL, new.covariates = NULL, ...)
 }
 \arguments{
 \item{object}{a fitted model from fit.acre().}
@@ -22,9 +15,6 @@
 
 \item{new.covariates}{a data frame, the same as "coef.acre()".}
 
-\item{show.fixed.par}{a logical value. To control whether to include the fixed parameters in the covariance matrix.
-It is TRUE by default.}
-
 \item{...}{For S3 compatibility.}
 }
 \value{
@@ -32,4 +22,7 @@ a list with matrices as its elements if multiple 'types'. a matrix if only one '
 }
 \description{
 Extract variance covariance matrix of the estimated parameters from acre models
+}
+\details{
+Fixed parameters are not included, as they have no variance.
 }

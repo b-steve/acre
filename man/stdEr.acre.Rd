@@ -22,7 +22,8 @@
 
 \item{new.covariates}{a data frame, the same as "coef.acre()".}
 
-\item{show.fixed.par}{a logical value, the same as "vcov.acre()".}
+\item{show.fixed.par}{a logical value. If TRUE, the default, fixed parameters are included with
+standard errors of zero.}
 
 \item{...}{For S3 compatibility.}
 }
