@@ -142,6 +142,8 @@ Type det_hr(const Type &dx, const vector<Type> &param){
   return ans;
 }
 
+//lth and th: 0.5 - 0.5 * erf(x) is written as pnorm(-sqrt(2) * x), as CppAD's taped erf()
+//is only an approximation
 //lth
 template<class Type>
 Type det_lth(const Type &dx, const vector<Type> &param){
@@ -149,7 +151,7 @@ Type det_lth(const Type &dx, const vector<Type> &param){
   Type shape_1 = param(0);
   Type shape_2 = param(1);
   Type scale = param(2);
-  ans = 0.5 - 0.5 * erf(shape_1 - exp(shape_2 - scale * dx));
+  ans = pnorm(Type(-M_SQRT2) * (shape_1 - exp(shape_2 - scale * dx)));
   return ans;
 }
 
@@ -159,7 +161,7 @@ Type det_th(const Type &dx, const vector<Type> &param){
   Type ans = 0.0;
   Type shape = param(0);
   Type scale = param(1);
-  ans = 0.5 - 0.5 * erf(dx / scale - shape);
+  ans = pnorm(Type(-M_SQRT2) * (dx / scale - shape));
   return ans;
 }
 
