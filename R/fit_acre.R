@@ -801,6 +801,10 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
   ## obtain the fixed parameters assigned by the user.
   name.fixed.par <- names(fix.input)[!sapply(fix.input, is.null)]
   name.fixed.par.4cpp <- gsub("\\.", "_", name.fixed.par)
+  ## TMB cannot optimise with no free parameters.
+  if(all(param.og %in% name.fixed.par)){
+    stop("All parameters are fixed, so there is nothing to estimate.")
+  }
 
   ## Combine this with the parameters that will not be used in this model.
   name.fixed.par.4cpp <- c(name.fixed.par.4cpp, fulllist.par.4cpp[!(fulllist.par.4cpp %in% param.og.4cpp)])

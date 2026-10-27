@@ -525,8 +525,8 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
       if(!all(foo_var %in% var.ex)) stop(paste0('one or more specifed covariates in "model"',
                                                 ' is not provided in "data".'))
       
-      ## The parameter sigma_toa is not trap extendable.
-      if(i == 'sigma_toa' & any(foo_var %in% var.t)) stop("'sigma_toa' is not extendable in 'trap' level.")
+      ## The parameter sigma.toa is not trap extendable.
+      if(i == 'sigma.toa' & any(foo_var %in% var.t)) stop("'sigma.toa' is not extendable in 'trap' level.")
       
       ## In the animal_ID embedded model, the parameter 'mu' is not extendable at the 'trap' level either.
       if(i == 'mu' & any(foo_var %in% var.t)) stop("'mu' is not extendable in 'trap' level.")
@@ -756,7 +756,10 @@ construct.G.matrix <- function(mean.sd) {
 ## not, the identity matrix is returned for the corresponding parameter.
 construct.G.matrix.list <- function(par.names, extended.par.names, mean.sd.list, is.scale) {
   u_names <- unique(par.names)
-  
+  ## The names in par.names are TMB's, which have underscores where the package's have dots.
+  extended.par.names <- gsub("\\.", "_", extended.par.names)
+  names(mean.sd.list) <- gsub("\\.", "_", names(mean.sd.list))
+
   ## Contains the first-derivative matrices for each parameter.
   G_list <- vector('list', length(u_names))
   names(G_list) <- u_names
@@ -1565,13 +1568,10 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
   }
   tem <- do.call('c', tem)
   tem <- c(tem, paste('esa', seq(dims$n.sessions), sep = "."))
-  ## Remove fixed parameters from the covariance matrix.
-  if(length(name.fixed.par) > 0){
-    which_fixed <- which(names(o$value) %in% name.fixed.par)
-    out$vcov <- o$cov[-which_fixed, -which_fixed]
-  } else {
-    out$vcov <- o$cov
-  }
+  ## Remove fixed parameters from the covariance matrix; TMB's names have underscores where the
+  ## package's have dots.
+  is_fixed <- names(o$value) %in% gsub("\\.", "_", name.fixed.par)
+  out$vcov <- o$cov[!is_fixed, !is_fixed, drop = FALSE]
   
   dimnames(out$vcov) <- list(tem, tem)
   

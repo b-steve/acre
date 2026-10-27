@@ -75,401 +75,147 @@ location.density <- function(fit, call.id, animal.id=NULL, session=1,
 }
 
 
-dist.density <- function(fit, call.id, animal.id=NULL, session=1,
-                         mask=get.mask(fit)[[session]]) {
+## The density of each call's location from one type of data, as a data frame with columns ID, x, y
+## and z. The function call.fun(det, bin, s) gives the density at each mask point for one call, from
+## its detections (det, the call's rows of the captures, sorted by detector), its binary capture
+## history (bin, one element per detector), and the session's set-up (s: the detection parameters,
+## with extended parameters as n.traps x n.mask matrices, the detectors, and the detector-mask
+## distances).
+call.density <- function(fit, type, call.id, animal.id, session, mask, call.fun, newdata = NULL) {
   ## The function get.capt.by.id() validates `call.id`, `animal.id` and `session`.
-
-  if (!("dist" %in% fit$infotypes)) {
-    stop(paste0("'fit' does not contain 'dist' information. ",
+  if (!type %in% c("capt", fit$infotypes)) {
+    stop(paste0("'fit' does not contain '", type, "' information. ",
                 "Infotypes available for the fit provided are: ",
                 paste0(fit$infotypes, collapse=", "), ", Dsurface, capt"))
   }
-
-  ## Check whether the model extends any parameters.
-  par_extended <- !is.null(get.par.extend(fit))
-
-  ## Grab the appropriate capture data and detection parameters.
-  det_pars <- as.list(coef(fit, type="fitted"))
   capt <- get.capt.by.id(fit, call.id, animal.id, session)
-  bincapt <- get.capt.by.id(fit, call.id, animal.id, session, return.bincapt=T)
   traps <- get.trap(fit)[[session]]
-
-  ## Calculate mask-trap distances.
-  dists <- distances(traps, as.matrix(mask))
-  ## If a trap is exactly on a mask point, the distance will be 0, causing numerical issues.
-  dists[dists == 0] <- .Machine$double.eps
-
-  ## Deal with extended parameters.
-  if (par_extended) {
-    ## Calculate the parameter values for each mask point-trap combination.
-    ext_par_matrices <- get.par.extend.matrix(fit, mask, traps, session = session)
-    det_pars[names(ext_par_matrices)] <- ext_par_matrices
-  }
-
-  ## Grab our estimated alphas and betas.
-  alpha <- det_pars[["alpha"]]
-  betas <- alpha/dists
-
-  ## A list to store the density of each call.
-  density_list <- vector("list", length(call.id))
-
-  for (i in seq_along(call.id)) {
-    cid <- call.id[i]
-
-    ## Grab the capt and bincapt for this call ID.
-    sub_capt <- subset(capt, capt$ID == cid)
-    ## Make sure to remove the ID column when doing calculations.
-    sub_bin  <- subset(bincapt, capt$ID == cid)[,-1]
-    dist_capt <- sub_capt$dist
-
-    traps_used <- which(sub_bin == 1)
-
-    ## Keep only detectors with a non-missing recorded distance.
-    traps_used <- traps_used[!is.na(dist_capt)]
-
-    ## If there is at least 1 non-NA detection.
-    if (length(traps_used) > 0) {
-
-      ## If alpha has been extended.
-      if (par_extended && is.matrix(alpha)) {
-        dens_mat <- dgamma(dist_capt[!is.na(dist_capt)],
-                           shape = alpha[traps_used, ],
-                           rate = betas[traps_used, ])
-      } else {
-        dens_mat <- dgamma(dist_capt[!is.na(dist_capt)],
-                           shape = alpha,
-                           rate = betas[traps_used, ])
-      }
-      ## Take the product if multiple traps were triggered.
-      if (length(traps_used) > 1) {
-        z <- matrixStats::colProds(dens_mat)
-      } else {
-        z <- dens_mat
-      }
-    } else {
-      ## The case of no detections.
-      z <- rep(1, nrow(mask))
-    }
-
-    density_list[[i]] <- data.frame(
-      ID = cid, x = mask[, 1], y = mask[, 2], z = z
-    )
-  }
-
-  return(do.call(rbind, density_list))
-}
-
-bearing.density <- function(fit, call.id, animal.id=NULL, session=1,
-                            mask=get.mask(fit)[[session]]) {
-  ## The function get.capt.by.id() validates `call.id`, `animal.id` and `session`.
-
-  if (!("bearing" %in% fit$infotypes)) {
-    stop(paste0("'fit' does not contain 'bearing' information. ",
-                "Infotypes available for the fit provided are: ",
-                paste0(fit$infotypes, collapse=", "), ", Dsurface, capt"))
-  }
-
-  ## Check whether the model extends any parameters.
-  par_extended <- !is.null(get.par.extend(fit))
-
-  ## Grab the appropriate capture data and detection parameters.
-  det_pars <- as.list(coef(fit, type="fitted"))
-  capt <- get.capt.by.id(fit, call.id, animal.id, session)
-  bincapt <- get.capt.by.id(fit, call.id, animal.id, session, return.bincapt=T)
-  traps <- get.trap(fit)[[session]]
-
-  ## Deal with extended parameters.
-  if (par_extended) {
-    ## Calculate the parameter values for each mask point-trap combination.
-    ext_par_matrices <- get.par.extend.matrix(fit, mask, traps, session = session)
-    det_pars[names(ext_par_matrices)] <- ext_par_matrices
-  }
-
-  ## Grab our estimated kappa parameter.
-  kappa <- det_pars[["kappa"]]
-
-  ## A list to store the density of each call.
-  density_list <- vector("list", length(call.id))
-
-  ## Calculate bearings for each trap.
-  mask_bearings <- bearings(traps, as.matrix(mask))
-
-  for (i in seq_along(call.id)) {
-    cid <- call.id[i]
-
-    ## Grab the capt and bincapt for this call ID.
-    sub_capt <- subset(capt, capt$ID == cid)
-    ## Make sure to remove the ID column when doing calculations.
-    sub_bin <- as.numeric(
-      subset(bincapt, bincapt$ID == cid)[,-1]
-    )
-    traps_used <- which(sub_bin == 1)
-    bearing_capt <- sub_capt$bearing
-
-    ## Keep only detectors with a non-missing recorded bearing.
-    traps_used <- traps_used[!is.na(bearing_capt)]
-    bearing_capt <- bearing_capt[!is.na(bearing_capt)]
-
-    ## Only consider the bearings relative to active traps.
-    active_bearings <- mask_bearings[traps_used, ]
-
-    ## If there is at least 1 non-NA detection.
-    if (length(traps_used) > 0) {
-      ## If kappa has been extended.
-      if (par_extended && is.matrix(kappa)) {
-        dens_mat <- CircStats::dvm(bearing_capt,
-                                   mu = active_bearings,
-                                   kappa = kappa[traps_used, ])
-      } else {
-        dens_mat <- CircStats::dvm(bearing_capt,
-                                   mu = active_bearings,
-                                   kappa = kappa)
-      }
-      ## Take the product if multiple traps were triggered.
-      if (length(traps_used) > 1) {
-        z <- matrixStats::colProds(dens_mat)
-      } else {
-        z <- dens_mat
-      }
-
-    } else {
-      ## All triggered traps had NA bearings, so there is no usable bearing information.
-      z <- rep(1, nrow(mask))
-    }
-
-
-    density_list[[i]] <- data.frame(
-      ID = cid, x = mask[, 1], y = mask[, 2], z = z
-    )
-  }
-
-  return(do.call(rbind, density_list))
-}
-
-toa.density <- function(fit, call.id, animal.id=NULL, session=1,
-                        mask=get.mask(fit)[[session]], warn=T) {
-  ## The function get.capt.by.id() validates `call.id`, `animal.id` and `session`.
-
-  if (!("toa" %in% fit$infotypes)) {
-    stop(paste0("'fit' does not contain 'toa' information. ",
-                "Infotypes available for the fit provided are: ",
-                paste0(fit$infotypes, collapse=", "), ", Dsurface, capt"))
-  }
-
-  ## Check whether the model extends any parameters.
-  par_extended <- !is.null(get.par.extend(fit))
-
-  ## Grab the appropriate capture data and detection parameters.
-  det_pars <- as.list(coef(fit, type="fitted"))
-  capt <- get.capt.by.id(fit, call.id, animal.id, session)
-  bincapt <- get.capt.by.id(fit, call.id, animal.id, session, return.bincapt=T)
-  traps <- get.trap(fit)[[session]]
-
-  ## Calculate mask-trap distances.
-  dists <- distances(traps, as.matrix(mask))
-  ## If a trap is exactly on a mask point, the distance will be 0, causing numerical issues.
-  dists[dists == 0] <- .Machine$double.eps
-
-  ## Deal with extended parameters.
-  if (par_extended) {
-    ## Calculate the parameter values for each mask point-trap combination.
-    ext_par_matrices <- get.par.extend.matrix(fit, mask, traps, session = session)
-    det_pars[names(ext_par_matrices)] <- ext_par_matrices
-  }
-
-  ## Grab our estimated sigma_toa parameter.
-  sigma_toa <- det_pars[["sigma.toa"]]
-
-  ## A list to store the density of each call.
-  density_list <- vector("list", length(call.id))
-
-  single_trap_detection <- FALSE
-  for (i in seq_along(call.id)) {
-    cid <- call.id[i]
-    ## Grab the capt and bincapt for this call ID.
-    sub_capt <- subset(capt, capt$ID == cid)
-    ## Make sure to remove the ID column when doing calculations.
-    sub_bin  <- subset(bincapt, bincapt$ID == cid)[,-1]
-    traps_used <- which(sub_bin == 1)
-    toa_capt <- sub_capt$toa
-
-    ## Keep only detectors with a non-missing recorded TOA.
-    ok <- !is.na(toa_capt)
-    traps_used <- traps_used[ok]
-    toa_capt <- toa_capt[ok]
-
-    ## We need at least 2 detections to be able to use arrival time data.
-    if (length(traps_used) < 2) {
-      single_trap_detection <- TRUE
-      mask.dens <- 1
-    } else {
-      dists.mask <- dists[traps_used, ]
-      prod.times <- toa_capt - dists.mask/fit$args$sound.speed
-      toa.ssq <- apply(prod.times, 2, function(x) sum((x - mean(x))^2))
-
-      if (par_extended && is.matrix(sigma_toa)) {
-        sig2 <- sigma_toa[traps_used, ]^2
-        ## Recycle the ssq vector; this is needed, as otherwise normal recycling
-        ## doesn't do what we want.
-        toa.ssq <- matrix(rep(toa.ssq, times = nrow(sig2)), nrow = nrow(sig2), byrow = TRUE)
-        mask.dens <- (2*pi*sig2)^((1 - sum(sub_bin))/2)*exp(toa.ssq/(-2*sig2))
-        ## mask.dens <- matrixStats::colProds(mask.dens)
-        mask.dens <- colSums(mask.dens)
-      } else {
-        mask.dens <- (2*pi*sigma_toa^2)^((1 - sum(sub_bin))/2)*
-          exp(toa.ssq/(-2*sigma_toa^2))
-      }
-    }
-
-    density_list[[i]] <- data.frame(
-      ID = cid, x = mask[, 1], y = mask[, 2], z = mask.dens
-    )
-  }
-
-  if (warn & single_trap_detection) {
-    warning(paste("Some calls were detected by only a single trap.
-    The use of toa data requires a call to be detected by at least
-    2 traps. Toa density for corresponding calls has been set to 1
-                  across the entire mask for such cases."))
-  }
-  return(do.call(rbind, density_list))
-}
-
-ss.density <- function(fit, call.id, animal.id=NULL, session=1,
-                       mask=get.mask(fit)[[session]], newdata=NULL) {
-  ## Note that input validation for call.id, animal.id and session
-  ## is handled in `get.capt.by.id()`.
-
-  if (!("ss" %in% fit$infotypes)) {
-    stop(paste0("'fit' does not contain 'ss' information. ",
-                "Infotypes available for the fit provided are: ",
-                paste0(fit$infotypes, collapse=", "), ", Dsurface, capt"))
-  }
-
-  ## Grab the appropriate capture data.
-  capt <- get.capt.by.id(fit, call.id, animal.id, session)
-  bincapt <- get.capt.by.id(fit, call.id, animal.id, session, return.bincapt=T)
-
-  ## Grab our estimated parameters, along with other model fitting parameters.
-  det_pars <- as.list(coef(fit, type="fitted"))
-  det_pars$cutoff <- get.ss.opts(fit)$cutoff
-  detfn <- get.detfn(fit)
-  ss.link <- get.ss.link(fit)
-  traps <- get.trap(fit)[[session]]
-  n_traps <- nrow(traps)
-  dists <- distances(traps, as.matrix(mask))
 
   ## Only allow the newdata argument for parameter-extended models.
   par_extended <- !is.null(get.par.extend(fit))
   if (!is.null(newdata) && !par_extended) {
     stop("'newdata' argument is only available for parameter extended models")
   }
-
-  ## Deal with extended parameters.
+  det_pars <- as.list(coef(fit, type="fitted"))
   if (par_extended) {
-    ext_par_matrices <- get.par.extend.matrix(fit, mask, traps,
-                                              session = session, newdata = newdata)
+    ## Calculate the parameter values for each mask point-trap combination.
+    ext_par_matrices <- get.par.extend.matrix(fit, mask, traps, session = session, newdata = newdata)
     det_pars[names(ext_par_matrices)] <- ext_par_matrices
   }
 
-  ## Coerce scalar parameters to an n_traps x n_mask matrix using recycling;
-  ## this makes the density calculation easier.
-  for (param_name in c("sigma.ss", "b0.ss", "b1.ss")) {
-    if (!is.matrix(det_pars[[param_name]])) {
-      det_pars[[param_name]] <- matrix(det_pars[[param_name]],
-                                       nrow = n_traps, ncol = nrow(mask))
+  ## Calculate mask-trap distances.
+  dists <- distances(traps, as.matrix(mask))
+  ## If a trap is exactly on a mask point, the distance will be 0, causing numerical issues.
+  dists[dists == 0] <- .Machine$double.eps
+  s <- list(pars = det_pars, traps = traps, dists = dists)
+
+  if (identical(call.id, "all")) call.id <- unique(capt$ID)
+  density_list <- lapply(call.id, function(cid) {
+    det <- capt[capt$ID == cid, ]
+    det <- det[order(det$trap), ]
+    bin <- numeric(nrow(traps))
+    bin[det$trap] <- 1
+    data.frame(ID = cid, x = mask[, 1], y = mask[, 2], z = call.fun(det, bin, s))
+  })
+  do.call(rbind, density_list)
+}
+
+## The product over detectors (rows) of densities at each mask point (columns); a vector is a
+## single detector's densities.
+prod.over.traps <- function(dens) {
+  if (is.matrix(dens)) matrixStats::colProds(dens) else dens
+}
+
+## A detection parameter's values for some detectors: rows of its matrix if it is extended,
+## otherwise the scalar.
+trap.par <- function(par, traps) {
+  if (is.matrix(par)) par[traps, ] else par
+}
+
+dist.density <- function(fit, call.id, animal.id=NULL, session=1,
+                         mask=get.mask(fit)[[session]]) {
+  call.density(fit, "dist", call.id, animal.id, session, mask, function(det, bin, s) {
+    ## Keep only detectors with a non-missing recorded distance.
+    det <- det[!is.na(det$dist), ]
+    if (nrow(det) == 0) return(rep(1, nrow(mask)))
+    alpha <- trap.par(s$pars$alpha, det$trap)
+    prod.over.traps(dgamma(det$dist, shape = alpha, rate = alpha/s$dists[det$trap, ]))
+  })
+}
+
+bearing.density <- function(fit, call.id, animal.id=NULL, session=1,
+                            mask=get.mask(fit)[[session]]) {
+  mask_bearings <- bearings(get.trap(fit)[[session]], as.matrix(mask))
+  call.density(fit, "bearing", call.id, animal.id, session, mask, function(det, bin, s) {
+    ## Keep only detectors with a non-missing recorded bearing.
+    det <- det[!is.na(det$bearing), ]
+    if (nrow(det) == 0) return(rep(1, nrow(mask)))
+    prod.over.traps(CircStats::dvm(det$bearing, mu = mask_bearings[det$trap, ],
+                                   kappa = trap.par(s$pars$kappa, det$trap)))
+  })
+}
+
+toa.density <- function(fit, call.id, animal.id=NULL, session=1,
+                        mask=get.mask(fit)[[session]], warn=T) {
+  single_trap_detection <- FALSE
+  out <- call.density(fit, "toa", call.id, animal.id, session, mask, function(det, bin, s) {
+    ## Keep only detectors with a non-missing recorded TOA; at least 2 are needed to be able
+    ## to use arrival time data.
+    det <- det[!is.na(det$toa), ]
+    if (nrow(det) < 2) {
+      single_trap_detection <<- TRUE
+      return(rep(1, nrow(mask)))
     }
+    prod.times <- det$toa - s$dists[det$trap, ]/fit$args$sound.speed
+    toa.ssq <- apply(prod.times, 2, function(x) sum((x - mean(x))^2))
+    ## The parameter sigma.toa has no detector-level covariates, so if it is extended, all of
+    ## its rows are the same.
+    sigma_toa <- s$pars$sigma.toa
+    if (is.matrix(sigma_toa)) sigma_toa <- sigma_toa[1, ]
+    (2*pi*sigma_toa^2)^((1 - nrow(det))/2)*exp(toa.ssq/(-2*sigma_toa^2))
+  })
+  if (warn & single_trap_detection) {
+    warning(paste("Some calls were detected by only a single trap.
+    The use of toa data requires a call to be detected by at least
+    2 traps. Toa density for corresponding calls has been set to 1
+                  across the entire mask for such cases."))
   }
+  out
+}
 
-  ## A list to store the density of each call; these will be combined into one data frame.
-  density_list <- vector("list", length(call.id))
-
-  for (i in seq_along(call.id)) {
-    cid <- call.id[i]
-
-    ## Grab the capt and bincapt for this call ID.
-    sub_capt <- subset(capt, capt$ID == cid)
-    ## Make sure to remove the ID column when doing calculations.
-    sub_bin  <- subset(bincapt, bincapt$ID == cid)[,-1]
-    ss.capt <- sub_capt$ss
-    triggered_traps <- sub_capt$trap
-    untriggered_traps <- setdiff(seq(n_traps), triggered_traps)
-
-    ## Initialise the density matrix for this call.
-    mask.dens <- matrix(1, nrow = n_traps, ncol = nrow(mask))
-
-    ## Probability contribution from triggered traps.
-    mu.ss <- det_pars$b0.ss[triggered_traps, ] -
-      det_pars$b1.ss[triggered_traps, ]*dists[triggered_traps, ]
-    mask.dens[triggered_traps, ] <- dnorm(ss.capt, mu.ss, det_pars$sigma.ss[triggered_traps, ])
-
-    ## Probability contribution from untriggered traps.
-    mu.ss <- det_pars$b0.ss[untriggered_traps, ] -
-      det_pars$b1.ss[untriggered_traps, ]*dists[untriggered_traps, ]
-    mask.dens[untriggered_traps, ] <- pnorm(det_pars$cutoff, mu.ss, det_pars$sigma.ss[untriggered_traps, ])
-
-    ## Multiply all the columns together (triggered and untriggered probabilities).
-    mask.dens <- matrixStats::colProds(mask.dens)
-
-    density_list[[i]] <- data.frame(
-      ID = cid, x = mask[, 1], y = mask[, 2], z = mask.dens
-    )
-  }
-
-  return(do.call(rbind, density_list))
+ss.density <- function(fit, call.id, animal.id=NULL, session=1,
+                       mask=get.mask(fit)[[session]], newdata=NULL) {
+  cutoff <- get.ss.opts(fit)$cutoff
+  call.density(fit, "ss", call.id, animal.id, session, mask, newdata = newdata, function(det, bin, s) {
+    triggered <- det$trap
+    untriggered <- which(bin == 0)
+    ## The expected signal strength, and its standard deviation, for some detectors.
+    mu.ss <- function(traps) trap.par(s$pars$b0.ss, traps) - trap.par(s$pars$b1.ss, traps)*s$dists[traps, ]
+    sd.ss <- function(traps) trap.par(s$pars$sigma.ss, traps)
+    ## The density of the signal strengths at the detectors that were triggered, and the
+    ## probability of being below the cutoff at those that were not.
+    mask.dens <- matrix(1, nrow = length(bin), ncol = nrow(mask))
+    mask.dens[triggered, ] <- dnorm(det$ss, mu.ss(triggered), sd.ss(triggered))
+    mask.dens[untriggered, ] <- pnorm(cutoff, mu.ss(untriggered), sd.ss(untriggered))
+    matrixStats::colProds(mask.dens)
+  })
 }
 
 capt.density <- function(fit, call.id, animal.id=NULL, session=1,
                          mask=get.mask(fit)[[session]]) {
-  ## Grab the appropriate capture data.
-  capt <- get.capt.by.id(fit, call.id, animal.id, session)
-  bincapt <- get.capt.by.id(fit, call.id, animal.id, session, return.bincapt=T)
-
-  ## Grab our estimated parameters, along with other model fitting parameters.
-  det_pars <- as.list(coef(fit, type="fitted"))
   detfn <- get.detfn(fit)
   if (fit$fit.types["ss"] || detfn == 'ss') {
     stop("Capture density for signal strength models is built in to the
          signal strength density. Please use 'ss.density()' instead.")
   }
-  traps <- get.trap(fit)[[session]]
-  dists <- distances(traps, as.matrix(mask))
-
-  par_extended <- !is.null(get.par.extend(fit))
-
-  ## Deal with extended parameters.
-  if (par_extended) {
-    ext_par_matrices <- get.par.extend.matrix(fit, mask, traps, session = session)
-    det_pars[names(ext_par_matrices)] <- ext_par_matrices
-  }
-
-  ## A list to store the density of each call; these will be combined into one data frame.
-  density_list <- vector("list", length(call.id))
-
-  for (i in seq_along(call.id)) {
-    cid <- call.id[i]
-
-    ## Grab the capt and bincapt for this call ID.
-    sub_capt <- subset(capt, capt$ID == cid)
-    ## Make sure to remove the ID column when doing calculations.
-    sub_bin  <- as.numeric(subset(bincapt, bincapt$ID == cid)[,-1])
-
-    ## Probability of detection at each mask point.
-    ## It is worth noting that det.prob() is set up in such a way that we can
-    ## pass an n_traps x n_mask matrix as parameter values, and get the corresponding
+  call.density(fit, "capt", call.id, animal.id, session, mask, function(det, bin, s) {
+    ## Probability of detection at each mask point. Note that det.prob() is set up so that
+    ## we can pass n_traps x n_mask matrices as parameter values, and get the corresponding
     ## n_traps x n_mask detection probabilities back.
-    det.probs <- det.prob(detfn, det_pars, dists)
-
+    det.probs <- det.prob(detfn, s$pars, s$dists)
     ## Density due to capture history alone.
-    capt_dens <- apply((det.probs ^ sub_bin) *
-                         ((1 - det.probs) ^ (1 - sub_bin)), 2, prod)
-
-    density_list[[i]] <- data.frame(
-      ID = cid, x = mask[, 1], y = mask[, 2], z = capt_dens
-    )
-  }
-
-  return(do.call(rbind, density_list))
+    apply((det.probs ^ bin) * ((1 - det.probs) ^ (1 - bin)), 2, prod)
+  })
 }
 
 Dsurface.density <- function(fit, session=1, mask=get.mask(fit)[[session]]) {
