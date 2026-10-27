@@ -50,6 +50,13 @@ sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list
     sound.speed <- get.sound.speed(fit)
     ss.opts <- get.ss.opts(fit)
 
+    ## The conditional likelihood does not estimate D, so simulate with the Horvitz-Thompson
+    ## estimate, assuming homogeneous density.
+    if(fit$CL){
+      param$D <- ht.density(fit)
+      par.extend$model$D <- NULL
+    }
+
   } else {
     stopifnot(all(!missing(detfn), !missing(param), !missing(traps), !is.null(control.mask$buffer)))
     ## Extract n.sessions first, and convert traps into a list if it is not one.
@@ -484,3 +491,23 @@ sim.from.param <- function(detfn, dat.pars, dat.density, random.location, dims, 
 }
 
 
+
+## The Horvitz-Thompson estimate of a homogeneous density from a fitted model: the number of
+## detected groups (animals, or calls for the call model), divided by the sum over sessions of the
+## expected number detected per unit density. For the call model, each animal at unit density
+## produces survey.length * cue.rates calls, while for the animal model esa is already the
+## effective area for detecting an animal.
+ht.density <- function(fit){
+  dims <- get.dims.tmb(fit)
+  animal.model <- "mu" %in% names(get.coef(fit))
+  survey.length <- get.survey.length(fit)
+  if(is.null(survey.length)) survey.length <- 1
+  if(animal.model){
+    n <- dims$n.animals
+    calls.per.animal <- 1
+  } else {
+    n <- dims$n.IDs
+    calls.per.animal <- survey.length * get.cue.rates(fit)
+  }
+  sum(n) / sum(esa(fit)$value * calls.per.animal)
+}

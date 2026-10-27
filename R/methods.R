@@ -20,115 +20,50 @@
 #' @export
 #'
 coef.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, ...){
-  newdata <- new.covariates
   ## Deal with the default setting for 'types'.
-  tem <- types.pars.sol(types, pars, newdata)
-  ## tem = types.pars.sol("linked", pars, newdata)
+  tem <- types.pars.sol(types, pars, new.covariates)
   types <- tem$types
   pars <- tem$pars
-  
-  is.fitted <- 'fitted' %in% types
-  is.linked <- 'linked' %in% types
-  is.derived <- 'derived' %in% types
-  
+
   ## Extract some key information from the object.
   param_values_og <- get.coef(object)
   name_og <- get.param.og(object)
-  
   if (object$CL) {
     name_og <- setdiff(name_og, "D")
     pars <- setdiff(pars, "D")
   }
-  
   name_extend <- get.par.extend.name(object)
   df_param <- get.data.param(object)
-  esa <- esa(object)
-  
-  ## Check which parameters will be displayed.
-  if(is.null(pars)){
-    pars <- name_og
-  } else {
-    if(any(!pars %in% name_og)) stop("Argument 'pars' only accept parameters' name in this model.")
-  }
-  
-  if(is.null(name_extend) & !is.null(newdata)){
-    warning('No parameter is extended, argument "newdata" will be ignored.')
-    newdata <- NULL
-  }
-  
-  output <- NULL
-  
-  ## Since the loop below depends on the order of pars, we need to re-order 'pars' to make its order
-  ## consistent with the default order of all parameters.
-  pars <- fulllist.par.generator()[fulllist.par.generator() %in% pars]
   extend_par_covariates <- get.par.extend.covariate(object)
-  
+  pars <- select.pars(pars, name_og)
+
+  if(is.null(name_extend) & !is.null(new.covariates)){
+    warning('No parameter is extended, argument "newdata" will be ignored.')
+    new.covariates <- NULL
+  }
+
+  output <- NULL
   for(i in pars){
-    par_info <- subset(df_param, df_param$par == i)
     values_link <- param_values_og[[i]]
-    ## This indicates whether we calculate \beta \times X, i.e., for an extended parameter,
-    ## whether we evaluate the link function.
-    do_BX <- FALSE
-    
     if(!i %in% name_extend){
       names(values_link) <- paste(i, "link", sep = "_")
     } else {
-      names(values_link) <- gsub(" _ ", "\\.", names(values_link))
-      names(values_link) <- paste(names(values_link), "link", sep = "_")
-      if(all(extend_par_covariates[[i]] %in% colnames(newdata))){
-        do_BX <- TRUE
-      }
+      names(values_link) <- paste(gsub(" _ ", "\\.", names(values_link)), "link", sep = "_")
     }
-    
-    if(is.linked){
-      if(!do_BX){
-        output <- c(output, values_link)
-      } else {
-        gam <- get.gam(object, i)
-        values_link_evaluated <- get.extended.par.value(gam, par_info$n_col_full, par_info$n_col_mask,
-                                                       values_link, newdata)
-        names(values_link_evaluated) <- rep(paste(i, "link", sep = "_"), length(values_link_evaluated))
-        output <- c(output, values_link_evaluated)
-      }
-
-    }
-    
-    if(is.fitted){
-      link <- par_info$link
-      if(i %in% name_extend){
-        if(!do_BX){
-          ## If no new covariates are assigned and the parameter is extended, then treat all of the
-          ## relevant betas as identity-linked parameters.
-          values_fitted <- values_link
-          names(values_fitted) <- gsub("_link", "", names(values_fitted))
-          link <- 'identity'
-        } else {
-          gam <- get.gam(object, i)
-          values_fitted <- get.extended.par.value(gam, par_info$n_col_full,
-                                                 par_info$n_col_mask, values_link, newdata)
-
-          names(values_fitted) <- rep(i, length(values_fitted))
-
-        }
-      } else {
-        values_fitted <- values_link
-        names(values_fitted) <- i
-      }
-
-      values_fitted <- unlink.fun(link = link, value = values_fitted)
-      output <- c(output, values_fitted)
+    for(type in intersect(c('linked', 'fitted'), types)){
+      output <- c(output, par.estimates(object, i, values_link, type, new.covariates,
+                                        name_extend, extend_par_covariates, df_param))
     }
   }
-  
-  if(is.derived){
-    value_esa <- esa$value
+
+  if('derived' %in% types){
+    value_esa <- esa(object)$value
     names(value_esa) <- paste('esa', seq(length(value_esa)), sep = '.')
     output <- c(output, value_esa)
   }
-  
+
   class(output) <- 'coef.acre'
-  
-  return(output)
+  output
 }
 
 
@@ -144,139 +79,46 @@ coef.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 #' @param ... For S3 compatibility.
 #' @export
 coef.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, correct.bias = FALSE, ...){
-  
   if(!correct.bias){
-    output <- coef.acre(object = object, types = types, pars = pars, new.covariates = new.covariates)
-    return(output)
+    return(coef.acre(object = object, types = types, pars = pars, new.covariates = new.covariates))
   }
 
-  
-  ## Some preparation:
-  ## deal with the default setting for 'types'.
+  ## Deal with the default setting for 'types'.
   tem <- types.pars.sol(types, pars, new.covariates)
   types <- tem$types
-  pars <- tem$pars
-  name_og <- get.param.og(object)
+  pars <- select.pars(tem$pars, get.param.og(object))
 
-  ## Check which parameters will be displayed.
-  if(is.null(pars)){
-    pars <- name_og
-  } else {
-    if(any(!pars %in% name_og)) stop("Argument 'pars' only accept parameters' name in this model.")
-  }
-  
-  ## Since the loop below depends on the order of pars, we need to re-order 'pars' to make its order
-  ## consistent with the default order of all parameters.
-  pars <- fulllist.par.generator()[fulllist.par.generator() %in% pars]
-  
-  ## Get the basic information needed for this method.
   name_extend <- get.par.extend.name(object)
-  
   if(is.null(name_extend) & !is.null(new.covariates)){
     warning('No parameter is extended, argument "new.covariates" will be ignored.')
     new.covariates <- NULL
   }
-  
-  
-
   df_param <- get.data.param(object)
-  res <- get.boot.res(object, pars)
-  coefs <- coef.acre(object, types = 'linked', pars)
-  bias <- get.bias(res, coefs)
-  coefs_linked_bias_corrected <- coefs - bias
-  
-  linked_name <- names(coefs)
-  original_name <- ori.name(linked_name)
   extend_par_covariates <- get.par.extend.covariate(object)
-  
+
+  ## The bias-corrected linked estimates: hat(coef) - (mean(boot_results) - hat(coef)).
+  coefs <- coef.acre(object, types = 'linked', pars)
+  coefs_linked_bias_corrected <- coefs - get.bias(get.boot.res(object, pars), coefs)
+  original_name <- ori.name(names(coefs))
+
   output <- vector('list', length(types))
   names(output) <- types
-  
   for(i in types){
-    
-    if(i == 'linked'){
-      if(is.null(new.covariates)){
-        output[[i]] <- coefs_linked_bias_corrected
-      } else {
-        ## If new.covariates is provided, then we need to go through the parameters one by one.
-        for(j in pars){
-          values_link <- coefs_linked_bias_corrected[original_name == j]
-          par_info <- subset(df_param, df_param$par == j)
-          
-          if(j %in% name_extend){
-            if(!all(extend_par_covariates[[j]] %in% colnames(new.covariates))){
-              values_link_evaluated <- values_link
-            } else {
-              ## if(nrow(new.covariates) != 1) stop('Argument "new.covariates" can only accept 1 row.')
-              gam <- get.gam(object, j)
-              values_link_evaluated <- get.extended.par.value(gam, par_info$n_col_full, par_info$n_col_mask,
-                                                     values_link, new.covariates)
-              
-              names(values_link_evaluated) <- rep(paste(j, 'link', sep = '_'), length(values_link_evaluated))
-            }
-          } else {
-            values_link_evaluated <- values_link
-          }
-          
-          output[[i]] <- c(output[[i]], values_link_evaluated)
-        }
-        
-      }
-      
-    } else if (i == 'derived'){
+    if(i == 'derived'){
       coefs_esa <- coef.acre(object, types = 'derived')
-      res_esa <- get.boot.res.esa(object)
-      bias_esa <- get.bias(res_esa, coefs_esa)
-      output[[i]] <- coefs_esa - bias_esa
-      
+      output[[i]] <- coefs_esa - get.bias(get.boot.res.esa(object), coefs_esa)
     } else {
-      ## When types is 'fitted', use 'coefs_linked_bias_corrected' and new.covariates to
-      ## calculate the estimates.
-
       for(j in pars){
-        values_link <- coefs_linked_bias_corrected[original_name == j]
-        
-        par_info <- subset(df_param, df_param$par == j)
-        link <- par_info$link
-        
-        if(j %in% name_extend){
-          if(!all(extend_par_covariates[[j]] %in% colnames(new.covariates))){
-            ## If no new covariates are assigned and the parameter is extended, then treat all of the
-            ## relevant betas as identity-linked parameters.
-            values_fitted <- values_link
-            names(values_fitted) <- gsub("_link", "", names(values_fitted))
-            link <- 'identity'
-          } else {
-            ## if(nrow(new.covariates) != 1) stop('Argument "new.covariates" can only accept 1 row.')
-            
-            gam <- get.gam(object, j)
-            values_fitted <- get.extended.par.value(gam, par_info$n_col_full, par_info$n_col_mask,
-                                                   values_link, new.covariates)
-            
-            names(values_fitted) <- rep(j, length(values_fitted))
-          }
-        } else {
-          values_fitted <- values_link
-          names(values_fitted) <- j
-        }
-        
-        values_fitted <- unlink.fun(link = link, value = values_fitted)
-
-        output[[i]] <- c(output[[i]], values_fitted)
+        output[[i]] <- c(output[[i]], par.estimates(object, j, coefs_linked_bias_corrected[original_name == j], i,
+                                                    new.covariates, name_extend, extend_par_covariates, df_param))
       }
-      ## End of if(i == 'fitted').
     }
-    
-    ## End of for i in types.
   }
 
   names(output) <- NULL
   output <- do.call('c', output)
-
-  
   class(output) <- "coef.acre"
-  return(output)
-  
+  output
 }
 
 #' @export
@@ -351,17 +193,8 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
     }
   }
   
-  ## Check which parameters will be displayed.
-  if(is.null(pars)){
-    pars <- unique(name_og)
-  } else {
-    if(any(!pars %in% name_og)) stop("Argument 'pars' only accept parameters, which is not fixed, in this model.")
-  }
-  
-  
-  ## Since the loop below depends on the order of pars, we need to re-order 'pars' to make its order
-  ## consistent with the default order of all parameters.
-  pars <- fulllist.par.generator()[fulllist.par.generator() %in% pars]
+  pars <- select.pars(pars, unique(name_og),
+                      "Argument 'pars' only accept parameters, which is not fixed, in this model.")
   ## The vector name_og is naturally in the right order because it is extracted from the TMB variance-covariance matrix output.
   
   ## Obtain the indices for the assigned "pars".
@@ -484,17 +317,7 @@ vcov.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NU
   tem <- types.pars.sol(types, pars, new.covariates)
   types <- tem$types
   pars <- tem$pars
-  all_par_name_og <- get.param.og(object)
-  ## Check which parameters will be displayed.
-  if(is.null(pars)){
-    pars <- all_par_name_og
-  } else {
-    if(any(!pars %in% all_par_name_og)) stop("Argument 'pars' only accept parameters' name in this model.")
-  }
-  
-  ## Since the loop below depends on the order of pars, we need to re-order 'pars' to make its order
-  ## consistent with the default order of all parameters.
-  pars <- fulllist.par.generator()[fulllist.par.generator() %in% pars]
+  pars <- select.pars(pars, get.param.og(object))
   if(any(c('linked', 'fitted') %in% types)){
     res <- get.boot.res(object, pars)
     fixed_par <- get.fixed.par.name(object)
@@ -560,19 +383,8 @@ stdEr <- function(object, ...){
 #' @return a named numeric vector
 #' @export
 stdEr.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, show.fixed.par = TRUE, ...){
-  
-  output_vcov <- vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates,
-                              show.fixed.par = show.fixed.par)
-  if(is(output_vcov, 'list')){
-    output <- NULL
-    for(i in names(output_vcov)){
-      output <- c(output, sqrt(diag(output_vcov[[i]])))
-    }
-  } else {
-    output <- sqrt(diag(output_vcov))
-  }
-  class(output) <- 'std.acre'
-  return(output)
+  std.from.vcov(vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates,
+                          show.fixed.par = show.fixed.par))
 }
 
 
@@ -587,22 +399,8 @@ stdEr.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL,
 #' @param ... For S3 compatibility.
 #' @export
 stdEr.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, from.boot = TRUE, show.fixed.par = TRUE, ...){
-
-  output_vcov <- vcov.acreboot(object = object, types = types, pars = pars, new.covariates = new.covariates,
-                               from.boot = from.boot, show.fixed.par = show.fixed.par)
-  
-  if(is(output_vcov, 'list')){
-    output <- NULL
-    for(i in names(output_vcov)){
-      output <- c(output, sqrt(diag(output_vcov[[i]])))
-    }
-  } else {
-    output <- sqrt(diag(output_vcov))
-  }
-  class(output) <- 'std.acre'
-  return(output)
-  
-  
+  std.from.vcov(vcov.acreboot(object = object, types = types, pars = pars, new.covariates = new.covariates,
+                              from.boot = from.boot, show.fixed.par = show.fixed.par))
 }
 
 #' @export
@@ -699,7 +497,7 @@ confint.acreboot <- function(object, parm = NULL, level = 0.95, types = NULL, ne
     if(correct.bias) message(paste0("The argument 'correct.bias' will be ignored as the confidence",
       " interval is not from bootstrap results."))
     
-    output <- confint.acre(object = object, types = types, level = level, pars = parm,
+    output <- confint.acre(object = object, types = types, level = level, parm = parm,
                               new.covariates = new.covariates)
     return(output)
   }
@@ -711,15 +509,7 @@ confint.acreboot <- function(object, parm = NULL, level = 0.95, types = NULL, ne
   pars <- tem$pars
   
   
-  ## Check which parameters will be displayed.
-  if(is.null(pars)){
-    pars <- name_og
-  } else {
-    if(any(!pars %in% name_og)) stop("Argument 'pars' only accept parameters' name in this model.")
-  }
-  
-  ## Make sure pars are in the right order.
-  pars <- fulllist.par.generator()[fulllist.par.generator() %in% pars]
+  pars <- select.pars(pars, name_og)
 
   
   ## Obtain the bootstrap result.
@@ -817,87 +607,7 @@ AIC.acre <- function(..., k = 2) {
 #' @export
 predict.acre <- function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                             level = 0.95, realnames = NULL, ...){
-  fit <- object
-  stopifnot(all(type %in% c('link', 'response'), length(type) == 1))
-  
-  if(type == 'response'){
-    type <- 'fitted'
-  } else if(type == 'link'){
-    type <- 'linked'
-  } else {
-    stop('invalid "type", it could be either "response" or "link".')
-  }
-  
-  name_og <- get.param.og(fit)
-  
-  ## Check which parameters will be displayed.
-  if(is.null(realnames)){
-    realnames <- name_og
-  } else {
-    if(any(!realnames %in% name_og)) stop("Argument 'realnames' only accept parameters' name in this model.")
-  }
-  
-  if (fit$CL) {
-    realnames <- setdiff(realnames, "D")
-  }
-  
-  ## Make sure pars are in the right order.
-  realnames <- fulllist.par.generator()[fulllist.par.generator() %in% realnames]
-  
-  par_fixed_name <- get.fixed.par.name(fit)
-  par_ext_name <- get.par.extend.name(fit)
-  par_ext_vars <- get.par.extend.covariate(fit)
-  newdata_vars <- colnames(newdata)
-  
-  output <- vector('list', length(realnames))
-  names(output) <- realnames
-  
-  for(i in realnames){
-    if(i %in% par_ext_name){
-      if(!all(par_ext_vars[[i]] %in% newdata_vars)){
-        n_row <- 0
-        output[[i]] <- paste0('Estimates not provided, because ', i, ' depends on ', paste(par_ext_vars[[i]], collapse = ', '),
-                             ', which are not all provided in the argument "newdata".')
-      } else {
-        ## If the condition above is FALSE, then newdata must not be NULL.
-        n_row <- nrow(newdata)
-      }
-      
-    } else {
-      n_row <- 1
-    }
-    
-    if(n_row != 0) {
-      output[[i]] <- data.frame(Estimate = numeric(n_row))
-
-      output[[i]]$Estimate <- as.vector(coef(fit, types = type, new.covariates = newdata, pars = i))
-      
-      if(se.fit){
-        if(i %in% par_fixed_name){
-          output[[i]]$StdError <- 0
-        } else {
-          output[[i]]$StdError <- as.vector(stdEr(fit, types = type, new.covariates = newdata, pars = i, show.fixed.par = FALSE))
-        }
-        
-      } 
-      if(confidence){
-        if(i %in% par_fixed_name){
-          output[[i]]$Lower <- output[[i]]$Estimate
-          output[[i]]$Upper <- output[[i]]$Estimate
-        } else {
-          output[[i]]$Lower <- numeric(n_row)
-          output[[i]]$Upper <- numeric(n_row)
-          output[[i]][, c('Lower', 'Upper')] <- confint(fit, parm = i, types = type, level = level, new.covariates = newdata)
-        }
-
-      }
-    }
-
-  }
-  
-  class(output) <- 'predict.acre'
-  return(output)
-  
+  predict.estimates(object, type, newdata, se.fit, confidence, level, realnames)
 }
 
 
@@ -920,90 +630,13 @@ predict.acre <- function(object, type = 'response', newdata = NULL, se.fit = TRU
 #' @export
 predict.acreboot <- function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                              level = 0.95, realnames = NULL, correct.bias = FALSE, from.boot = TRUE, ...){
-  fit <- object
   if(!from.boot){
     if(correct.bias) message(paste0("The argument 'correct.bias' will be ignored as the confidence",
                                     " interval is not from bootstrap results."))
     correct.bias <- FALSE
   }
-  
-  
-  stopifnot(all(type %in% c('link', 'response'), length(type) == 1))
-  
-  if(type == 'response'){
-    type <- 'fitted'
-  } else {
-    type <- 'linked'
-  }
-  
-  name_og <- get.param.og(fit)
-  
-  ## Check which parameters will be displayed.
-  if(is.null(realnames)){
-    realnames <- name_og
-  } else {
-    if(any(!realnames %in% name_og)) stop("Argument 'realnames' only accept parameters' name in this model.")
-  }
-  
-  ## Make sure pars are in the right order.
-  realnames <- fulllist.par.generator()[fulllist.par.generator() %in% realnames]
-  
-  par_fixed_name <- get.fixed.par.name(fit)
-  par_ext_name <- get.par.extend.name(fit)
-  par_ext_vars <- get.par.extend.covariate(fit)
-  newdata_vars <- colnames(newdata)
-  
-  output <- vector('list', length(realnames))
-  names(output) <- realnames
-  
-  for(i in realnames){
-    if(i %in% par_ext_name){
-      if(!all(par_ext_vars[[i]] %in% newdata_vars)){
-        n_row <- 0
-        output[[i]] <- paste0('Estimates not provided, because ', i, ' depends on ', paste(par_ext_vars[[i]], collapse = ', '),
-                             ', which are not all provided in the argument "newdata".')
-      } else {
-        ## If the condition above is FALSE, then newdata must not be NULL.
-        n_row <- nrow(newdata)
-      }
-      
-    } else {
-      n_row <- 1
-    }
-    
-    if(n_row != 0){
-      output[[i]] <- data.frame(Estimate = numeric(n_row))
-
-      output[[i]]$Estimate <- as.vector(coef(fit, types = type, new.covariates = newdata, pars = i, correct.bias = correct.bias))
-      
-      if(se.fit){
-        
-        if(i %in% par_fixed_name){
-          output[[i]]$StdError <- 0
-        } else {
-          output[[i]]$StdError <- as.vector(stdEr(fit, types = type, new.covariates = newdata, pars = i, from.boot = from.boot, show.fixed.par = FALSE))
-        }
-        
-      }
-
-      if(confidence){
-        if(i %in% par_fixed_name){
-          output[[i]]$Lower <- output[[i]]$Estimate
-          output[[i]]$Upper <- output[[i]]$Estimate
-        } else {
-          output[[i]]$Lower <- numeric(n_row)
-          output[[i]]$Upper <- numeric(n_row)
-          output[[i]][, c('Lower', 'Upper')] <- confint(fit, parm = i, types = type, new.covariates = newdata, correct.bias = correct.bias,
-                                                       from.boot = from.boot)
-        }
-      }
-    }
-    
-  }
-  
-  class(output) <- 'predict.acre'
-  return(output)
-  
+  predict.estimates(object, type, newdata, se.fit, confidence, level, realnames,
+                    boot.opts = list(correct.bias = correct.bias, from.boot = from.boot))
 }
 
 #' @export
@@ -1232,3 +865,130 @@ print.acre <- function(x, ...){
 
 
 
+
+##################################################################################################################
+## Helpers shared by the methods above.
+
+## The parameters to report: all of the available ones by default, in the standard parameter order.
+select.pars <- function(pars, available, message = "Argument 'pars' only accept parameters' name in this model."){
+  if(is.null(pars)){
+    pars <- available
+  } else {
+    if(any(!pars %in% available)) stop(message)
+  }
+  fulllist.par.generator()[fulllist.par.generator() %in% pars]
+}
+
+## The estimates of the parameter 'name' from its link-scale values (named as by coef(types = "linked")), on the
+## link scale (type "linked") or back-transformed (type "fitted"). An extended parameter is evaluated at
+## new.covariates when they include all of its covariates; otherwise its coefficients are returned, on
+## the identity scale.
+par.estimates <- function(object, name, values.link, type, new.covariates, name.extend, extend.covariates, df.param){
+  par_info <- subset(df.param, df.param$par == name)
+  evaluate <- name %in% name.extend && all(extend.covariates[[name]] %in% colnames(new.covariates))
+  if(evaluate){
+    gam <- get.gam(object, name)
+    values <- get.extended.par.value(gam, par_info$n_col_full, par_info$n_col_mask, values.link, new.covariates)
+  }
+  if(type == "linked"){
+    if(!evaluate) return(values.link)
+    names(values) <- rep(paste(name, "link", sep = "_"), length(values))
+    return(values)
+  }
+  link <- par_info$link
+  if(evaluate){
+    names(values) <- rep(name, length(values))
+  } else if(name %in% name.extend){
+    values <- values.link
+    names(values) <- gsub("_link", "", names(values))
+    link <- 'identity'
+  } else {
+    values <- values.link
+    names(values) <- name
+  }
+  unlink.fun(link = link, value = values)
+}
+
+## Standard errors from the output of vcov(), which is a matrix, or a list of matrices for several types.
+std.from.vcov <- function(output.vcov){
+  if(is(output.vcov, 'list')){
+    output <- NULL
+    for(i in names(output.vcov)){
+      output <- c(output, sqrt(diag(output.vcov[[i]])))
+    }
+  } else {
+    output <- sqrt(diag(output.vcov))
+  }
+  class(output) <- 'std.acre'
+  output
+}
+
+## The predictions for predict.acre() and predict.acreboot(): for each parameter, its estimate, and
+## optionally its standard error and confidence interval. The bootstrap options (correct.bias and
+## from.boot) are passed on to coef(), stdEr() and confint() in boot.opts.
+predict.estimates <- function(fit, type, newdata, se.fit, confidence, level, realnames, boot.opts = list()){
+  stopifnot(all(type %in% c('link', 'response'), length(type) == 1))
+  type <- if(type == 'response') 'fitted' else 'linked'
+
+  ## Under the conditional likelihood, D is not estimated.
+  available <- get.param.og(fit)
+  if(fit$CL) available <- setdiff(available, "D")
+  if(!is.null(realnames) && any(!realnames %in% get.param.og(fit))){
+    stop("Argument 'realnames' only accept parameters' name in this model.")
+  }
+  realnames <- select.pars(if(is.null(realnames)) NULL else intersect(realnames, available), available)
+
+  par_fixed_name <- get.fixed.par.name(fit)
+  par_ext_name <- get.par.extend.name(fit)
+  par_ext_vars <- get.par.extend.covariate(fit)
+  newdata_vars <- colnames(newdata)
+  coef.opts <- boot.opts[names(boot.opts) == "correct.bias"]
+  var.opts <- boot.opts[names(boot.opts) == "from.boot"]
+
+  output <- vector('list', length(realnames))
+  names(output) <- realnames
+
+  for(i in realnames){
+    if(i %in% par_ext_name){
+      if(!all(par_ext_vars[[i]] %in% newdata_vars)){
+        n_row <- 0
+        output[[i]] <- paste0('Estimates not provided, because ', i, ' depends on ', paste(par_ext_vars[[i]], collapse = ', '),
+                             ', which are not all provided in the argument "newdata".')
+      } else {
+        ## If the condition above is FALSE, then newdata must not be NULL.
+        n_row <- nrow(newdata)
+      }
+    } else {
+      n_row <- 1
+    }
+
+    if(n_row != 0){
+      output[[i]] <- data.frame(Estimate = numeric(n_row))
+      output[[i]]$Estimate <- as.vector(do.call(coef, c(list(fit, types = type, new.covariates = newdata, pars = i), coef.opts)))
+
+      if(se.fit){
+        if(i %in% par_fixed_name){
+          output[[i]]$StdError <- 0
+        } else {
+          output[[i]]$StdError <- as.vector(do.call(stdEr, c(list(fit, types = type, new.covariates = newdata, pars = i,
+                                                                  show.fixed.par = FALSE), var.opts)))
+        }
+      }
+
+      if(confidence){
+        if(i %in% par_fixed_name){
+          output[[i]]$Lower <- output[[i]]$Estimate
+          output[[i]]$Upper <- output[[i]]$Estimate
+        } else {
+          output[[i]]$Lower <- numeric(n_row)
+          output[[i]]$Upper <- numeric(n_row)
+          output[[i]][, c('Lower', 'Upper')] <- do.call(confint, c(list(fit, parm = i, types = type, level = level,
+                                                                       new.covariates = newdata), boot.opts))
+        }
+      }
+    }
+  }
+
+  class(output) <- 'predict.acre'
+  output
+}
