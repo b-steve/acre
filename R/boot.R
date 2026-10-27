@@ -9,6 +9,7 @@
 #'                  bootstraps with different settings of infotypes.
 #' @param seed a numerical value indicates the seed for the randomness.
 #'
+#' @return (Still to write)
 #' @export
 boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   stopifnot(N > 2)

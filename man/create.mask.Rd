@@ -13,6 +13,11 @@ In a list of matrices or data frames, each element of the list corresponds to th
 If the detector locations stayed the same across several sessions, only one matrix/data frame is required.}
 
 \item{buffer}{a scalar, the furthest distance that a detector could detect (in metres)}
+
+\item{...}{(Still to write)}
+}
+\value{
+(Still to write)
 }
 \description{
 Creates a mask object to use with the function read.acre().

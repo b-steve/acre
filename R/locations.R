@@ -16,6 +16,7 @@
 #'    case of `toa` data with only a single call.
 #' @param newdata data.frame; contains any covariates that will be used
 #'    for all extended parameters.
+#' @return (Still to write)
 #' @export
 location.density <- function(fit, call.id, animal.id=NULL, session=1,
                              mask=get.mask(fit)[[session]], warn.toa=F,

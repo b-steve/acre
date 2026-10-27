@@ -7,8 +7,9 @@
 #'              In a list of matrices or data frames, each element of the list corresponds to the detector location of a different session.
 #'              If the detector locations stayed the same across several sessions, only one matrix/data frame is required.
 #' @param buffer a scalar, the furthest distance that a detector could detect (in metres)
-#' @param ...
+#' @param ... (Still to write)
 #'
+#' @return (Still to write)
 #' @export
 create.mask <- function(traps, buffer, ...){
     ## Changing data frame to matrix to avoid is.list() issues.

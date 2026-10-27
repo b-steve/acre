@@ -115,10 +115,17 @@ section on cue rate data, below.}
 
 \item{n.sessions}{An integer for the number of sessions.}
 
+\item{n.rand}{(Still to write)}
+
+\item{random.location}{(Still to write)}
+
 \item{sound.speed}{A scalar, the speed of sound in metres per
 second. This argument is only used when time-of-arrival data are
 included in the \code{captures} data frame. Defaults to 330, the
 approximate speed of sound in air.}
+}
+\value{
+(Still to write)
 }
 \description{
 Simulates SCR capture histories and associated additional

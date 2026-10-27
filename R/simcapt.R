@@ -18,9 +18,10 @@
 #'     along with values for parameters associated with the chosen
 #'     detection function and additional information type(s).
 #' @param n.sessions An integer for the number of sessions.
-#' @param n.rand 
-#' @param random.location
+#' @param n.rand (Still to write)
+#' @param random.location (Still to write)
 #'
+#' @return (Still to write)
 #' @export
 sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list(), session.cov = NULL, trap.cov = NULL, loc.cov = NULL,
                     dist.cov = NULL, time.loc.cov = NULL, convert.loc2mask = list(), survey.length = NULL, ss.opts = NULL,

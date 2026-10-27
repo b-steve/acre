@@ -44,9 +44,15 @@ providing the x- and y-coordinates of the new mask
 points. Additional columns must provide the covariates used to
 fit the model.}
 
+\item{D.cov}{(Still to write)}
+
 \item{xlim}{a numeric vector with two elements as the range of x-axis.}
 
 \item{ylim}{a numeric vector with two elements as the range of y-axis.}
+
+\item{x.pixels}{(Still to write)}
+
+\item{y.pixels}{(Still to write)}
 
 \item{zlim}{A numeric vector of length 2, giving the range of the
 density contours}
@@ -69,7 +75,9 @@ on spatial covariates below.}
 \item{arg.col}{A numeric value, indicating the number of levels to
 stretch the color over}
 
-\item{...}{otlp}
+\item{trap.plot}{(Still to write)}
+
+\item{...}{(Still to write)}
 }
 \description{
 Plots density surface estimated by a model fitted with the function \link{fit.acre}

@@ -73,6 +73,8 @@ link: the same as argument \code{model.link}  in the function \code{fit.acre()}.
 \item{CL}{same as the argument with the same name in the function \code{fit.acre()}.}
 
 \item{two.stage}{same as the argument with the same name in the function \code{fit.acre()}.}
+
+\item{...}{(Still to write)}
 }
 \description{
 The model-fitting engine used by \code{fit.acre()}, \code{boot.acre()} and \code{sim.study()}. It takes the

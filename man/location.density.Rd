@@ -35,6 +35,9 @@ case of \code{toa} data with only a single call.}
 \item{newdata}{data.frame; contains any covariates that will be used
 for all extended parameters.}
 }
+\value{
+(Still to write)
+}
 \description{
 Calculates the estimated density of a location, given its observed capture
 history and auxiliary information.

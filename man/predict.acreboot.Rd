@@ -41,6 +41,9 @@ from the bootstrap results.}
 
 \item{...}{For S3 compatibility.}
 }
+\value{
+(Still to write)
+}
 \description{
 Title
 }

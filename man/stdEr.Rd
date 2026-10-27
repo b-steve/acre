@@ -6,6 +6,14 @@
 \usage{
 stdEr(object, ...)
 }
+\arguments{
+\item{object}{(Still to write)}
+
+\item{...}{(Still to write)}
+}
+\value{
+(Still to write)
+}
 \description{
 Title
 }

@@ -89,6 +89,9 @@ second. This argument is only used when time-of-arrival data are
 included in the \code{captures} data frame. Defaults to 330, the
 approximate speed of sound in air.}
 }
+\value{
+(Still to write)
+}
 \description{
 Combines detection data, detector locations, and covariate data
 into a single object. Performs spatial interpolation for spatial

@@ -71,6 +71,9 @@ approach are carried out.}
 \item{CL}{A logical value. If \code{TRUE}, a conditional likelihood
 model is fitted, and so density is not estimated.}
 }
+\value{
+(Still to write)
+}
 \description{
 Fits an a spatial capture-recapture model to a data object returned by \code{\link[=read.acre]{read.acre()}}.
 }

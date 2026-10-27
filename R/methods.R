@@ -77,6 +77,7 @@ coef.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 #'                     return the original estimation directly. The bias correct method is
 #'                     hat(coef) - (mean(boot_results) - hat(coef)).
 #' @param ... For S3 compatibility.
+#' @return (Still to write)
 #' @export
 coef.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, correct.bias = FALSE, ...){
   if(!correct.bias){
@@ -305,6 +306,7 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 #'                  from the bootstrap results. If FALSE, the method "vcov.acre()" will be called.
 #' @param show.fixed.par a logical value, the same as "vcov.acre()".
 #' @param ... For S3 compatibility.
+#' @return (Still to write)
 #' @export
 vcov.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, from.boot = TRUE, show.fixed.par = TRUE, ...){
   
@@ -359,8 +361,9 @@ vcov.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NU
 
 #' Title
 #'
-#' @param object 
-#' @param ... 
+#' @param object (Still to write)
+#' @param ... (Still to write)
+#' @return (Still to write)
 #' @export
 stdEr <- function(object, ...){
   UseMethod("stdEr")
@@ -397,6 +400,7 @@ stdEr.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL,
 #' @param from.boot a logical value, the same as "vcov.acreboot()".
 #' @param show.fixed.par a logical value, the same as "vcov.acre()".
 #' @param ... For S3 compatibility.
+#' @return (Still to write)
 #' @export
 stdEr.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, from.boot = TRUE, show.fixed.par = TRUE, ...){
   std.from.vcov(vcov.acreboot(object = object, types = types, pars = pars, new.covariates = new.covariates,
@@ -490,6 +494,7 @@ confint.acre <- function(object, parm = NULL, level = 0.95, types = NULL, new.co
 #'                  the confidence matrix. Default is TRUE; if FALSE, "confint.acre()" will
 #'                  be called.
 #' @param ... For S3 compatibility.
+#' @return (Still to write)
 #' @export
 confint.acreboot <- function(object, parm = NULL, level = 0.95, types = NULL, new.covariates = NULL,
                              correct.bias = FALSE, from.boot = TRUE, ...){
@@ -604,6 +609,7 @@ AIC.acre <- function(..., k = 2) {
 #' @param level a numeric value indicates the confident level, default is 0.95.
 #' @param realnames a character vector containing any parameter names.
 #' @param ... For S3 compatibility.
+#' @return (Still to write)
 #' @export
 predict.acre <- function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                             level = 0.95, realnames = NULL, ...){
@@ -627,6 +633,7 @@ predict.acre <- function(object, type = 'response', newdata = NULL, se.fit = TRU
 #' @param from.boot a logical value indicates whether to extract standard error and confidence interval
 #'                  from the bootstrap results.
 #' @param ... For S3 compatibility.
+#' @return (Still to write)
 #' @export
 predict.acreboot <- function(object, type = 'response', newdata = NULL, se.fit = TRUE, confidence = TRUE,
                              level = 0.95, realnames = NULL, correct.bias = FALSE, from.boot = TRUE, ...){
@@ -659,6 +666,7 @@ print.predict.acre <- function(x, ...){
 #'               the bootstrap process "boot.acre()".
 #' @param derived.print a logical value indicates whether to show the estimations of "esa".
 #' @param ... For S3 compatibility.
+#' @return (Still to write)
 #' @export
 summary.acre <- function(object, derived.print = FALSE, ...){
   coefs <- coef(object, types = 'fitted')
@@ -801,6 +809,7 @@ logLik.acre <- function(object, ...) {
 #' sampling area.
 #' 
 #' @param fit A fitted model from [fit.acre()]
+#' @return (Still to write)
 #' @export
 esa <- function(fit){
   fit$esa

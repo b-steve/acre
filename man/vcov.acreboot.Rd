@@ -30,6 +30,9 @@ from the bootstrap results. If FALSE, the method "vcov.acre()" will be called.}
 
 \item{...}{For S3 compatibility.}
 }
+\value{
+(Still to write)
+}
 \description{
 Title
 }

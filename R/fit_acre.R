@@ -165,7 +165,7 @@
 #'   included in the `captures` data frame. Defaults to 330, the
 #'   approximate speed of sound in air.
 #'
-#' @return
+#' @return (Still to write)
 #' @export
 #'
 read.acre <- function(captures, traps, mask = NULL,
@@ -358,7 +358,7 @@ read.acre <- function(captures, traps, mask = NULL,
 #'   to propagate variance under a two-stage density modelling
 #'   approach are carried out.
 #'
-#' @return
+#' @return (Still to write)
 #' @export
 fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(),
@@ -511,7 +511,7 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
 #' @param CL same as the argument with the same name in the function `fit.acre()`.
 #' @param two.stage same as the argument with the same name in the function `fit.acre()`.
 #'
-#' @param ...
+#' @param ... (Still to write)
 #' @keywords internal
 fit.from.settings <- function(capt, traps, mask, detfn = NULL, sv = NULL, bounds = NULL, fix = NULL, ss.opts = NULL,
                               cue.rates = NULL, survey.length = NULL, sound.speed = 331, local = FALSE, par.extend = NULL,

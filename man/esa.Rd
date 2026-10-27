@@ -9,6 +9,9 @@ esa(fit)
 \arguments{
 \item{fit}{A fitted model from \code{\link[=fit.acre]{fit.acre()}}}
 }
+\value{
+(Still to write)
+}
 \description{
 Extracts an estimate and standard error of each session's effective
 sampling area.

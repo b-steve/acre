@@ -45,6 +45,8 @@ each plot type.}
 \value{
 \code{NULL}, invisibly. The function is called for its plotting side
 effects.
+
+(Still to write)
 }
 \description{
 Creates plots from either a data object returned by \code{\link[=read.acre]{read.acre()}}
@@ -125,4 +127,5 @@ plot(acre_dat, type = "survey", session = 1)
 
 # Plot the capture history for the first call in session 1.
 plot(acre_dat, type = "capt", session = 1, call.id = 1, ask = FALSE)
+## (Still to write)
 }

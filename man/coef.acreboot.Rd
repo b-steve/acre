@@ -28,6 +28,9 @@ hat(coef) - (mean(boot_results) - hat(coef)).}
 
 \item{...}{For S3 compatibility.}
 }
+\value{
+(Still to write)
+}
 \description{
 Title
 }

@@ -20,6 +20,9 @@ bootstraps with different settings of infotypes.}
 
 \item{seed}{a numerical value indicates the seed for the randomness.}
 }
+\value{
+(Still to write)
+}
 \description{
 Bootstrapping a fitted \code{acre} model
 }

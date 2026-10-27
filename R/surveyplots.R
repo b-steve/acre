@@ -163,9 +163,9 @@ show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NUL
 #' @param show.cv Logical. If true, the CV of the density estimate is
 #'   plotted rather than the estimate itself. At present, this will
 #'   only work if `newdata` is also provided.
-#' @param D.cov
-#' @param x.pixels
-#' @param y.pixels
+#' @param D.cov (Still to write)
+#' @param x.pixels (Still to write)
+#' @param y.pixels (Still to write)
 #' @param zlim A numeric vector of length 2, giving the range of the
 #'   density contours
 #' @param scale By default, density is in animals per hectare. The
@@ -177,8 +177,8 @@ show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NUL
 #'   the existing plot
 #' @param arg.col A numeric value, indicating the number of levels to
 #'   stretch the color over
-#' @param trap.plot
-#' @param ...
+#' @param trap.plot (Still to write)
+#' @param ... (Still to write)
 #' @inheritParams show.detfn
 #' @inheritParams read.acre
 #' @keywords internal
@@ -706,10 +706,11 @@ plot.acre.data <- function(x, type = NULL, call.id = NULL, animal.id = NULL,
 #'
 #' @inheritParams plot.acre.data
 #' 
-#' @return
+#' @return (Still to write)
 #' @export
 #' 
 #' @examples
+#' ## (Still to write)
 plot.acre <- function(x, type = NULL, call.id = NULL, animal.id = NULL, session = NULL, ...){
   extra_args <- list(...)
   

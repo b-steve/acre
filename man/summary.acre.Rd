@@ -14,6 +14,9 @@ the bootstrap process "boot.acre()".}
 
 \item{...}{For S3 compatibility.}
 }
+\value{
+(Still to write)
+}
 \description{
 Summarise \code{acre} Model Fits
 }
