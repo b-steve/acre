@@ -303,6 +303,11 @@ sim.data.prepare <- function(detfn, param, par.extend, traps, mask, survey.lengt
       }
     }
 
+    ## As in fit.acre(), the time-of-arrival model has a common sigma.toa for all detectors.
+    if(is.toa && 'sigma.toa' %in% name.extend.par){
+      n.values <- tapply(dat$sigma.toa, list(dat$session, dat$mask), function(x) length(unique(x)))
+      if(any(n.values > 1, na.rm = TRUE)) stop("'sigma.toa' is not extendable in 'trap' level.")
+    }
   }
 
   ## D is the animal density, whatever the kind of model.

@@ -87,6 +87,11 @@ test_that("sigma.toa cannot depend on detector-level covariates", {
                    trap.cov = data.frame(height = seq_len(nrow(d$traps))))
   expect_error(fit.acre(dat, detfn = d$detfn, model = list(sigma.toa = ~ height), tracing = FALSE),
                "'sigma.toa' is not extendable in 'trap' level.")
+  expect_error(suppressMessages(sim.capt(detfn = d$detfn, param = list(D = 1000, sigma = 2, lambda0 = 5, sigma.toa = c(-6, 1)),
+                                         traps = d$traps, control.mask = list(buffer = 15, nx = 8),
+                                         trap.cov = data.frame(height = seq_len(nrow(d$traps))),
+                                         model = list(sigma.toa = ~ height))),
+               "'sigma.toa' is not extendable in 'trap' level.")
 })
 
 test_that("confidence intervals are consistent with estimates and standard errors", {
