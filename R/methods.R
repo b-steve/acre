@@ -554,19 +554,11 @@ AIC.acre <- function(..., k = 2) {
   ## Loop over models and calculate AIC.
   for (i in seq_along(models)) {
     model <- models[[i]]
-    
-    ## A call model fitted with known cue rates.
-    fit.freqs <- !is.null(model$args$cue.rates) && !"animal_ID" %in% colnames(model$args$capt)
-    if (fit.freqs) {
-      message(sprintf("NOTE: AIC for model '%s' relies on independence between locations of calls from the same animal, which may not be appropriate.", names(aic_values)[i]))
-      aic_values[i] <- NA
-    } else {
-      n_fixed <- length(get.fixed.par.name(model))
-      aic_values[i] <- k * (length(coef(model)) - n_fixed) - 2 * model$loglik
-      n_par[i] <- length(coef(model))
-    }
-  }
+    n_fixed <- length(get.fixed.par.name(model))
+    aic_values[i] <- k * (length(coef(model)) - n_fixed) - 2 * model$loglik
+    n_par[i] <- length(coef(model))
   
+  }
   return(data.frame(npar = n_par, AIC = aic_values))
 }
 
