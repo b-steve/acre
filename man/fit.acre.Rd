@@ -85,6 +85,12 @@ Specify models using the \code{model} argument.
 (More to put in here)
 }
 
+\section{Smooth density surfaces}{
+
+
+(Still to write)
+}
+
 \section{Parameter names}{
 
 
