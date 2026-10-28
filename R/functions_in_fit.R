@@ -379,6 +379,9 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
   ## A list recording the number of betas in both data.full and data.mask needed for each parameter.
   param_distribution <- vector('list', length(fulllist.par))
   names(param_distribution) <- fulllist.par
+  ## For each parameter with penalised smooths, the random effects' standard deviation indices
+  ## and labels.
+  smooth_re <- list()
   
   
 
@@ -565,6 +568,7 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
         
         
         tem_model <- mgcv::gam(foo_full, data = tem.data, fit = FALSE)
+        check.smooths.fixed(tem_model, i, "session- or trap-level covariates")
         gam_output[[i]][['gam_non_mask']] <- tem_model
         design.matrix <- tem_model$X
         n_col_full <- ncol(design.matrix)
@@ -619,16 +623,30 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
         tem.data[['gam.resp']] <- 1
         
         
-        ## Delete the first column, which is the intercept.
         tem_model <- mgcv::gam(foo_mask, data = tem.data, fit = FALSE)
+        ## Smooth terms' design matrices for new data are built from the smooth objects, so they
+        ## are kept with the gam() setup object.
+        ## Smooths are penalised unless they have fx = TRUE; penalisation is only available for D.
+        if(i != 'D') check.smooths.fixed(tem_model, i, "parameters other than D")
+        tem_model$smooth_info <- smooth.info(tem_model, tem.data, i == 'D')
         gam_output[[i]][['gam_mask']] <- tem_model
-        design.matrix <- tem_model$X[, -1, drop = FALSE]
-        n_col_mask <- ncol(design.matrix)
+        tem <- smooth.design(tem_model$smooth_info, tem.data, X.param = tem_model$smooth_info$G_param$X)
+        if(ncol(tem$Z) > 0){
+          smooth_re[[i]] <- list(re_fac = tem$re_fac, sd_labels = tem$sd_labels, z_names = colnames(tem$Z))
+        }
+        ## Delete the first column, which is the intercept.
+        design.matrix <- tem$X[, -1, drop = FALSE]
+        ## The columns for random effects come last, and are not standardised, because that
+        ## would change the penalty.
+        design.matrix.rand <- as.data.frame(tem$Z, stringsAsFactors = FALSE)
+        n_col_rand <- ncol(tem$Z)
+        n_col_mask <- ncol(design.matrix) + n_col_rand
         design.matrix <- as.data.frame(design.matrix, stringsAsFactors = FALSE)
         colnames(design.matrix) <- paste(i, "_", colnames(design.matrix), sep = " ")
+        if(n_col_rand > 0) colnames(design.matrix.rand) <- paste(i, "_", colnames(design.matrix.rand), sep = " ")
         
         ## Standardise the design matrix if is.scale.
-        if(is.scale){
+        if(is.scale && ncol(design.matrix) > 0){
           col_mean <- apply(design.matrix, 2, mean)
           col_sd <- apply(design.matrix, 2, stats::sd)
           
@@ -642,6 +660,12 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
           ## intercept column has been removed.
           design.matrix <- (design.matrix - mean_matrix)/sd_matrix
         }
+        if(is.scale && n_col_rand > 0){
+          lst_mean_std[[i]] <- cbind(lst_mean_std[[i]],
+                                     rbind(col_mean = setNames(rep(0, n_col_rand), colnames(design.matrix.rand)),
+                                           col_sd = rep(1, n_col_rand)))
+        }
+        design.matrix <- cbind(design.matrix, design.matrix.rand)
         
         design.matrix[['session']] <- tem.data[['session']]
         design.matrix[['mask']] <- tem.data[['mask']]
@@ -649,9 +673,10 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
                               by = c('session', 'mask'), all = TRUE)
       } else {
         n_col_mask <- 0
+        n_col_rand <- 0
       }
       
-      param_distribution[[i]] <- c(n_col_full, n_col_mask)
+      param_distribution[[i]] <- c(n_col_full, n_col_mask, n_col_rand)
     }
     
     
@@ -677,7 +702,7 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
     for(i in fulllist.par){
       if(!(i %in% name.extend.par)){
         data.trap[[paste0(i, ' _ (Intercept)')]] <- 1
-        param_distribution[[i]] <- c(1, 0)
+        param_distribution[[i]] <- c(1, 0, 0)
       }
     }
     ## Key component ends.
@@ -686,7 +711,7 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
   } else {
     for(i in fulllist.par){
       data.trap[[paste0(i, ' _ (Intercept)')]] <- 1
-      param_distribution[[i]] <- c(1, 0)
+      param_distribution[[i]] <- c(1, 0, 0)
     }
     name.extend.par <- NULL
     gam_output <- NULL
@@ -694,8 +719,9 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
   
   ## Finally, record the link. Here we only check whether the name is in the full list of parameters,
   ## so technically the user could assign a link function to any parameter here, but this is not recommended.
+  ## The last n_col_rand of the n_col_mask mask-level columns are for random effects.
   df.par <- data.frame(par = character(0), link = character(0), n_col_full = numeric(0),
-                      n_col_mask = numeric(0), stringsAsFactors = FALSE)
+                      n_col_mask = numeric(0), n_col_rand = numeric(0), stringsAsFactors = FALSE)
   
   link <- par.extend$link
   
@@ -710,6 +736,7 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
     df.par[j, 'par'] <- i
     df.par[j, 'n_col_full'] <- param_distribution[[i]][1]
     df.par[j, 'n_col_mask'] <- param_distribution[[i]][2]
+    df.par[j, 'n_col_rand'] <- param_distribution[[i]][3]
     if(i %in% names(link)){
       ## If 'link' is provided, check whether it is a valid input;
       ## currently we only support three link functions.
@@ -736,7 +763,7 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
 
   return(list(data.full = data.full, data.trap = data.trap, data.mask = data.mask, data.par = df.par, is.scale = is.scale,
               name.extend.par = name.extend.par, gam_output= gam_output,
-              lst_mean_std = lst_mean_std))
+              lst_mean_std = lst_mean_std, smooth.re = smooth_re))
 }
 
 ## Construct the Jacobian used to back-transform the scaling and centring done
@@ -1185,6 +1212,7 @@ param.detfn.fun <- function(animal.model, sv, fix, bounds, name.extend.par, detf
         design.matrices.full[[i]] <- design.matrices.full[[i]][, 1, drop = FALSE]
         design.matrices.mask[[i]] <- matrix(0, ncol = 2, nrow = 2)
         data.par[index_par, 'n_col_mask'] <- 0
+        data.par[index_par, 'n_col_rand'] <- 0
         data.par[index_par, 'n_col_full'] <- 1
         name.extend.par <- name.extend.par[-which(name.extend.par == i)]
       }
@@ -1227,7 +1255,8 @@ param.detfn.fun <- function(animal.model, sv, fix, bounds, name.extend.par, detf
       ## worry about its length, as it is always a scalar.
       sv.input[[i]] <- fix.input[[i]]
     } else {
-      sv.input[[i]] <- numeric(length_param)
+      ## Random effects are not in the parameter vector, but have bounds like the fixed coefficients.
+      sv.input[[i]] <- numeric(length_param - data.par[index_par, 'n_col_rand'])
       ## Since numeric(n) defaults to 0, we only need to assign the
       ## first element, whether or not it is extended.
       sv.input[[i]][1] <- link.fun(link = link, value = sv[[i]])

@@ -63,7 +63,7 @@ coef.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
   }
 
   class(output) <- 'coef.acre'
-  output
+  drop.re(output, object, ...)
 }
 
 
@@ -81,7 +81,7 @@ coef.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 #' @export
 coef.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, correct.bias = FALSE, ...){
   if(!correct.bias){
-    return(coef.acre(object = object, types = types, pars = pars, new.covariates = new.covariates))
+    return(coef.acre(object = object, types = types, pars = pars, new.covariates = new.covariates, ...))
   }
 
   ## Deal with the default setting for 'types'.
@@ -98,7 +98,8 @@ coef.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NU
   extend_par_covariates <- get.par.extend.covariate(object)
 
   ## The bias-corrected linked estimates: hat(coef) - (mean(boot_results) - hat(coef)).
-  coefs <- coef.acre(object, types = 'linked', pars)
+  ## The bootstrap results include the random effects for penalised smooths.
+  coefs <- coef.acre(object, types = 'linked', pars, re = TRUE)
   coefs_linked_bias_corrected <- coefs - get.bias(get.boot.res(object, pars), coefs)
   original_name <- ori.name(names(coefs))
 
@@ -119,7 +120,7 @@ coef.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NU
   names(output) <- NULL
   output <- do.call('c', output)
   class(output) <- "coef.acre"
-  output
+  drop.re(output, object, ...)
 }
 
 #' @export
@@ -276,7 +277,7 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
   ## If only one type is assigned, change the output from a list to a matrix.
   if(length(types) == 1) output <- output[[types]]
   
-  return(output)
+  drop.re(output, object, ...)
   
 }
 
@@ -296,7 +297,7 @@ vcov.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, 
 vcov.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, from.boot = TRUE, ...){
   
   if(!from.boot){
-    output <- vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates)
+    output <- vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates, ...)
     return(output)
   }
   
@@ -328,7 +329,7 @@ vcov.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NU
   ## When there is only one type, output it directly without a list structure.
   if(length(types) == 1) output <- output[[types]]
  
-  return(output)
+  drop.re(output, object, ...)
 
     
 }
@@ -362,7 +363,7 @@ stdEr <- function(object, ...){
 #' @return a named numeric vector
 #' @export
 stdEr.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL, show.fixed.par = TRUE, ...){
-  output.vcov <- vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates)
+  output.vcov <- vcov.acre(object = object, types = types, pars = pars, new.covariates = new.covariates, ...)
   std.from.vcov(output.vcov, object, types, pars, new.covariates, show.fixed.par)
 }
 
@@ -380,7 +381,7 @@ stdEr.acre <- function(object, types = NULL, pars = NULL, new.covariates = NULL,
 #' @export
 stdEr.acreboot <- function(object, types = NULL, pars = NULL, new.covariates = NULL, from.boot = TRUE, show.fixed.par = TRUE, ...){
   output.vcov <- vcov.acreboot(object = object, types = types, pars = pars, new.covariates = new.covariates,
-                               from.boot = from.boot)
+                               from.boot = from.boot, ...)
   std.from.vcov(output.vcov, object, types, pars, new.covariates, show.fixed.par)
 }
 
@@ -447,7 +448,7 @@ confint.acre <- function(object, parm = NULL, level = 0.95, types = NULL, new.co
   
   output <- do.call('rbind', output)
   colnames(output) <- col_name
-  return(output)
+  drop.re(output, object, ...)
 }
 
 
@@ -496,7 +497,8 @@ confint.acreboot <- function(object, parm = NULL, level = 0.95, types = NULL, ne
   
   ## Obtain the bootstrap result.
   res <- get.boot.res(object, pars)
-  coef_link <- coef.acre(object, types = 'linked', pars)
+  ## The bootstrap results include the random effects for penalised smooths.
+  coef_link <- coef.acre(object, types = 'linked', pars, re = TRUE)
   
   res <- res.mod.for.CI(res, coef_link, correct.bias)
 
@@ -523,7 +525,7 @@ confint.acreboot <- function(object, parm = NULL, level = 0.95, types = NULL, ne
   
   output <- do.call('rbind', output)
 
-  return(output)
+  drop.re(output, object, ...)
 }
 
 
@@ -555,8 +557,11 @@ AIC.acre <- function(..., k = 2) {
   for (i in seq_along(models)) {
     model <- models[[i]]
     n_fixed <- length(get.fixed.par.name(model))
-    aic_values[i] <- k * (length(coef(model)) - n_fixed) - 2 * model$loglik
-    n_par[i] <- length(coef(model))
+    ## The standard deviations of the random effects for penalised smooths are parameters, but
+    ## are not in coef().
+    n_sd <- if(is.null(model$D.smooth)) 0 else nrow(model$D.smooth)
+    aic_values[i] <- k * (length(coef(model)) + n_sd - n_fixed) - 2 * model$loglik
+    n_par[i] <- length(coef(model)) + n_sd
   
   }
   return(data.frame(npar = n_par, AIC = aic_values))
@@ -679,7 +684,8 @@ summary.acre <- function(object, derived.print = FALSE, ...){
                 CI = CI, CI_derived = CI_derived,
                 is_boot = is_boot, infotypes = infotypes, detfn = detfn,
                 n.sessions = n.sessions, pars_ext_links = pars_ext_links,
-                ss_opts = ss_opts, derived_print = derived.print, CL = CL)
+                ss_opts = ss_opts, derived_print = derived.print, CL = CL,
+                D_smooth = object$D.smooth)
   class(output) <- c("summary.acre", class(output))
   return(output)
 }
@@ -751,6 +757,13 @@ print.summary.acre <- function(x, ...){
     for(i in names(pars_ext_links)){
       cat(i, ":", pars_ext_links[i], "\n")
     }
+  }
+  
+  if(!is.null(x$D_smooth)){
+    cat("\n", "\n", "Penalised smooths for D (standard deviations of random effects):", "\n")
+    mat_smooth <- cbind(x$D_smooth$n.re, x$D_smooth$sd, x$D_smooth$se)
+    dimnames(mat_smooth) <- list(x$D_smooth$term, c("No. random effects", "Std. Dev.", "Std. Error"))
+    print(mat_smooth, digits = 4)
   }
   
   if(!is.null(ss_opts)){

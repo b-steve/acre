@@ -291,10 +291,8 @@ get.extended.par.value <- function(gam, n.col.full, n.col.mask, par.value.linked
   }
 
   if(n.col.mask > 0){
-    gam.model <- gam$gam_mask
-    DX_mask_new <- get.DX.new.gam(gam.model, new.covariates)
-    ## Get rid of the first column since the intercept is not here.
-    DX_mask_new <- DX_mask_new[, -1, drop = FALSE]
+    ## The intercept is not among the mask-level columns.
+    DX_mask_new <- mask.design.new(gam$gam_mask, new.covariates)
   } else {
     DX_mask_new <- NULL
   }
@@ -491,6 +489,10 @@ get.default.covariates <- function(fit){
   if(length(dat_name) > 1){
     for(i in 2:length(dat_name)) output <- cbind(output, o[[dat_name[i]]])
   }
+  ## Models can also depend on the mask coordinates, which default to the centre of the mask.
+  mask <- do.call('rbind', lapply(get.mask(fit), as.matrix))
+  if(is.null(output$x)) output$x <- mean(mask[, 1])
+  if(is.null(output$y)) output$y <- mean(mask[, 2])
   return(output)
 }
 

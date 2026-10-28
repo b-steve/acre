@@ -54,8 +54,9 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
   traps <- arguments$traps
   masks <- arguments$mask
 
-  ## Coefficient names.
-  coefs <- coef(fit, 'linked')
+  ## Coefficient names. The random effects for penalised smooths are recorded too, because
+  ## predictions of density from the bootstrap results depend on them.
+  coefs <- coef(fit, 'linked', re = TRUE)
   n_pars <- length(coefs)
   par_names <- names(coefs)
 
@@ -95,7 +96,7 @@ boot.acre <- function(fit, N = 30, n.cores = 1, infotypes = NULL, seed = NULL){
       base_cols <- intersect(c('session', 'animal_ID', 'ID', 'trap'), colnames(arguments$capt))
       new_args$capt <- arguments$capt[, c(base_cols, infotypes[[i]]), drop = FALSE]
       new_fit <- suppressWarnings(do.call("fit.from.settings", new_args))
-      tem <- coef(new_fit, 'linked')
+      tem <- coef(new_fit, 'linked', re = TRUE)
       new_ncol_res <- length(tem) + 1 + dims$n.sessions
       new_colnames_res <- c(names(tem), 'maxgrad', paste('esa', seq(dims$n.sessions), sep = "_"))
 
@@ -154,7 +155,7 @@ boot.step <- function(seed, N, fit, arguments, dims, infotypes, len.output, name
       ## If it still has not converged, give up and report NA, which is the default value of the output,
       ## so nothing needs to be done. If it converged, assign the result to the output.
       if (!("try-error" %in% class(fit_boot) || fit_boot$maxgrad < -0.01)){
-        output[n, ] <- c(coef(fit_boot, 'linked'), fit_boot$maxgrad, coef(fit_boot, 'derived'))
+        output[n, ] <- c(coef(fit_boot, 'linked', re = TRUE), fit_boot$maxgrad, coef(fit_boot, 'derived'))
       }
 
     } else {

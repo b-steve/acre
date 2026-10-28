@@ -268,6 +268,9 @@ Type acreTMB(objective_function<Type>* obj)
   
   // Conditional likelihood 
   DATA_INTEGER(is_conditional);
+  //penalised smooths for D, and the index of each random effect's standard deviation
+  DATA_INTEGER(is_D_smooth);
+  DATA_IVECTOR(u_fac);
   DATA_INTEGER(is_two_stage);
   
   DATA_SCALAR(cutoff);
@@ -458,18 +461,36 @@ Type acreTMB(objective_function<Type>* obj)
   PARAMETER(sigma_b0_ss);
   if(sigma_b0_ss < sigma_b0_ss_bound(0, 0) || sigma_b0_ss > sigma_b0_ss_bound(1, 0)) nll += std::numeric_limits<double>::infinity();
   if(incheck_scalar(16, param_og) == 1) ADREPORT(sigma_b0_ss);
+  //random effects for penalised smooths of D, and the logs of their standard deviations;
+  //without penalised smooths, both are placeholders that are not estimated
+  PARAMETER_VECTOR(u);
+  PARAMETER_VECTOR(log_sigma_u);
   //D is used by every model, so it is always reported
   PARAMETER_VECTOR(D);
   vector<Type> D_vec_full, D_vec_mask;
-  ADREPORT(D);
-  linear_predictor(D, D_DX, D_DX_mask, D_bound, par_n_col, 16, nrow_data_mask, nll, D_vec_full, D_vec_mask);
+  if(is_D_smooth == 1){
+    //the last columns of D_DX_mask are for the random effects, so their coefficients follow D's,
+    //and are reported with them
+    vector<Type> D_u(D.size() + u.size());
+    D_u << D, u;
+    linear_predictor(D_u, D_DX, D_DX_mask, D_bound, par_n_col, 16, nrow_data_mask, nll, D_vec_full, D_vec_mask);
+    vector<Type> sigma_u = exp(log_sigma_u);
+    for(int i = 0; i < u.size(); i++){
+      nll -= dnorm(u(i), Type(0.0), sigma_u(u_fac(i)), true);
+    }
+    {
+      vector<Type> D = D_u;
+      ADREPORT(D);
+    }
+  } else {
+    ADREPORT(D);
+    linear_predictor(D, D_DX, D_DX_mask, D_bound, par_n_col, 16, nrow_data_mask, nll, D_vec_full, D_vec_mask);
+  }
   //mu is the call rate in the animal model
   PARAMETER_VECTOR(mu);
   vector<Type> mu_vec_full, mu_vec_mask;
   linear_predictor(mu, mu_DX, mu_DX_mask, mu_bound, par_n_col, 17, nrow_data_mask, nll, mu_vec_full, mu_vec_mask);
   if(incheck_scalar(18, param_og) == 1) ADREPORT(mu);
-  //a latent variable, currently unused
-  PARAMETER_VECTOR(u);
   
   //---------------------------------------------------------------------------------------
   //The likelihood.

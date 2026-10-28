@@ -848,9 +848,8 @@ delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, new.co
 
         if(n_col_mask > 0){
           gam.model <- gam.output[[par_name]][["gam_mask"]]
-          tem <- get.DX.new.gam(gam.model, new.covariates)
-          ## Get rid of the first column since the intercept is not here.
-          w[, (n_col_full + 1):(n_col_full + n_col_mask)] <- tem[, -1]
+          ## The intercept is not among the mask-level columns.
+          w[, (n_col_full + 1):(n_col_full + n_col_mask)] <- mask.design.new(gam.model, new.covariates)
         }
 
       } else {
@@ -1928,9 +1927,9 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
     par_info <- subset(par_info, par_info$par == 'D')
     gam.model <- get.gam(fit, 'D')
     if(is(fit, 'acreboot')){
-      values_link <- as.vector(coef(fit, types = 'linked', pars = 'D', correct.bias = control.boot$correct.bias))
+      values_link <- as.vector(coef(fit, types = 'linked', pars = 'D', correct.bias = control.boot$correct.bias, re = TRUE))
     } else {
-      values_link <- as.vector(coef(fit, types = 'linked', pars = 'D'))
+      values_link <- as.vector(coef(fit, types = 'linked', pars = 'D', re = TRUE))
     }
 
     values_link_og <- values_link
@@ -1955,7 +1954,7 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
                                from.boot = control.boot$from.boot, show.fixed.par = FALSE))
 
       } else {
-        vcov_matrix <- vcov(fit, types = 'linked', pars = 'D')
+        vcov_matrix <- vcov(fit, types = 'linked', pars = 'D', re = TRUE)
         D.se <- sqrt(delta.for.pred(DX, values_link_og, vcov_matrix, log.scale))
       }
 

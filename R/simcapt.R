@@ -26,6 +26,7 @@
 sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list(), session.cov = NULL, trap.cov = NULL, loc.cov = NULL,
                     dist.cov = NULL, time.loc.cov = NULL, convert.loc2mask = list(), survey.length = NULL, ss.opts = NULL,
                     cue.rates = NULL, n.sessions = NULL, n.rand = 1, random.location = FALSE, sound.speed = 331){
+  D.mask.fit <- NULL
   if(!missing(fit)) {
     ## If 'fit' is provided, get all information from the fitted object.
 
@@ -58,6 +59,12 @@ sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list
       par.extend$model$D <- NULL
     }
 
+    ## The mask is the fit's, so an extended D is the fitted density at each mask point; this
+    ## includes any random effects for penalised smooths.
+    if('D' %in% names(par.extend$model)){
+      D.mask.fit <- fit$D.mask
+    }
+
   } else {
     stopifnot(all(!missing(detfn), !missing(param), !missing(traps), !is.null(control.mask$buffer)))
     ## Extract n.sessions first, and convert traps into a list if it is not one.
@@ -86,7 +93,7 @@ sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list
 
   ## write.csv(par.extend$data$mask, 'df_m_sim.csv', row.names = F)
   tem <- sim.data.prepare(detfn, param, par.extend, traps, mask,
-                         survey.length, random.location, n.sessions)
+                         survey.length, random.location, n.sessions, D.mask.fit)
   dat_pars <- tem$dat_pars
   dat.density <- tem$dat.density
   dims <- tem$dims
@@ -131,9 +138,11 @@ sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list
 }
 
 ####################################################################################################################################
-## Simulate from the assigned parameters.
+## Simulate from the assigned parameters. If D.mask.fit is provided (a list with the density at each
+## mask point for each session, from a fitted model), it is used for D.
 
-sim.data.prepare <- function(detfn, param, par.extend, traps, mask, survey.length, random.location, n.sessions){
+sim.data.prepare <- function(detfn, param, par.extend, traps, mask, survey.length, random.location, n.sessions,
+                             D.mask.fit = NULL){
 
   if(is.null(survey.length)){
     survey.length <- rep(1, n.sessions)
@@ -284,7 +293,10 @@ sim.data.prepare <- function(detfn, param, par.extend, traps, mask, survey.lengt
       par.value <- param[[i]]
       if(is.null(par.value)) stop(paste0('please provide parameter: ', i))
 
-      if(i %in% name.extend.par){
+      if(i == 'D' && !is.null(D.mask.fit)){
+        D_mask_index <- paste(rep(seq_along(D.mask.fit), lengths(D.mask.fit)), sequence(lengths(D.mask.fit)))
+        dat[[i]] <- unlist(D.mask.fit, use.names = FALSE)[match(paste(dat$session, dat$mask), D_mask_index)]
+      } else if(i %in% name.extend.par){
         foo <- stats::as.formula(paste(c('gam.resp', as.character(par.extend$model[[i]])), collapse = ""))
         tem_model <- mgcv::gam(foo, data = tem_dat, fit = FALSE)
         DX <- tem_model$X
