@@ -17,7 +17,8 @@ read.acre(
   dist.cov = NULL,
   cue.rates = NULL,
   survey.length = NULL,
-  sound.speed = 330
+  sound.speed = 330,
+  unsuitable = NULL
 )
 }
 \arguments{
@@ -88,6 +89,8 @@ sessions, the value will be assigned to all sessions.}
 second. This argument is only used when time-of-arrival data are
 included in the \code{captures} data frame. Defaults to 330, the
 approximate speed of sound in air.}
+
+\item{unsuitable}{(Still to write)}
 }
 \value{
 (Still to write)

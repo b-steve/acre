@@ -15,7 +15,8 @@ fit.acre(
   tracing = TRUE,
   optim.opts = NULL,
   two.stage = FALSE,
-  CL = two.stage
+  CL = two.stage,
+  unsuitable = NULL
 )
 }
 \arguments{
@@ -70,6 +71,8 @@ approach are carried out.}
 
 \item{CL}{A logical value. If \code{TRUE}, a conditional likelihood
 model is fitted, and so density is not estimated.}
+
+\item{unsuitable}{(Still to write)}
 }
 \value{
 (Still to write)
