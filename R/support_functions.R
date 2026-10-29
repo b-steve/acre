@@ -1839,7 +1839,8 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
         ## calculate the value at each mask point for distance covariates.
 
         ## Separate distance covariates from location covariates.
-        dist_cov_names <- names(fit$arg_input$dist.cov)
+        dist_cov_names <- as.character(names(fit$arg_input$dist.cov))
+        if(is.data.frame(old_loc_cov)) old_loc_cov <- list(old_loc_cov)
         separated_cov <- separate.dist.loc.cov(old_loc_cov, dist_cov_names)
 
         ## NOTICE: we aren't using separated_cov$distance; we want to calculate
@@ -1849,11 +1850,11 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
         convert.loc2mask$loc.cov <- separated_cov$location
 
         loc_cov_mask <- do.call('location.cov.to.mask', convert.loc2mask)
-        dist_cov_mask <- do.call('distance.cov.to.mask', convert.dist2mask)
+        dist_cov_mask <- if(length(dist_cov_names) > 0) do.call('distance.cov.to.mask', convert.dist2mask)
 
         ## Combine the distance and location covariates into one data frame.
         ## The distance mask should (read: will) have x, y columns matching old_covariates.
-        cov_mask <- cbind(loc_cov_mask, dist_cov_mask)
+        cov_mask <- if(is.null(dist_cov_mask)) loc_cov_mask else cbind(loc_cov_mask, dist_cov_mask)
       }
       ## Make sure to remove any unnecessary session or mask columns.
       if(any(colnames(cov_mask) %in% c('session', 'mask'))){
@@ -1974,6 +1975,24 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
       D.se <- as.vector(rep(stdEr(fit, types = type, pars = 'D', show.fixed.par = FALSE), nrow(mask)))
     }
 
+  }
+
+  ## There is no density in unsuitable habitat. The fitted masks exclude it, but new locations
+  ## might not.
+  if(!original_mask && length(fit$unsuitable) > 0){
+    if('D' %in% get.par.extend.name(fit)){
+      covs <- old_covariates
+    } else {
+      covs <- as.data.frame(if(is.null(new.data)) mask else new.data)
+      loc_cov <- get.loc.cov(fit)
+      if(!is.null(loc_cov)){
+        tem <- location.cov.to.mask(list(mask[, c('x', 'y')]), loc_cov)
+        for(i in setdiff(colnames(tem), c('session', 'mask', colnames(covs)))) covs[[i]] <- tem[[i]]
+      }
+    }
+    bad <- unsuitable.points(fit$unsuitable, covs)
+    D.mask[bad] <- 0
+    if(se.fit) D.se[bad] <- if(log.scale) NA else 0
   }
 
   output <- as.data.frame(mask)

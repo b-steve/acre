@@ -164,6 +164,7 @@
 #'   second. This argument is only used when time-of-arrival data are
 #'   included in the `captures` data frame. Defaults to 330, the
 #'   approximate speed of sound in air.
+#' @param unsuitable (Still to write)
 #'
 #' @return (Still to write)
 #' @export
@@ -171,7 +172,9 @@
 read.acre <- function(captures, traps, mask = NULL,
                      control.mask = list(), loc.cov = NULL, time.loc.cov = NULL,
                      convert.loc2mask = list(), session.cov = NULL, trap.cov = NULL, dist.cov = NULL,
-                     cue.rates = NULL, survey.length = NULL, sound.speed = 330){
+                     cue.rates = NULL, survey.length = NULL, sound.speed = 330, unsuitable = NULL){
+  ## A logical expression in the mask-level covariates, kept unevaluated; see R/unsuitable.R.
+  unsuitable <- unsuitable.formula(substitute(unsuitable), parent.frame())
   ## Keep all original input arguments.
   arg.names <- names(as.list(environment()))
   arg.input <- vector('list', length(arg.names))
@@ -217,6 +220,13 @@ read.acre <- function(captures, traps, mask = NULL,
   par.extend <- tem$output
   arg.input$loc.cov <- tem$loc.cov
 
+  ## Remove unsuitable habitat from the mask, after the covariates have been computed for it.
+  if(!is.null(unsuitable)){
+    tem <- remove.unsuitable(mask, par.extend$data$mask, list(unsuitable))
+    mask <- tem$mask
+    if(!is.null(par.extend$data$mask)) par.extend$data$mask <- tem$mask.cov
+  }
+
   output$capt <- capt
   output$traps <- traps
   output$mask <- mask
@@ -225,6 +235,7 @@ read.acre <- function(captures, traps, mask = NULL,
   output$cue.rates <- cue.rates
   output$survey.length <- survey.length
   output$sound.speed <- sound.speed
+  output$unsuitable <- unsuitable
 
   ## The object arg.input is not used by fit.from.settings(), but it needs to be passed to the final model fit object.
   output$arg.input <- arg.input
@@ -361,15 +372,21 @@ read.acre <- function(captures, traps, mask = NULL,
 #' @param two.stage A logical value. If `TRUE`, computations required
 #'   to propagate variance under a two-stage density modelling
 #'   approach are carried out.
+#' @param unsuitable (Still to write)
 #'
 #' @return (Still to write)
 #' @export
 fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(),
                     tracing = TRUE, optim.opts = NULL,
-                    two.stage = FALSE, CL = two.stage){
+                    two.stage = FALSE, CL = two.stage, unsuitable = NULL){
+  ## A logical expression in the mask-level covariates, kept unevaluated; see R/unsuitable.R.
+  unsuitable <- unsuitable.formula(substitute(unsuitable), parent.frame())
   ## Renaming object.
   dat <- data
+  ## Unsuitable habitat according to read.acre(), which has already been removed from its mask.
+  unsuitable.data <- dat$unsuitable
+  dat$unsuitable <- NULL
 
   arg.input <- dat$arg.input
   dat$arg.input <- NULL
@@ -412,6 +429,21 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
     mask_override <- TRUE
   }
 
+  if(mask_override && !is.null(dat$par.extend$data$mask)){
+    convert.loc2mask$loc.cov <- arg.input$loc.cov
+    convert.loc2mask$mask <- mask
+    dat$par.extend$data$mask <- do.call("location.cov.to.mask", convert.loc2mask)
+  }
+
+  ## Remove unsuitable habitat from the mask. A new mask needs read.acre()'s unsuitable habitat
+  ## removing too.
+  unsuitable.new <- Filter(Negate(is.null), list(if(mask_override) unsuitable.data, unsuitable))
+  if(length(unsuitable.new) > 0){
+    tem <- remove.unsuitable(dat$mask, dat$par.extend$data$mask, unsuitable.new)
+    dat$mask <- tem$mask
+    if(!is.null(dat$par.extend$data$mask)) dat$par.extend$data$mask <- tem$mask.cov
+  }
+
   if(!is.null(model)){
     if(is.null(dat$par.extend)){
       dat$par.extend <- list(model = model)
@@ -420,13 +452,6 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
     }
     dat$par.extend$scale <- scale.covs
     dat$par.extend$link <- NULL
-
-    if(mask_override && !is.null(dat$par.extend$data$mask)){
-      convert.loc2mask$loc.cov <- arg.input$loc.cov
-      convert.loc2mask$mask <- mask
-      dat$par.extend$data$mask <- do.call("location.cov.to.mask", convert.loc2mask)
-    }
-
   } else {
     dat$par.extend <- NULL
   }
@@ -473,6 +498,8 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
   output <- do.call("fit.from.settings", dat)
   output$arg_input <- arg.input
   output$call <- match.call()
+  ## All unsuitable habitat, for predictions away from the mask.
+  output$unsuitable <- Filter(Negate(is.null), list(unsuitable.data, unsuitable))
   output$CL <- CL
 
   return(output)
