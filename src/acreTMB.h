@@ -515,6 +515,9 @@ Type acreTMB(objective_function<Type>* obj)
   vector<Type> essx(nrow_dx);
   essx.setZero();
   vector<Type> esa(n_sessions);
+  //detection probabilities at all mask points, in the order of data_mask, reported so that
+  //p.dot() does not have to calculate them again
+  vector<Type> p_dot_all(nrow_data_mask);
 
   //first rows of the current session in each data layout
   int off_full = 0;
@@ -586,6 +589,7 @@ Type acreTMB(objective_function<Type>* obj)
         p_dot(m) *= 1 - p_k(m, t);
       }
       p_dot(m) = 1 - p_dot(m);
+      p_dot_all(mrow) = p_dot(m);
 
       //probability that a group at m is detected: for a call, p_dot; for an animal, that
       //at least one of its calls is detected
@@ -794,6 +798,7 @@ Type acreTMB(objective_function<Type>* obj)
   }
 
   ADREPORT(esa);
+  REPORT(p_dot_all);
   
   if (is_two_stage) {
     // Report the log_esa for each session
