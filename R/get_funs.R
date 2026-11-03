@@ -242,7 +242,14 @@ get.DX.new.gam <- function(mod, newdata){
   ## Make sure the new data are in the right data type.
   for(i in var_names){
     if(is.null(newdata[[i]])) stop(paste0('covariate: ', i, " is not provided."))
-    if(is(mod$var.summary[[i]], 'factor')) newdata[[i]] <- as.character(newdata[[i]])
+    if(is(mod$var.summary[[i]], 'factor')){
+      newdata[[i]] <- as.character(newdata[[i]])
+      new_levels <- setdiff(unique(newdata[[i]]), levels(mod$var.summary[[i]]))
+      if(length(new_levels) > 0){
+        stop("Covariate ", i, " has values that are not in the data used to fit the model: ",
+             paste(new_levels, collapse = ", "), ".", call. = FALSE)
+      }
+    }
     if(is(mod$var.summary[[i]], 'numeric')) newdata[[i]] <- as.numeric(newdata[[i]])
   }
 
@@ -281,18 +288,18 @@ get.DX.new.gam <- function(mod, newdata){
   return(output)
 }
 
-get.extended.par.value <- function(gam, n.col.full, n.col.mask, par.value.linked, new.covariates,
+get.extended.par.value <- function(gam, n.col.full, n.col.mask, par.value.linked, newdata,
                                   DX.output = FALSE, matrix.par.value = FALSE){
   if(n.col.full > 1){
     gam.model <- gam$gam_non_mask
-    DX_full_new <- get.DX.new.gam(gam.model, new.covariates)
+    DX_full_new <- get.DX.new.gam(gam.model, newdata)
   } else {
-    DX_full_new <- matrix(1, ncol = 1, nrow = nrow(new.covariates))
+    DX_full_new <- matrix(1, ncol = 1, nrow = nrow(newdata))
   }
 
   if(n.col.mask > 0){
     ## The intercept is not among the mask-level columns.
-    DX_mask_new <- mask.design.new(gam$gam_mask, new.covariates)
+    DX_mask_new <- mask.design.new(gam$gam_mask, newdata)
   } else {
     DX_mask_new <- NULL
   }
@@ -341,12 +348,14 @@ get.extended.par.value <- function(gam, n.col.full, n.col.mask, par.value.linked
 #'    model specification.
 #' @param session an integer value indicating the session of detector array and
 #'    individual(s) to be plotted.
+#' @param mask.data (Still to write)
+#' @param pars (Still to write)
 #'
 #' @return a list of (nmask) x (ntrap) columns, for each extended parameter.
 #'          values correspond to estimated parameter value for the given covariate values.
 #' @keywords internal
 get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
-                                  warn = T) {
+                                  warn = T, mask.data = NULL, pars = NULL) {
   ## Make sure the model has an extended parameter.
   par_extended <- !is.null(get.par.extend(fit))
   if (!par_extended) {
@@ -383,6 +392,11 @@ get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
     }
   }
 
+  ## Mask-level covariates for other mask points, which replace those from the fit.
+  if (!is.null(mask.data)) {
+    ext_par_data$mask <- mask.data
+  }
+
   ext_par_newdata <- NULL
 
   ## Mask-level covariates.
@@ -396,11 +410,18 @@ get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
       }
     }
 
+    if ("mask" %in% names(ext_par_data$mask)) {
+      ext_par_data$mask <- ext_par_data$mask[order(ext_par_data$mask$mask), , drop = FALSE]
+    }
     ext_par_newdata <- ext_par_data$mask[
       rep(seq_len(n_mask_ext), each = n_trap_ext),
       ,
       drop = FALSE
     ]
+    ## The mask coordinates, which can also be covariates.
+    for (i in setdiff(c("x", "y"), names(ext_par_newdata))) {
+      ext_par_newdata[[i]] <- rep(mask[, i], each = n_trap_ext)
+    }
   }
 
   ## Trap-level covariates.
@@ -446,13 +467,20 @@ get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
 
   ## Calculate the coefficients. Note that this is in long format, so it will have to be
   ## reformatted before returning.
+  ## Only the parameters in pars, if it is provided.
+  ext_par_names <- get.par.extend.name(fit)
+  if (!is.null(pars)) {
+    ext_par_names <- intersect(ext_par_names, pars)
+  }
   ext_par_values <- predict(fit, newdata = ext_par_newdata, se.fit = F,
-                            confidence = F)
+                            confidence = F, realnames = ext_par_names)
 
   par_values <- list()
-  ext_par_names <- get.par.extend.name(fit)
   ## Reformat the predicted values.
   for (par in ext_par_names) {
+    if (!is.data.frame(ext_par_values[[par]])) {
+      stop(ext_par_values[[par]], call. = FALSE)
+    }
     ext_par_values_matrix <- matrix(
       ext_par_values[[par]]$Estimate,
       nrow = nrow(traps),
@@ -508,7 +536,7 @@ get.sv.for.boot <- function(fit){
   is.extended <- !is.null(get.par.extend.name(fit))
   if(is.extended){
     covaraites_default <- get.default.covariates(fit)
-    output <- as.list(coef(fit, 'fitted', new.covariates = covaraites_default))
+    output <- as.list(coef(fit, 'fitted', newdata = covaraites_default))
   } else {
     output <- as.list(coef(fit, 'fitted'))
   }

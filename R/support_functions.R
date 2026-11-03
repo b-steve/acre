@@ -242,25 +242,55 @@ p.dot.defaultD <- function(points = NULL, traps = NULL, detfn = NULL,
 #' Calculates the probability of a call produced at a mask point being
 #' detected by one or more detectors.
 #' @inheritParams boot.acre
+#' @param mask (Still to write)
+#' @param newdata (Still to write)
 #'
 #' @return A list with a component for each session, containing a
 #'   vector of detection probabilities.
 #'
 #' @export
-p.dot <- function(fit){
+p.dot <- function(fit, mask = NULL, newdata = NULL){
   n.sessions <- fit$n.sessions
+  ## At the masks used to fit the model, the detection probabilities were reported by TMB.
+  if(is.null(mask) && is.null(newdata) && !is.null(fit$output.tmb$p_dot)){
+    return(fit$output.tmb$p_dot)
+  }
+  ## Otherwise, they are calculated from the estimated detection parameters. A single mask, or
+  ## data frame of covariates, is used for every session.
+  masks <- if(is.null(mask)) get.mask(fit) else if(is.list(mask) && !is.data.frame(mask)) mask else rep(list(mask), n.sessions)
+  if(is.data.frame(newdata)) newdata <- rep(list(newdata), n.sessions)
+  if(length(masks) != n.sessions || (!is.null(newdata) && length(newdata) != n.sessions)){
+    stop("'mask' and 'newdata' must be for a single session, or for each of the ", n.sessions, " sessions.")
+  }
+  ## Density, and the call rate, do not affect the probability of detecting a call.
+  det.par.names <- setdiff(get.par.extend.name(fit), c("D", "mu"))
   out <- vector(mode = "list", length = n.sessions)
   for (i in 1:n.sessions){
-    mask <- as.matrix(get.mask(fit)[[i]])
+    points <- as.matrix(masks[[i]])[, 1:2, drop = FALSE]
+    colnames(points) <- c("x", "y")
     traps <- get.trap(fit)[[i]]
     det.pars <- as.list(coef(fit, type = "fitted"))
-    ext.par.matrices <- get.par.extend.matrix(fit, mask, traps, session = i)
-    det.pars[names(ext.par.matrices)] <- ext.par.matrices
-    out[[i]] <- p.dot.defaultD(points = mask, traps = traps,
+    if(fit$fit.types["ss"]) det.pars$cutoff <- get.ss.opts(fit)$cutoff
+    if(length(det.par.names) > 0){
+      ## New points or covariates replace the mask-level covariates from the fit.
+      mask.data <- NULL
+      if(!is.null(mask) || !is.null(newdata)){
+        mask.data <- data.frame(points)
+        if(!is.null(newdata)){
+          nd <- as.data.frame(newdata[[i]])
+          if(nrow(nd) != nrow(points)) stop("'newdata' must have a row for each mask point.")
+          mask.data <- cbind(mask.data, nd[, setdiff(colnames(nd), c("x", "y")), drop = FALSE])
+        }
+      }
+      ext.par.matrices <- get.par.extend.matrix(fit, points, traps, session = i, mask.data = mask.data,
+                                                pars = det.par.names)
+      det.pars[names(ext.par.matrices)] <- ext.par.matrices
+    }
+    out[[i]] <- p.dot.defaultD(points = points, traps = traps,
                                detfn = get.detfn(fit),
                                ss.link = get.ss.link(fit),
                                pars = det.pars,
-                               A = attr(mask, "area"),
+                               A = attr(masks[[i]], "area"),
                                esa = FALSE)
   }
   out
@@ -743,11 +773,11 @@ list.2vector.4value <- function(param){
 }
 
 
-ext.par.in.new.df <- function(par.ext, new.covariates, extend.par.covariates){
+ext.par.in.new.df <- function(par.ext, newdata, extend.par.covariates){
   output <- NULL
   if(!is.null(par.ext)){
     for(i in par.ext){
-      if(all(extend.par.covariates[[i]] %in% colnames(new.covariates))){
+      if(all(extend.par.covariates[[i]] %in% colnames(newdata))){
         output <- c(output, i)
       }
     }
@@ -757,7 +787,7 @@ ext.par.in.new.df <- function(par.ext, new.covariates, extend.par.covariates){
 }
 
 
-delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, new.covariates = NULL,
+delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, newdata = NULL,
                                  name.og = NULL, name.extend = NULL, par.ext.cov.provided = NULL, df.param = NULL,
                                  gam.model.full = NULL, gam.output = NULL, back.trans = TRUE){
   ## Delta method: G(x) is a vector of n functions, where x is a vector of m variables;
@@ -768,7 +798,7 @@ delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, new.co
   m <- length(param.values)
 
   ## In the simple case, no new covariates are involved, and "link.funs" should be provided;
-  ## otherwise, "new.covariates", "name.og", "df.param" will be used together, and "link.funs" should be NULL.
+  ## otherwise, "newdata", "name.og", "df.param" will be used together, and "link.funs" should be NULL.
   if(!is.null(link.funs)){
     ## In this case, G'(x) is an n*n diagonal matrix.
     n <- length(link.funs)
@@ -792,14 +822,14 @@ delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, new.co
     }
 
   } else {
-    ## if(nrow(new.covariates) != 1) stop('Only 1 row in new.covariates is accepted.')
-    ## If "new.covariates" is provided, then we are going to calculate the covariance matrix
+    ## if(nrow(newdata) != 1) stop('Only 1 row in newdata is accepted.')
+    ## If "newdata" is provided, then we are going to calculate the covariance matrix
     ## for all original parameters used in this model. Let "n" be length(unique(name.og));
     ## then G'(x) will be an n * m matrix.
     unique_name_og <- unique(name.og)
     n <- length(unique_name_og)
     G_grad <- vector('list', n)
-    n_new_df <- nrow(new.covariates)
+    n_new_df <- nrow(newdata)
     ## G_grad = matrix(0, nrow = n, ncol = m)
 
 
@@ -841,7 +871,7 @@ delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, new.co
         w <- matrix(0, nrow = n_new_df, ncol = n_col_full + n_col_mask)
         if(n_col_full > 1){
           gam.model <- gam.output[[par_name]][["gam_non_mask"]]
-          w[, 1:n_col_full] <- get.DX.new.gam(gam.model, new.covariates)
+          w[, 1:n_col_full] <- get.DX.new.gam(gam.model, newdata)
         } else {
           w[, 1] <- matrix(1, nrow = n_new_df, ncol = 1)
         }
@@ -849,7 +879,7 @@ delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, new.co
         if(n_col_mask > 0){
           gam.model <- gam.output[[par_name]][["gam_mask"]]
           ## The intercept is not among the mask-level columns.
-          w[, (n_col_full + 1):(n_col_full + n_col_mask)] <- mask.design.new(gam.model, new.covariates)
+          w[, (n_col_full + 1):(n_col_full + n_col_mask)] <- mask.design.new(gam.model, newdata)
         }
 
       } else {
@@ -969,7 +999,7 @@ vector.to.df <- function(vec){
   return(output)
 }
 
-gaussian.confint.cal <- function(object, types, pars, new.covariates, q.lower, q.upper){
+gaussian.confint.cal <- function(object, types, pars, newdata, q.lower, q.upper){
 
   output <- vector('list', length(types))
   names(output) <- types
@@ -981,8 +1011,8 @@ gaussian.confint.cal <- function(object, types, pars, new.covariates, q.lower, q
 
     if(i == 'fitted' | i == 'linked'){
       ## The "fitted" interval is just back-transformed from the "linked" confidence interval.
-      df_est <- vector.to.df(coef.acre(object, types = 'linked', pars = pars, new.covariates = new.covariates))
-      df_std <- vector.to.df(stdEr.acre(object, types = 'linked', pars = pars, new.covariates = new.covariates, show.fixed.par = FALSE))
+      df_est <- vector.to.df(coef.acre(object, types = 'linked', pars = pars, newdata = newdata))
+      df_std <- vector.to.df(stdEr.acre(object, types = 'linked', pars = pars, newdata = newdata, show.fixed.par = FALSE))
     }
 
     if(i == 'derived'){
@@ -1719,7 +1749,7 @@ circle.fun <- function(centre = data.frame(x = 0, y = 0), r = 0.5, npoints = 50)
 
 ## Predict density using location coordinates; currently only used in the plot.
 
-D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
+D.predict.for.plot <- function(fit, session.select = 1, newdata = NULL,
                               D.cov = NULL, xlim = NULL, ylim = NULL,
                               x.pixels = 50, y.pixels = 50, se.fit = FALSE, log.scale = FALSE, set.zero = NULL,
                               convert.loc2mask = NULL,
@@ -1730,9 +1760,9 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
 
   original_mask <- FALSE
 
-  if(is.null(new.data)){
+  if(is.null(newdata)){
 
-    ## If new.data is not provided, but xlim and ylim are, we use xlim and ylim to build the mask instead of
+    ## If newdata is not provided, but xlim and ylim are, we use xlim and ylim to build the mask instead of
     ## extracting the mask from the fit.
     if(any(!is.null(xlim), !is.null(ylim))){
       if(!all(!is.null(xlim), !is.null(ylim))) stop('please provide both xlim and ylim.')
@@ -1745,11 +1775,11 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
     }
 
   } else {
-    ## If new.data is provided, then xlim and ylim just do what they are supposed to do,
+    ## If newdata is provided, then xlim and ylim just do what they are supposed to do,
     ## i.e. trim the plot, instead of building a "mask".
-    stopifnot(any(is(new.data, 'data.frame'), is(new.data, 'matrix')))
-    stopifnot(all(c('x', 'y') %in% colnames(new.data)))
-    mask <- new.data[, c('x', 'y'), drop = FALSE]
+    stopifnot(any(is(newdata, 'data.frame'), is(newdata, 'matrix')))
+    stopifnot(all(c('x', 'y') %in% colnames(newdata)))
+    mask <- newdata[, c('x', 'y'), drop = FALSE]
   }
 
 
@@ -1798,7 +1828,7 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
         }
 
         ## When the locations/mask for prediction are given by `xlim`/`ylim` or
-        ## `new.data`, we use the original mask-level data as `loc.cov`;
+        ## `newdata`, we use the original mask-level data as `loc.cov`;
         ## otherwise, we do not need to do any conversion in the first place.
         if(!original_mask){
           if('session' %in% colnames(old_loc_cov)) {
@@ -1868,13 +1898,13 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
     ## Session-related covariates are simple: just take them
     ## from the input arguments of the fit. But don't do this if new data
     ## are provided.
-    if(!is.null(session_data_in_model) & is.null(new.data)){
+    if(!is.null(session_data_in_model) & is.null(newdata)){
       tem <- session_data_in_model[which(session_data_in_model$session == session.select), , drop = FALSE]
       tem <- tem[, -which(colnames(tem) == 'session'), drop = FALSE]
       for(i in colnames(tem)) old_covariates[[i]] <- tem[1,i]
     }
 
-    if(!is.null(D.cov) | !is.null(new.data)){
+    if(!is.null(D.cov) | !is.null(newdata)){
       ## First deal with all scenarios in which new covariates may be provided.
       if(!is.null(D.cov)){
         stopifnot(is(D.cov, 'list'))
@@ -1888,14 +1918,14 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
       ## So we create 2 data frames, one for all new covariates and one for old covariates. We must make sure these two data frames
       ## contain the same mask points, and then replace the covariates in the "old" data frame with the same columns in the "new" one,
       ## if the same covariate appears in the "new" data frame.
-      if(!is.null(new.data)){
-        ## In new.data, the user can include any location-related covariates directly, and it also contains x and y,
+      if(!is.null(newdata)){
+        ## In newdata, the user can include any location-related covariates directly, and it also contains x and y,
         ## so we can use it directly instead of the mask.
-        new.covariates <- as.data.frame(new.data)
+        new_cov <- as.data.frame(newdata)
       } else {
-        new.covariates <- as.data.frame(mask)
+        new_cov <- as.data.frame(mask)
       }
-      ## Build new.covariates based on all the information we have.
+      ## Build new_cov based on all the information we have.
       if(!is.null(D.cov$location)){
         if(is.null(convert.loc2mask)){
           convert.loc2mask <- vector('list', 2)
@@ -1905,23 +1935,32 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
         convert.loc2mask$loc.cov <- D.cov$location
 
         cov_mask <- do.call('location.cov.to.mask', convert.loc2mask)
-        new.covariates <- cbind(new.covariates, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
+        new_cov <- cbind(new_cov, cov_mask[, -which(colnames(cov_mask) %in% c('session', 'mask')), drop = FALSE])
       }
 
 
       ## Since we only plot one session, the number of rows of D.cov$session should be 1.
       if(!is.null(D.cov$session)){
         stopifnot(nrow(D.cov$session) == 1)
-        for(i in colnames(D.cov$session)) new.covariates[[i]] <- D.cov$session[1,i]
+        for(i in colnames(D.cov$session)) new_cov[[i]] <- D.cov$session[1,i]
 
       }
-      ## Update old_covariates with new.covariates.
+      ## Update old_covariates with new_cov.
 
-      for(i in colnames(new.covariates)){
+      for(i in colnames(new_cov)){
         if(all(i != 'x', i != 'y')){
-          old_covariates[[i]] <- new.covariates[[i]]
+          old_covariates[[i]] <- new_cov[[i]]
         }
       }
+    }
+
+    ## There is no density in unsuitable habitat. The fitted masks exclude it, but new locations
+    ## might not. These are left out of the predictions, which might not otherwise be possible,
+    ## e.g., if they have levels of a factor that the fitted masks do not.
+    bad <- rep(FALSE, nrow(old_covariates))
+    if(!original_mask && length(fit$unsuitable) > 0){
+      bad <- unsuitable.points(fit$unsuitable, old_covariates)
+      old_covariates <- old_covariates[!bad, , drop = FALSE]
     }
 
     par_info <- get.data.param(fit)
@@ -1951,7 +1990,7 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
           type <- 'fitted'
         }
 
-        D.se <- as.vector(stdEr(fit, types = type, new.covariates = old_covariates, pars = 'D',
+        D.se <- as.vector(stdEr(fit, types = type, newdata = old_covariates, pars = 'D',
                                from.boot = control.boot$from.boot, show.fixed.par = FALSE))
 
       } else {
@@ -1961,6 +2000,9 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
 
 
     }
+
+    D.mask <- replace(numeric(length(bad)), !bad, D.mask)
+    if(se.fit) D.se <- replace(rep(if(log.scale) NA else 0, length(bad)), !bad, D.se)
 
   } else {
     ## When D is not extended, it is literally a constant, so just take the 'fitted' estimate of D from coef() and stdEr().
@@ -1977,18 +2019,13 @@ D.predict.for.plot <- function(fit, session.select = 1, new.data = NULL,
 
   }
 
-  ## There is no density in unsuitable habitat. The fitted masks exclude it, but new locations
-  ## might not.
-  if(!original_mask && length(fit$unsuitable) > 0){
-    if('D' %in% get.par.extend.name(fit)){
-      covs <- old_covariates
-    } else {
-      covs <- as.data.frame(if(is.null(new.data)) mask else new.data)
-      loc_cov <- get.loc.cov(fit)
-      if(!is.null(loc_cov)){
-        tem <- location.cov.to.mask(list(mask[, c('x', 'y')]), loc_cov)
-        for(i in setdiff(colnames(tem), c('session', 'mask', colnames(covs)))) covs[[i]] <- tem[[i]]
-      }
+  ## Unsuitable habitat for constant density, using the covariates the fit was given.
+  if(!original_mask && length(fit$unsuitable) > 0 && !('D' %in% get.par.extend.name(fit))){
+    covs <- as.data.frame(if(is.null(newdata)) mask else newdata)
+    loc_cov <- get.loc.cov(fit)
+    if(!is.null(loc_cov)){
+      tem <- location.cov.to.mask(list(mask[, c('x', 'y')]), loc_cov)
+      for(i in setdiff(colnames(tem), c('session', 'mask', colnames(covs)))) covs[[i]] <- tem[[i]]
     }
     bad <- unsuitable.points(fit$unsuitable, covs)
     D.mask[bad] <- 0
@@ -2052,10 +2089,10 @@ var.from.res <- function(res, fixed = NULL){
 
 
 ## Used to resolve the determination of "types" and "pars" in various methods.
-types.pars.sol <- function(types, pars, new.covariates){
+types.pars.sol <- function(types, pars, newdata){
 
-  ## If new.covariates is provided, we need "fitted".
-  ## if(!is.null(new.covariates) & (!"fitted" %in% types)) types = c(types, 'fitted')
+  ## If newdata is provided, we need "fitted".
+  ## if(!is.null(newdata) & (!"fitted" %in% types)) types = c(types, 'fitted')
   ## If types is still empty, set it to 'linked'.
   if(is.null(types)) types <- 'linked'
 
@@ -2116,7 +2153,7 @@ boot.res.to.CI <- function(res, level){
 }
 
 ## Transform the linked bootstrap results to the fitted type.
-res.transform <- function(res, new.covariates, pars, object, back.trans = TRUE){
+res.transform <- function(res, newdata, pars, object, back.trans = TRUE){
   name_extend <- get.par.extend.name(object)
   df_param <- get.data.param(object)
   col_name_og <- ori.name(colnames(res))
@@ -2125,12 +2162,12 @@ res.transform <- function(res, new.covariates, pars, object, back.trans = TRUE){
 
   extend_par_covariates <- get.par.extend.covariate(object)
 
-  if(is.null(name_extend) & !is.null(new.covariates)){
-    warning('No parameter is extended, argument "new.covariates" will be ignored.')
-    new.covariates <- NULL
+  if(is.null(name_extend) & !is.null(newdata)){
+    warning('No parameter is extended, argument "newdata" will be ignored.')
+    newdata <- NULL
   }
 
-  name_extned_covariate_provided <- ext.par.in.new.df(name_extend, new.covariates, extend_par_covariates)
+  name_extned_covariate_provided <- ext.par.in.new.df(name_extend, newdata, extend_par_covariates)
 
 
   for(j in pars){
@@ -2140,17 +2177,17 @@ res.transform <- function(res, new.covariates, pars, object, back.trans = TRUE){
 
     if(j %in% name_extend){
 
-      if(!is.null(new.covariates) & (j %in% name_extned_covariate_provided)){
+      if(!is.null(newdata) & (j %in% name_extned_covariate_provided)){
         gam <- get.gam(object, j)
         values_fitted <- get.extended.par.value(gam, par_info$n_col_full,
-                                               par_info$n_col_mask, values_link, new.covariates,
+                                               par_info$n_col_mask, values_link, newdata,
                                                matrix.par.value = TRUE)
         colnames(values_fitted) <- rep(j, ncol(values_fitted))
         if(!back.trans){
           colnames(values_fitted) <- paste(colnames(values_fitted), "link", sep = "_")
         }
       } else {
-          ## If no new covariates are assigned to this extended parameter (maybe there are no new.covariates at all,
+          ## If no new covariates are assigned to this extended parameter (maybe there are no newdata at all,
           ## or at least one of the covariates for this parameter is not provided),
           ## then treat all of the relevant betas as identity-linked parameters.
           values_fitted <- values_link

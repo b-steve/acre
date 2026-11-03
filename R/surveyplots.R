@@ -152,7 +152,7 @@ show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NUL
 #'   "fit.acre()" or the bootstrap process "boot.acre()".
 #' @param session The session with the detector array and invidual(s)
 #'   to be plotted. Ignored if the `newdata` argument is provided.
-#' @param new.data A data frame including new mask points and
+#' @param newdata A data frame including new mask points and
 #'   covariate values, from which to estimate and plot density
 #'   estimates for. This allows, for example, estimates to be provided
 #'   for new regions not included in the mask used to fit the
@@ -182,7 +182,7 @@ show.detfn <- function(fit, newdata = NULL, skip.extend.param = NULL, xlim = NUL
 #' @inheritParams show.detfn
 #' @inheritParams read.acre
 #' @keywords internal
-show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.cov = NULL, xlim = NULL, ylim = NULL,
+show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, newdata = NULL, D.cov = NULL, xlim = NULL, ylim = NULL,
                         x.pixels = 50, y.pixels = 50, zlim = NULL, scale = 1, plot.contours = FALSE,
                         add = FALSE, convert.loc2mask= NULL, arg.col = 100, trap.plot = NULL, ...){
   
@@ -191,7 +191,7 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, new.data = NULL, D.
   }
   
   pred <- D.predict.for.plot(fit, session.select = ifelse(is.null(session), 1, session), 
-                            new.data = new.data, D.cov = D.cov, xlim = xlim, ylim = ylim,
+                            newdata = newdata, D.cov = D.cov, xlim = xlim, ylim = ylim,
                             x.pixels = x.pixels, y.pixels = y.pixels, se.fit = show.cv,
                             convert.loc2mask= convert.loc2mask)
 
@@ -716,7 +716,7 @@ plot.acre <- function(x, type = NULL, call.id = NULL, animal.id = NULL, session 
   
   if(is.null(type)){
     stop('argument "type" is needed, which should be either "survey", "capt", 
-         "covariates", "detfn", "locations" or "Dsurf".')
+         "covariates", "detfn", "locations", "Dsurf" or "effect".')
   }
   
   if(type %in% c('survey', 'capt', 'covariates')){
@@ -734,6 +734,9 @@ plot.acre <- function(x, type = NULL, call.id = NULL, animal.id = NULL, session 
     args_pass <- args_pass[sapply(args_pass, function(x) !is.null(x))]
     do.call('show.Dsurf', args_pass)
 
+  } else if(type == 'effect'){
+    show.effect(x, ...)
+
   } else if(type == 'locations'){
     args_pass <- list(fit = x, call.id = call.id, animal.id = animal.id,
                      session = session, ...)
@@ -749,7 +752,7 @@ plot.acre <- function(x, type = NULL, call.id = NULL, animal.id = NULL, session 
     
   } else {
     stop('invalid input for "type", which should be either "survey", "capt", 
-         "covariates", "detfn", "locations" or "Dsurf".')
+         "covariates", "detfn", "locations", "Dsurf" or "effect".')
   }
 }
 
