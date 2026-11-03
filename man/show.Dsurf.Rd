@@ -8,7 +8,7 @@ show.Dsurf(
   fit,
   session = NULL,
   show.cv = FALSE,
-  new.data = NULL,
+  newdata = NULL,
   D.cov = NULL,
   xlim = NULL,
   ylim = NULL,
@@ -35,7 +35,7 @@ to be plotted. Ignored if the \code{newdata} argument is provided.}
 plotted rather than the estimate itself. At present, this will
 only work if \code{newdata} is also provided.}
 
-\item{new.data}{A data frame including new mask points and
+\item{newdata}{A data frame including new mask points and
 covariate values, from which to estimate and plot density
 estimates for. This allows, for example, estimates to be provided
 for new regions not included in the mask used to fit the

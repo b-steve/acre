@@ -4,7 +4,7 @@
 \alias{vcov.acre}
 \title{Extract variance covariance matrix of the estimated parameters from acre models}
 \usage{
-\method{vcov}{acre}(object, types = NULL, pars = NULL, new.covariates = NULL, ...)
+\method{vcov}{acre}(object, types = NULL, pars = NULL, newdata = NULL, ...)
 }
 \arguments{
 \item{object}{a fitted model from fit.acre().}
@@ -13,7 +13,7 @@
 
 \item{pars}{a character vector, the same as "coef.acre()".}
 
-\item{new.covariates}{a data frame, the same as "coef.acre()".}
+\item{newdata}{a data frame, the same as "coef.acre()".}
 
 \item{...}{For S3 compatibility.}
 }

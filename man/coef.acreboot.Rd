@@ -8,7 +8,7 @@
   object,
   types = NULL,
   pars = NULL,
-  new.covariates = NULL,
+  newdata = NULL,
   correct.bias = FALSE,
   ...
 )
@@ -20,7 +20,7 @@
 
 \item{pars}{a character vector, the same as "coef.acre()".}
 
-\item{new.covariates}{a data frame, the same as "coef.acre()".}
+\item{newdata}{a data frame, the same as "coef.acre()".}
 
 \item{correct.bias}{logical. if TRUE, apply a bias correction method to the bootstrap results; otherwise,
 return the original estimation directly. The bias correct method is

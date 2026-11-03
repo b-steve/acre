@@ -8,7 +8,7 @@
   object,
   types = NULL,
   pars = NULL,
-  new.covariates = NULL,
+  newdata = NULL,
   show.fixed.par = TRUE,
   ...
 )
@@ -20,7 +20,7 @@
 
 \item{pars}{a character vector, the same as "coef.acre()".}
 
-\item{new.covariates}{a data frame, the same as "coef.acre()".}
+\item{newdata}{a data frame, the same as "coef.acre()".}
 
 \item{show.fixed.par}{a logical value. If TRUE, the default, fixed parameters are included with
 standard errors of zero.}

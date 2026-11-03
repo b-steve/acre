@@ -9,7 +9,7 @@
   parm = NULL,
   level = 0.95,
   types = NULL,
-  new.covariates = NULL,
+  newdata = NULL,
   correct.bias = FALSE,
   from.boot = TRUE,
   ...
@@ -24,7 +24,7 @@
 
 \item{types}{a character vector, the same as "coef.acre()".}
 
-\item{new.covariates}{a data frame, the same as "coef.acre()".}
+\item{newdata}{a data frame, the same as "coef.acre()".}
 
 \item{correct.bias}{a logical value indicates whether to apply a bias correction method to
 the confidence interval. Default is FALSE, and the naive percentiles from

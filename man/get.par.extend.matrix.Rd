@@ -4,7 +4,16 @@
 \alias{get.par.extend.matrix}
 \title{Calculate and return coefficients for extended models}
 \usage{
-get.par.extend.matrix(fit, mask, traps, session = 1, newdata = NULL, warn = T)
+get.par.extend.matrix(
+  fit,
+  mask,
+  traps,
+  session = 1,
+  newdata = NULL,
+  warn = T,
+  mask.data = NULL,
+  pars = NULL
+)
 }
 \arguments{
 \item{fit}{an object generated from the model fitting function
@@ -23,6 +32,10 @@ for all extended parameters.}
 
 \item{warn}{Logical; warn users if they have not passed all covariates in
 model specification.}
+
+\item{mask.data}{(Still to write)}
+
+\item{pars}{(Still to write)}
 }
 \value{
 a list of (nmask) x (ntrap) columns, for each extended parameter.

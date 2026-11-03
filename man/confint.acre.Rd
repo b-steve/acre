@@ -4,14 +4,7 @@
 \alias{confint.acre}
 \title{Extract confidence interval for acre.tmb models}
 \usage{
-\method{confint}{acre}(
-  object,
-  parm = NULL,
-  level = 0.95,
-  types = NULL,
-  new.covariates = NULL,
-  ...
-)
+\method{confint}{acre}(object, parm = NULL, level = 0.95, types = NULL, newdata = NULL, ...)
 }
 \arguments{
 \item{object}{a fitted model from "fit.acre()".}
@@ -22,7 +15,7 @@
 
 \item{types}{a character vector, the same as "coef.acre()".}
 
-\item{new.covariates}{a data frame, the same as "coef.acre()".}
+\item{newdata}{a data frame, the same as "coef.acre()".}
 
 \item{...}{For S3 compatibility.}
 }
