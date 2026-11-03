@@ -1038,6 +1038,14 @@ run.tmb <- function(spec, tracing, gr.skip, two.stage){
     o <- gr.free.o.restore(fn.base, opt, H, parameters, param.og.4cpp, dims$n.sessions)
   }
 
+  ## The detection probabilities at the mask points, at the estimates, for p.dot(). Reporting
+  ## them is a single evaluation of the likelihood, without derivatives.
+  p_dot <- tryCatch({
+    par_best <- if(gr.skip) opt$par else obj$env$last.par.best
+    p_dot_all <- obj$report(par_best)$p_dot_all
+    unname(split(as.vector(p_dot_all), data.mask$session))
+  }, error = function(e) NULL)
+
   ## If partial derivatives are being returned (i.e. two.stage == T).
   esa_partial_derivatives <- NULL
   if (isTRUE(two.stage)) {
@@ -1098,7 +1106,7 @@ run.tmb <- function(spec, tracing, gr.skip, two.stage){
   o$sd <- sqrt(diag(o$cov))
 
   list(o = o, opt = opt, tmb.output.og = tmb_output_og, esa.partial.derivatives = esa_partial_derivatives,
-       D.smooth = D.smooth)
+       D.smooth = D.smooth, p.dot = p_dot)
 }
 
 ## Builds the fitted object from the prepared fit and the TMB results.
@@ -1137,6 +1145,7 @@ build.fit <- function(spec, tmb){
                CL = spec$CL,
                esa.partial.derivatives = tmb$esa.partial.derivatives)
   out$D.smooth <- tmb$D.smooth
+  out$output.tmb$p_dot <- tmb$p.dot
   out$output.tmb$D_re_names <- spec$smooth.re$z_names
   ## The predicted random effects for penalised smooths, which coef() and friends leave out, with
   ## the standard deviations of their prediction errors.
