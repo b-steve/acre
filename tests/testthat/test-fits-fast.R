@@ -69,11 +69,11 @@ test_that("gradient-free fit agrees with the gradient-based one", {
 
 test_that("estimates, standard errors and intervals with new covariate values", {
   fit <- fit.demo.coarse('ihd_ext')
-  new.data <- data.frame(brand = 'sony', noise = 7.7)
+  newdata <- data.frame(brand = 'sony', noise = 7.7)
   pars <- c('g0', 'sigma', 'D')
-  expect_equal(coef(fit, types = 'fitted', new.covariates = new.data)[pars], c(g0 = 1, sigma = 5.73517236, D = 831.7528031), tolerance = 1e-4)
-  expect_equal(stdEr(fit, types = 'fitted', new.covariates = new.data)[c('sigma', 'D')], c(sigma = 0.9169049017, D = 399.8796185), tolerance = 1e-4)
-  ci <- confint(fit, types = 'fitted', new.covariates = new.data)[pars, ]
+  expect_equal(coef(fit, types = 'fitted', newdata = newdata)[pars], c(g0 = 1, sigma = 5.73517236, D = 831.7528031), tolerance = 1e-4)
+  expect_equal(stdEr(fit, types = 'fitted', newdata = newdata)[c('sigma', 'D')], c(sigma = 0.9169049017, D = 399.8796185), tolerance = 1e-4)
+  ci <- confint(fit, types = 'fitted', newdata = newdata)[pars, ]
   expect_equal(ci[, 1], c(g0 = 1.000000, sigma = 4.192388, D = 324.163666), tolerance = 1e-4)
   expect_equal(ci[, 2], c(g0 = 1.000000, sigma = 7.845696, D = 2134.146417), tolerance = 1e-4)
   expect_equal(colnames(ci), c('2.5 %', '97.5 %'))
