@@ -129,9 +129,10 @@ test_that("penalised smooths are checked", {
 })
 
 test_that("smooths are set up from the mask points in order of session and then mask point", {
-  ## The basis of a smooth depends on the order of the data it is set up with, so it should be
-  ## the same as mgcv sets up from the mask points in their natural order, with more than nine
-  ## mask points and sessions so that sorting them as character strings would give another order.
+  ## The mixed-model parameterisation of a smooth depends on the order of the data it is set up
+  ## with, so the design matrix should be the same as mgcv sets up from the mask points in their
+  ## natural order. There are more than nine mask points and sessions, so that sorting them as
+  ## character strings would give another order.
   d <- mul_ses
   masks <- create.mask(d$traps, buffer = d$control.mask$buffer, nx = 10)
   traps <- rep(d$traps, length.out = 11)
