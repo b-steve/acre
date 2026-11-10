@@ -127,3 +127,24 @@ test_that("penalised smooths are checked", {
                         optim.opts = list(gr.skip = TRUE)),
                "'gr.skip' cannot be TRUE")
 })
+
+test_that("smooths are set up from the mask points in order of session and then mask point", {
+  ## The basis of a smooth depends on the order of the data it is set up with, so it should be
+  ## the same as mgcv sets up from the mask points in their natural order, with more than nine
+  ## mask points and sessions so that sorting them as character strings would give another order.
+  d <- mul_ses
+  masks <- create.mask(d$traps, buffer = d$control.mask$buffer, nx = 10)
+  traps <- rep(d$traps, length.out = 11)
+  masks <- lapply(rep(masks, length.out = 11), function(m){
+    m$habitat <- m$x
+    m
+  })
+  capt <- do.call(rbind, lapply(1:11, function(s) transform(d$capt[d$capt$session == (s - 1) %% 2 + 1, ], session = s)))
+  dat <- read.acre(captures = capt, traps = traps, mask = masks)
+  fit <- fit.quietly(dat, list(model = list(D = ~ s(x, y, k = 8)), detfn = 'hn',
+                               optim.opts = list(fix = list(g0 = 1))))
+  md <- do.call(rbind, lapply(1:11, function(s) data.frame(session = s, as.data.frame(get.mask(fit)[[s]])[, c("x", "y")])))
+  md$gam.resp <- 1
+  G <- mgcv::gam(gam.resp ~ s(x, y, k = 8), data = md, fit = FALSE)
+  expect_equal(get.gam(fit, 'D')$gam_mask$X, G$X)
+})

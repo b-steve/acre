@@ -619,7 +619,13 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
           stop(paste0("NA appears in covariates for parameter ", i, ", a review on the data is recommended."))
         }
         
-        tem.data <- data.par.mask
+        ## The basis of a smooth depends on the order of the data it is set up with (e.g., a thin
+        ## plate regression spline's knots are a random subsample of the data, and the rotation of
+        ## its null space depends on the order), so the data are ordered by session and then mask
+        ## point. Otherwise they are in the order merge() leaves them, which sorts the keys as
+        ## character strings (e.g., mask point 10 before 2).
+        tem.data <- data.par.mask[order(data.par.mask$session, data.par.mask$mask), , drop = FALSE]
+        rownames(tem.data) <- NULL
         tem.data[['gam.resp']] <- 1
         
         
