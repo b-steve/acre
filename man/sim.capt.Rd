@@ -83,8 +83,8 @@ spatial covariates below.}
 \item{dist.cov}{A list containing locations of features from which
 distances are calculated, and can be used as spatial
 covariates. Each component must be named after a feature, with a
-data frame containing columns \code{x} and \code{y}, recording the the
-location of a feature.}
+data frame containing columns \code{x} and \code{y}, recording the location
+of a feature.}
 
 \item{time.loc.cov}{A list, or list of data frames, containing
 spatial covariates that change over time. The data frames must

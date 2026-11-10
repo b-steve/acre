@@ -52,7 +52,8 @@ make.mask.matrix <- function(traps, buffer, ...){
 #'
 #' Create a captures object to use with the function read.acre
 #'
-#' @section Captures argument
+#' @section Captures argument:
+#'
 #' The `captures` argument will be passed to the function `create.capt`. The main arguments provided are the session, the
 #' identification number of the detected animal or sound, and the identification number of the trap which made the detection
 #' (where the identification number is the row number of the corresponding trap in the matrix of trap locations. These columns

@@ -32,8 +32,10 @@ metres. For multi-session models, each component of the list
 provides detector locations for one session.}
 
 \item{mask}{Optional. A mask object, for example created using
-\code{\link[=create.mask]{create.mask()}}. If \code{NULL}, a mask object will be created
-automatically based on the \code{traps} and \code{control.mask} arguments.}
+\code{\link[=create.mask]{create.mask()}}. Covariates can optionally be attached; see
+the section on spatial covariates below. If \code{NULL}, a mask object
+will be created automatically based on the \code{traps} and
+\code{control.mask} arguments.}
 
 \item{control.mask}{A list specifying arguments for
 \code{\link[=create.mask]{create.mask()}}, other than \code{traps}, that are used to create a
@@ -74,8 +76,8 @@ multisession data.}
 \item{dist.cov}{A list containing locations of features from which
 distances are calculated, and can be used as spatial
 covariates. Each component must be named after a feature, with a
-data frame containing columns \code{x} and \code{y}, recording the the
-location of a feature.}
+data frame containing columns \code{x} and \code{y}, recording the location
+of a feature.}
 
 \item{cue.rates}{A numeric vector containing the recorded cue rates
 of individuals, collected separately to the SCR survey. See the
@@ -116,7 +118,7 @@ detector. The following columns are required:
 
 Additional columns can specify auxiliary data collected about the
 calls. Missing values of \code{NA} are allowed, so that an auxiliary
-data type might only be available for a subet of calls.
+data type might only be available for a subset of calls.
 \itemize{
 \item \code{bearing}: the estimated bearing (in radians) from the detector
 to the detected call.
@@ -169,15 +171,24 @@ leading to poor inference. Users should inspect plots of
 interpolated covariates using \code{plot()} to assess their
 suitability. See \code{\link[=plot.acre.data]{plot.acre.data()}}.
 
-If a user does not want to use our spatial interpolation method,
-they can take full control of the procedure using these steps:
+If a user does not want to use our spatial interpolation method
+for some of their covariates, they can take full control of the
+procedure using the following steps.
 \itemize{
 \item Create a mask themselves using \code{\link[=create.mask]{create.mask()}}.
 \item Carry out spatial interpolation themselves, generating covariate
-values at the mask points.
-\item Provide the spatially interpolated data as the \code{loc.cov} and
-\code{time.loc.cov} arguments.
+values at the mask points, and add them as columns to the mask
+object.
+\item Provide the spatially interpolated data as additional columns in
+the mask object. No missing values are allowed.
 }
+
+It is possible to use covariates that are specified for the mask
+points, using the approach above, alongside automatically computed
+covariates that are provided with other arguments such as
+\code{loc.cov} and \code{dist.cov}. If a covariate with the same name
+appears in both places, only the covariate attached directly to
+the mask object by the user will be used.
 }
 
 \section{Cue rate data}{
