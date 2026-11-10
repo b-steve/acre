@@ -12,16 +12,29 @@
 #' @return (Still to write)
 #' @export
 create.mask <- function(traps, buffer, ...){
+    mask <- make.mask.matrix(traps, buffer, ...)
+    ## Returned as data frames, so that covariates can be attached as further columns.
+    to.df <- function(m){
+        df <- data.frame(m)
+        for (a in c("area", "buffer")) attr(df, a) <- attr(m, a)
+        df
+    }
+    if (is.matrix(mask)) to.df(mask) else lapply(mask, to.df)
+}
+
+## Creates masks as matrices with columns x and y, as they are stored internally. Takes the same
+## arguments as create.mask().
+make.mask.matrix <- function(traps, buffer, ...){
     ## Changing data frame to matrix to avoid is.list() issues.
     if (is(traps, 'data.frame')){
         traps <- as.matrix(traps)
     }
     if (is.list(traps)){
-        ## Calling create.mask() on each session separately.
+        ## Creating a mask for each session separately.
         n.sessions <- length(traps)
         mask <- vector(mode = "list", length = n.sessions)
         for (i in 1:n.sessions){
-            mask[[i]] <- create.mask(traps[[i]], buffer = buffer, ...)
+            mask[[i]] <- make.mask.matrix(traps[[i]], buffer = buffer, ...)
         }
     } else {
         ## Creating mask for a single session.

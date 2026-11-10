@@ -1369,10 +1369,24 @@ distance.cov.to.mask <- function(mask, dist.cov) {
 }
 
 par.extend.create <- function(loc.cov = NULL, mask = NULL, convert.loc2mask = list(),
-                             dist.cov = NULL, session.cov = NULL, trap.cov = NULL, time.loc.cov = NULL){
+                             dist.cov = NULL, session.cov = NULL, trap.cov = NULL, time.loc.cov = NULL,
+                             mask.cov = NULL){
 
+  ## Covariates attached to the mask, from split.mask.cov(), are used in favour of covariates with
+  ## the same names provided elsewhere.
+  covs <- list(loc.cov = loc.cov, dist.cov = dist.cov, time.loc.cov = time.loc.cov,
+               session.cov = session.cov, trap.cov = trap.cov)
+  if(!is.null(mask.cov)){
+    covs <- drop.mask.cov.clashes(setdiff(colnames(mask.cov), c("session", "mask")), covs)
+    loc.cov <- covs$loc.cov
+    dist.cov <- covs$dist.cov
+    time.loc.cov <- covs$time.loc.cov
+    session.cov <- covs$session.cov
+    trap.cov <- covs$trap.cov
+  }
 
-  if(any(!is.null(loc.cov), !is.null(session.cov), !is.null(trap.cov), !is.null(dist.cov), !is.null(time.loc.cov))){
+  if(any(!is.null(loc.cov), !is.null(session.cov), !is.null(trap.cov), !is.null(dist.cov), !is.null(time.loc.cov),
+         !is.null(mask.cov))){
     par.extend <- list()
 
     if(!is.null(session.cov)) stopifnot(is(session.cov, 'data.frame'))
@@ -1399,12 +1413,12 @@ par.extend.create <- function(loc.cov = NULL, mask = NULL, convert.loc2mask = li
     par.extend$data <- list()
     par.extend$data$session <- session.cov
     par.extend$data$trap <- trap.cov
-    par.extend$data$mask <- mask_cov
+    par.extend$data$mask <- combine.mask.cov(mask_cov, mask.cov)
   } else (
     par.extend <- NULL
   )
 
-  return(list(output = par.extend, loc.cov = loc.cov))
+  return(list(output = par.extend, loc.cov = loc.cov, covs = covs))
 }
 
 

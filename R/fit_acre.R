@@ -17,7 +17,7 @@
 #'
 #' Additional columns can specify auxiliary data collected about the
 #' calls. Missing values of `NA` are allowed, so that an auxiliary
-#' data type might only be available for a subet of calls.
+#' data type might only be available for a subset of calls.
 #' * `bearing`: the estimated bearing (in radians) from the detector
 #'   to the detected call.
 #' * `dist`: the estimated distance (in metres) from the detector to
@@ -66,13 +66,22 @@
 #'  interpolated covariates using `plot()` to assess their
 #'  suitability. See [plot.acre.data()].
 #'
-#'  If a user does not want to use our spatial interpolation method,
-#'  they can take full control of the procedure using these steps:
+#'  If a user does not want to use our spatial interpolation method
+#'  for some of their covariates, they can take full control of the
+#'  procedure using the following steps.
 #'  * Create a mask themselves using [create.mask()].
 #'  * Carry out spatial interpolation themselves, generating covariate
-#'    values at the mask points.
-#'  * Provide the spatially interpolated data as the `loc.cov` and
-#'    `time.loc.cov` arguments.
+#'    values at the mask points, and add them as columns to the mask
+#'    object.
+#'  * Provide the spatially interpolated data as additional columns in
+#'    the mask object. No missing values are allowed.
+#'
+#'  It is possible to use covariates that are specified for the mask
+#'  points, using the approach above, alongside automatically computed
+#'  covariates that are provided with other arguments such as
+#'  `loc.cov` and `dist.cov`. If a covariate with the same name
+#'  appears in both places, only the covariate attached directly to
+#'  the mask object by the user will be used.
 #'
 #' @section Cue rate data:
 #'
@@ -117,8 +126,10 @@
 #'   metres. For multi-session models, each component of the list
 #'   provides detector locations for one session.
 #' @param mask Optional. A mask object, for example created using
-#'   [create.mask()]. If `NULL`, a mask object will be created
-#'   automatically based on the `traps` and `control.mask` arguments.
+#'   [create.mask()]. Covariates can optionally be attached; see
+#'   the section on spatial covariates below. If `NULL`, a mask object
+#'   will be created automatically based on the `traps` and
+#'   `control.mask` arguments.
 #' @param control.mask A list specifying arguments for
 #'   [create.mask()], other than `traps`, that are used to create a
 #'   mask object. The `buffer` should be provided, and, optionally,
@@ -152,8 +163,8 @@
 #' @param dist.cov A list containing locations of features from which
 #'   distances are calculated, and can be used as spatial
 #'   covariates. Each component must be named after a feature, with a
-#'   data frame containing columns `x` and `y`, recording the the
-#'   location of a feature.
+#'   data frame containing columns `x` and `y`, recording the location
+#'   of a feature.
 #' @param cue.rates A numeric vector containing the recorded cue rates
 #'   of individuals, collected separately to the SCR survey. See the
 #'   section on cue rate data, below.
@@ -196,8 +207,13 @@ read.acre <- function(captures, traps, mask = NULL,
 
   traps <- df.to.list(traps, n.sessions)
 
+  mask.cov <- NULL
   if(!is.null(mask)){
     mask <- df.to.list(mask, n.sessions)
+    ## Covariates attached to the mask, as columns other than x and y; see R/mask_covariates.R.
+    tem <- split.mask.cov(mask)
+    mask <- tem$mask
+    mask.cov <- tem$cov
 
     for(i in 1:n.sessions){
       mask[[i]] <- convert.one.mask(mask[[i]], traps[[i]])
@@ -206,7 +222,7 @@ read.acre <- function(captures, traps, mask = NULL,
   } else {
     stopifnot(!is.null(control.mask$buffer))
     control.mask$traps <- traps
-    mask <- do.call('create.mask', control.mask)
+    mask <- do.call('make.mask.matrix', control.mask)
   }
 
 
@@ -215,9 +231,12 @@ read.acre <- function(captures, traps, mask = NULL,
   tem <- par.extend.create(loc.cov = loc.cov, dist.cov = dist.cov, mask = mask,
                                  convert.loc2mask = convert.loc2mask,
                                  session.cov = session.cov, trap.cov = trap.cov,
-                                 time.loc.cov = time.loc.cov)
+                                 time.loc.cov = time.loc.cov, mask.cov = mask.cov)
 
   par.extend <- tem$output
+  ## Covariates that are ignored in favour of those attached to the mask are removed.
+  arg.input[c("dist.cov", "time.loc.cov", "session.cov", "trap.cov")] <-
+    tem$covs[c("dist.cov", "time.loc.cov", "session.cov", "trap.cov")]
   arg.input$loc.cov <- tem$loc.cov
 
   ## Remove unsuitable habitat from the mask, after the covariates have been computed for it.
@@ -352,9 +371,12 @@ read.acre <- function(captures, traps, mask = NULL,
 #'   function `create.mask`. If provided, and the argument "mask" is
 #'   not provided, it will be used together with "traps" in the "dat"
 #'   to expand masks.
-#' @param mask an object generated by the function `create.mask()`, if
-#'   not provided, this function will create it based on provided
-#'   `traps` and `control.mask`.
+#' @param mask Optional. A mask object will already have been
+#'   generated by [read.acre()]. An alternative mask can be provided
+#'   here as an override. If [read.acre()] was provided with a mask
+#'   object with attached covariates, then the mask object provided to
+#'   [fit.acre()] must also include values for the same covariates at
+#'   the new mask point locations.
 #' @param convert.loc2mask a list. When either the arguments of `mask`
 #'   or `control.mask` is provided, the mask will be created by them,
 #'   and if there is any parameter extended under mask level, this
@@ -414,7 +436,12 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
     CL <- TRUE
   }
 
+  mask.cov <- NULL
   if(!is.null(mask)){
+    ## Covariates attached to the mask, as columns other than x and y; see R/mask_covariates.R.
+    tem <- split.mask.cov(df.to.list(mask, length(dat$traps)))
+    mask <- tem$mask
+    mask.cov <- tem$cov
     dat$mask <- mask
     if(!is.null(control.mask)){
       warning("Argument of 'mask' is provided, 'control.mask' will be ignored.")
@@ -424,15 +451,31 @@ fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
   } else if(!is.null(control.mask)){
     stopifnot(!is.null(control.mask$buffer))
     control.mask$traps <- dat$traps
-    mask <- do.call("create.mask", control.mask)
+    mask <- do.call("make.mask.matrix", control.mask)
     dat$mask <- mask
     mask_override <- TRUE
   }
 
-  if(mask_override && !is.null(dat$par.extend$data$mask)){
-    convert.loc2mask$loc.cov <- arg.input$loc.cov
-    convert.loc2mask$mask <- mask
-    dat$par.extend$data$mask <- do.call("location.cov.to.mask", convert.loc2mask)
+  if(mask_override){
+    ## Covariates attached to read.acre()'s mask are only known at its points, so a new mask needs
+    ## them attached too.
+    missing_cov <- setdiff(mask.cov.names(arg.input$mask), colnames(mask.cov))
+    if(length(missing_cov) > 0){
+      stop("Covariate", if(length(missing_cov) > 1) "s", " ", paste0("'", missing_cov, "'", collapse = ", "),
+           " ", if(length(missing_cov) > 1) "were" else "was", " attached to the mask given to read.acre(), ",
+           "so a new mask must have ", if(length(missing_cov) > 1) "them" else "it", " attached too.", call. = FALSE)
+    }
+    interp <- NULL
+    if(!is.null(arg.input$loc.cov) && !is.null(dat$par.extend$data$mask)){
+      convert.loc2mask$loc.cov <- arg.input$loc.cov
+      convert.loc2mask$mask <- mask
+      interp <- do.call("location.cov.to.mask", convert.loc2mask)
+    }
+    mask_data <- combine.mask.cov(interp, mask.cov)
+    if(!is.null(mask_data)){
+      if(is.null(dat$par.extend)) dat$par.extend <- list(data = list())
+      dat$par.extend$data$mask <- mask_data
+    }
   }
 
   ## Remove unsuitable habitat from the mask. A new mask needs read.acre()'s unsuitable habitat

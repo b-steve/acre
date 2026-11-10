@@ -54,7 +54,7 @@ test_that("fit.acre() removes unsuitable habitat, including read.acre()'s from a
   cov_new <- location.cov.to.mask(list(mask_new), ihd$loc.cov)
   bad_new <- cov_new$forest_volumn == "low" | cov_new$noise > 10
   expect_true(any(bad_new) && !all(bad_new))
-  expect_equal(get.mask(fit_new)[[1]], mask_new[!bad_new, ], ignore_attr = TRUE)
+  expect_equal(get.mask(fit_new)[[1]], as.matrix(mask_new[!bad_new, ]), ignore_attr = TRUE)
   expect_equal(get.par.extend.data(fit_new)$mask$noise, cov_new$noise[!bad_new])
   expect_equal(length(fit_new$unsuitable), 2)
   ## Predicted density away from the mask is zero in unsuitable habitat, and otherwise as if

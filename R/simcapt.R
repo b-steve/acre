@@ -83,7 +83,7 @@ sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list
 
     ## Create the mask; traps is guaranteed to be a list, so the mask must be a list too.
     control.mask$traps <- traps
-    mask <- do.call('create.mask', control.mask)
+    mask <- do.call('make.mask.matrix', control.mask)
     ## If a model is assigned, we need to construct "par.extend" for the simulation.
     par.extend <- par.extend.create(loc.cov = loc.cov, mask = mask, dist.cov = dist.cov, time.loc.cov = time.loc.cov,
                                    convert.loc2mask = convert.loc2mask,
