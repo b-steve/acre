@@ -23,4 +23,29 @@ recorded; it is checked, and sorted by session, animal (if any), call and detect
 \description{
 Create a captures object to use with the function read.acre
 }
+\section{Captures argument}{
+
+
+The \code{captures} argument will be passed to the function \code{create.capt}. The main arguments provided are the session, the
+identification number of the detected animal or sound, and the identification number of the trap which made the detection
+(where the identification number is the row number of the corresponding trap in the matrix of trap locations. These columns
+must be exactly labelled "session", "ID" and "trap" respectively.
+
+Additional columns can specify the auxiliary information collected over the course of the survey:
+
+\itemize{
+\item A column named \code{bearing}, containing estimated bearings (in radians) from the detector to each detected animal or sound.
+
+\item A column named \code{dist}, containing the estimated distance between the detected animal or sound.
+
+\item A column named \code{ss} containing the measured signal strengh of the detected sound.
+
+\item A column named \code{toa} containing the measured time of arrival (in seconds) since the start of the survey (or some other
+reference time) of the detected sound (only possible when the detectors are microphones).
+
+\item A column named \code{animal_ID} containing the identification number of animals can be provided if individuals could be distinguished by
+their acoustic detection.
+}
+}
+
 \keyword{internal}
