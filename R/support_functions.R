@@ -1912,6 +1912,8 @@ D.predict.for.plot <- function(fit, session.select = 1, newdata = NULL,
     ## Session-related covariates are simple: just take them
     ## from the input arguments of the fit. But don't do this if new data
     ## are provided.
+    ## The session index is available to the model as a covariate.
+    old_covariates$session <- session.select
     if(!is.null(session_data_in_model) & is.null(newdata)){
       tem <- session_data_in_model[which(session_data_in_model$session == session.select), , drop = FALSE]
       tem <- tem[, -which(colnames(tem) == 'session'), drop = FALSE]

@@ -265,7 +265,19 @@ get.DX.new.gam <- function(mod, newdata){
       ## only has 4 levels. However, I guess this scenario is extremely unlikely.
       olddata[[i]] <- levels(mod$var.summary[[i]])
     } else if(is(mod$var.summary[[i]], 'numeric')){
-      olddata[[i]] <- 1
+      ## A numeric variable made into a factor in the formula, e.g., factor(session), needs all
+      ## of its levels too, which the model keeps as those of the term.
+      fac_levels <- numeric.factor.levels(mod, i)
+      if(!is.null(fac_levels)){
+        new_levels <- setdiff(unique(newdata[[i]]), fac_levels)
+        if(length(new_levels) > 0){
+          stop("Covariate ", i, " has values that are not in the data used to fit the model: ",
+               paste(new_levels, collapse = ", "), ".", call. = FALSE)
+        }
+        olddata[[i]] <- fac_levels
+      } else {
+        olddata[[i]] <- 1
+      }
     } else {
       ## Actually I have never seen any other class; just leave an "in-case" step here.
       stop(paste0('unknown data type in one of gam model objects, the variable name is: ', i,
@@ -288,13 +300,23 @@ get.DX.new.gam <- function(mod, newdata){
   return(output)
 }
 
+## The levels of a numeric variable that the formula makes into a factor, e.g., with
+## factor(session), or NULL if it does not.
+numeric.factor.levels <- function(mod, var){
+  terms <- names(mod$xlevels)
+  terms <- terms[vapply(terms, function(t) identical(all.vars(str2lang(t)), var), logical(1))]
+  if(length(terms) == 0) return(NULL)
+  as.numeric(mod$xlevels[[terms[1]]])
+}
+
 get.extended.par.value <- function(gam, n.col.full, n.col.mask, par.value.linked, newdata,
                                   DX.output = FALSE, matrix.par.value = FALSE){
   if(n.col.full > 1){
     gam.model <- gam$gam_non_mask
     DX_full_new <- get.DX.new.gam(gam.model, newdata)
   } else {
-    DX_full_new <- matrix(1, ncol = 1, nrow = nrow(newdata))
+    ## An intercept-only model needs no new data, and has a single value.
+    DX_full_new <- matrix(1, ncol = 1, nrow = if(is.null(newdata)) 1 else nrow(newdata))
   }
 
   if(n.col.mask > 0){
@@ -397,7 +419,10 @@ get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
     ext_par_data$mask <- mask.data
   }
 
-  ext_par_newdata <- NULL
+  ## The mask coordinates, which can be covariates even when there are no others, for each
+  ## combination of mask point and trap.
+  ext_par_newdata <- data.frame(x = rep(mask[, 1], each = n_trap_ext),
+                                y = rep(mask[, 2], each = n_trap_ext))
 
   ## Mask-level covariates.
   if (!is.null(ext_par_data$mask)) {
@@ -413,15 +438,12 @@ get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
     if ("mask" %in% names(ext_par_data$mask)) {
       ext_par_data$mask <- ext_par_data$mask[order(ext_par_data$mask$mask), , drop = FALSE]
     }
-    ext_par_newdata <- ext_par_data$mask[
+    mask_covariates <- ext_par_data$mask[
       rep(seq_len(n_mask_ext), each = n_trap_ext),
-      ,
+      setdiff(names(ext_par_data$mask), c("x", "y")),
       drop = FALSE
     ]
-    ## The mask coordinates, which can also be covariates.
-    for (i in setdiff(c("x", "y"), names(ext_par_newdata))) {
-      ext_par_newdata[[i]] <- rep(mask[, i], each = n_trap_ext)
-    }
+    ext_par_newdata <- cbind(ext_par_newdata, mask_covariates)
   }
 
   ## Trap-level covariates.
@@ -442,11 +464,7 @@ get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
       drop = FALSE
     ]
 
-    if (!is.null(ext_par_newdata)) {
-      ext_par_newdata <- cbind(ext_par_newdata, trap_ext_data)
-    } else {
-      ext_par_newdata <- trap_ext_data
-    }
+    ext_par_newdata <- cbind(ext_par_newdata, trap_ext_data)
   }
 
   ## Session-level covariates.
@@ -458,12 +476,13 @@ get.par.extend.matrix <- function(fit, mask, traps, session=1, newdata=NULL,
       drop = FALSE
     ]
 
-    if (!is.null(ext_par_newdata)) {
-      ext_par_newdata <- cbind(ext_par_newdata, session_covariates)
-    } else {
-      ext_par_newdata <- session_covariates
-    }
+    ext_par_newdata <- cbind(ext_par_newdata, session_covariates)
   }
+
+  ## The session index, which can also be a covariate. The covariate data frames each have a
+  ## session column, so these are replaced by a single one.
+  ext_par_newdata <- ext_par_newdata[, names(ext_par_newdata) != "session", drop = FALSE]
+  ext_par_newdata$session <- session
 
   ## Calculate the coefficients. Note that this is in long format, so it will have to be
   ## reformatted before returning.

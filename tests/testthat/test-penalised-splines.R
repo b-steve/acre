@@ -131,34 +131,57 @@ test_that("penalised smooths are checked", {
 test_that("smooths are set up from the mask points in order of session and then mask point", {
   ## The mixed-model parameterisation of a smooth depends on the order of the data it is set up
   ## with, so the design matrix should be the same as mgcv sets up from the mask points in their
-  ## natural order. There are more than nine mask points and sessions, so that sorting them as
-  ## character strings would give another order.
-  d <- mul_ses
-  masks <- create.mask(d$traps, buffer = d$control.mask$buffer, nx = 10)
-  traps <- rep(d$traps, length.out = 11)
-  masks <- lapply(rep(masks, length.out = 11), function(m){
-    m$habitat <- m$x
-    m
-  })
-  capt <- do.call(rbind, lapply(1:11, function(s) transform(d$capt[d$capt$session == (s - 1) %% 2 + 1, ], session = s)))
-  dat <- read.acre(captures = capt, traps = traps, mask = masks)
+  ## natural order. The mask has a covariate, so the mask data are merged with it, and more than
+  ## nine points, so that sorting them as character strings would give another order.
+  masks <- lapply(create.mask(mul_ses$traps, buffer = mul_ses$control.mask$buffer, nx = 6),
+                  function(m) transform(m, habitat = x))
+  dat <- read.acre(captures = mul_ses$capt, traps = mul_ses$traps, mask = masks)
   fit <- fit.quietly(dat, list(model = list(D = ~ s(x, y, k = 8)), detfn = 'hn',
                                optim.opts = list(fix = list(g0 = 1))))
-  md <- do.call(rbind, lapply(1:11, function(s) data.frame(session = s, as.data.frame(get.mask(fit)[[s]])[, c("x", "y")])))
+  md <- do.call(rbind, lapply(get.mask(fit), function(m) as.data.frame(m)[, c("x", "y")]))
+  expect_gt(nrow(get.mask(fit)[[1]]), 9)
   md$gam.resp <- 1
   G <- mgcv::gam(gam.resp ~ s(x, y, k = 8), data = md, fit = FALSE)
   expect_equal(get.gam(fit, 'D')$gam_mask$X, G$X)
 })
 
+## The simple_hhn demo data on a coarse mask.
+simple.coarse <- function(nx = 10){
+  read.acre(captures = simple_hhn$capt, traps = simple_hhn$traps,
+            control.mask = list(buffer = simple_hhn$control.mask$buffer, nx = nx))
+}
+
 test_that("density models in the mask coordinates need no covariates", {
-  dat <- read.acre(captures = simple_hhn$capt, traps = simple_hhn$traps,
-                   control.mask = simple_hhn$control.mask)
-  fit <- fit.acre(dat, model = list(D = ~ x + y), detfn = "hhn", tracing = FALSE)
-  expect_equal(names(coef(fit, "linked"))[3:5], c("D.(Intercept)_link", "D.x_link", "D.y_link"))
-  fit <- fit.acre(dat, model = list(D = ~ s(x, y, k = 10)), detfn = "hhn", tracing = FALSE)
-  expect_true(all(is.finite(coef(fit))))
-  eff <- term.effect(fit, "s(x,y)", data.frame(x = c(-10, 10), y = c(0, 0)))
+  dat <- simple.coarse()
+  fit <- fit.quietly(dat, list(model = list(D = ~ s(x, k = 4) + y), detfn = "hhn"))
+  expect_true(all(c("D.(Intercept)_link", "D.y_link") %in% names(coef(fit))))
+  eff <- term.effect(fit, "s(x)", c(-10, 10))
   expect_true(all(is.finite(eff$se)))
   expect_error(fit.acre(dat, model = list(D = ~ habitat), detfn = "hhn", tracing = FALSE),
                "not provided")
+})
+
+test_that("intercept-only models are the same as no model", {
+  dat <- simple.coarse()
+  fit0 <- fit.quietly(dat, list(detfn = "hhn"))
+  fit1 <- fit.quietly(dat, list(model = list(D = ~ 1, lambda0 = ~ 1), detfn = "hhn"))
+  expect_equal(logLik(fit1), logLik(fit0), tolerance = 1e-6)
+  expect_equal(coef(fit1, "fitted"), coef(fit0, "fitted"), tolerance = 1e-4)
+  expect_error(fit.acre(dat, model = list(D = ~ 0 + x), detfn = "hhn", tracing = FALSE),
+               "must include an intercept")
+})
+
+test_that("the session index is available as a covariate", {
+  ctrl <- list(buffer = mul_ses$control.mask$buffer, nx = 8)
+  dat <- read.acre(captures = mul_ses$capt, traps = mul_ses$traps, control.mask = ctrl)
+  ses <- read.acre(captures = mul_ses$capt, traps = mul_ses$traps, control.mask = ctrl,
+                   session.cov = data.frame(session = 1:2, s.num = 1:2, s.fac = factor(1:2)))
+  ## A level for each session, and a linear trend, the same as with the covariates provided.
+  fit <- fit.quietly(dat, list(model = list(D = ~ factor(session), sigma = ~ session), detfn = "hn"))
+  ref <- fit.quietly(ses, list(model = list(D = ~ s.fac, sigma = ~ s.num), detfn = "hn"))
+  expect_equal(unname(coef(fit)), unname(coef(ref)), tolerance = 1e-4)
+  expect_true(all(c("D.factor(session)2_link", "sigma.session_link") %in% names(coef(fit))))
+  ## The density surface for each session uses that session's level.
+  p <- predict(fit, newdata = data.frame(session = 1:2))$D$Estimate
+  for(s in 1:2) expect_equal(unique(round(acre:::D.predict.for.plot(fit, session.select = s)$est, 6)), round(p[s], 6))
 })

@@ -526,8 +526,12 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
     for(i in name.extend.par){
       foo <- stats::as.formula(paste(c('gam.resp', as.character(par.extend$model[[i]])), collapse = ""))
       foo_var <- all.vars(foo[[3]])
-      if(length(foo_var) == 0) stop('please input a valid formula except "~ 1"')
-      if(!all(foo_var %in% var.ex)) stop(paste0('one or more specifed covariates in "model"',
+      if(attr(stats::terms(foo), 'intercept') == 0){
+        stop("The model for '", i, "' must include an intercept.", call. = FALSE)
+      }
+      ## The session index is always available, as an integer; factor(session) gives each
+      ## session its own level.
+      if(!all(foo_var %in% c(var.ex, 'session'))) stop(paste0('one or more specifed covariates in "model"',
                                                 ' is not provided in "data".'))
       
       ## The parameter sigma.toa is not trap extendable.
@@ -542,15 +546,17 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
       ## there might be a concern about the workflow later if we enable 'trap' level extension of 'sigma_toa'.
       
       
-      tem <- separate.formula(foo, var.m)
-      
       ## Here "full" does not mean full information; it does not contain mask information.
-      
-      foo_full <- tem$foo_full
-      foo_mask <- tem$foo_mask
-      
-      foo_full_var <- all.vars(foo_full[[3]])
-      foo_mask_var <- all.vars(foo_mask[[3]])
+      ## An intercept-only model, ~ 1, has no covariates at either level.
+      if(length(foo_var) == 0){
+        foo_full_var <- foo_mask_var <- character(0)
+      } else {
+        tem <- separate.formula(foo, var.m)
+        foo_full <- tem$foo_full
+        foo_mask <- tem$foo_mask
+        foo_full_var <- all.vars(foo_full[[3]])
+        foo_mask_var <- all.vars(foo_mask[[3]])
+      }
       
       gam_output[[i]] <- vector('list', 2)
       names(gam_output[[i]]) <- c('gam_non_mask', 'gam_mask')
@@ -779,7 +785,7 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
 ## Construct the Jacobian used to back-transform the scaling and centring done
 ## on the model covariates.
 construct.G.matrix <- function(mean.sd) {
-  G <- diag(1 / mean.sd[2,])
+  G <- diag(1 / mean.sd[2,], nrow = ncol(mean.sd))
   G[1,] <- -1 * mean.sd[1,] / mean.sd[2,]
   ## The intercept needs to be reset manually, as its standard deviation will be
   ## 0, and 1 / standard deviation = infinity.

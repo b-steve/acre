@@ -263,6 +263,12 @@ read.acre <- function(captures, traps, mask = NULL,
 }
 
 
+## To document under "Model specification": the covariates that are always available without
+## being provided, which are x and y (the mask coordinates) and session (the session index, an
+## integer). Highlight that ~ session is a linear trend across sessions, and ~ factor(session)
+## gives each session its own level. Also that ~ 1 is the same as leaving the parameter out of
+## model.
+
 #' Fitting a spatial capture-recapture model
 #'
 #' Fits an a spatial capture-recapture model to a data object returned by [read.acre()].
