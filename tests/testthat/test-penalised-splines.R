@@ -149,3 +149,16 @@ test_that("smooths are set up from the mask points in order of session and then 
   G <- mgcv::gam(gam.resp ~ s(x, y, k = 8), data = md, fit = FALSE)
   expect_equal(get.gam(fit, 'D')$gam_mask$X, G$X)
 })
+
+test_that("density models in the mask coordinates need no covariates", {
+  dat <- read.acre(captures = simple_hhn$capt, traps = simple_hhn$traps,
+                   control.mask = simple_hhn$control.mask)
+  fit <- fit.acre(dat, model = list(D = ~ x + y), detfn = "hhn", tracing = FALSE)
+  expect_equal(names(coef(fit, "linked"))[3:5], c("D.(Intercept)_link", "D.x_link", "D.y_link"))
+  fit <- fit.acre(dat, model = list(D = ~ s(x, y, k = 10)), detfn = "hhn", tracing = FALSE)
+  expect_true(all(is.finite(coef(fit))))
+  eff <- term.effect(fit, "s(x,y)", data.frame(x = c(-10, 10), y = c(0, 0)))
+  expect_true(all(is.finite(eff$se)))
+  expect_error(fit.acre(dat, model = list(D = ~ habitat), detfn = "hhn", tracing = FALSE),
+               "not provided")
+})
