@@ -231,8 +231,7 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, newdata = NULL, D.c
     fields::imagePlot(x = unique.x, y = unique.y, z = z, zlim = zlim, 
                       col = faded.virdis(arg.col, min.alpha = 1),
                        asp = 1, xlim = xlim, ylim = ylim, xlab = "x", ylab = "y", legend.width = 2,
-                       main = "Density surface", legend.line = 4, legend.lab = expression("Density per ha"),
-                       legend.shrink = 1, legend.mar = 7)
+                       main = "Density surface", legend.shrink = 1)
   } else {
     image(x = unique.x, y = unique.y, z = z, zlim = zlim, 
                        col = faded.virdis(arg.col, min.alpha = 0.65), add = TRUE, legend.width = 2.5)

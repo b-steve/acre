@@ -147,9 +147,16 @@ effect.terms <- function(fit, term){
 ## The covariates at the mask points used to fit the model, for all sessions, including the mask
 ## coordinates, in the order of the masks.
 effect.mask.data <- function(fit){
+  masks <- get.mask(fit)
+  if(!is.list(masks)) masks <- list(masks)
   mask_data <- get.par.extend.data(fit)$mask
+  ## Without covariates, only the coordinates are needed.
+  if(is.null(mask_data)){
+    mask_data <- data.frame(session = rep(seq_along(masks), sapply(masks, nrow)),
+                            mask = unlist(lapply(masks, function(m) seq_len(nrow(m)))))
+  }
   mask_data <- mask_data[order(mask_data$session, mask_data$mask), , drop = FALSE]
-  coords <- do.call(rbind, lapply(get.mask(fit), function(m) m[, 1:2, drop = FALSE]))
+  coords <- do.call(rbind, lapply(masks, function(m) m[, 1:2, drop = FALSE]))
   for(i in setdiff(c("x", "y"), colnames(mask_data))) mask_data[[i]] <- coords[, i]
   mask_data
 }

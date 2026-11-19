@@ -241,8 +241,8 @@ sim.data.prepare <- function(detfn, param, par.extend, traps, mask, survey.lengt
       warning(paste0("'scale' will be ignored and it will be regarded as FALSE."))
     }
 
-    if(!all(c('data', 'model') %in% names(par.extend))){
-      stop("'data' and 'model' must be provided.")
+    if(!('model' %in% names(par.extend))){
+      stop("'model' must be provided.")
     }
 
     name.extend.par <- names(par.extend$model)

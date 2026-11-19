@@ -391,9 +391,11 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
     if(!all(names(par.extend) %in% c('data', 'model', 'link', 'scale'))) {
       stop("'par.extend' only accepts 'data', 'model', 'link' and 'scale' as input.")
     }
-    if(!all(c('data', 'model') %in% names(par.extend))){
-      stop("'data' and 'model' must be provided.")
+    if(!('model' %in% names(par.extend))){
+      stop("'model' must be provided.")
     }
+    ## Models can use the mask coordinates without any other covariates.
+    if(is.null(par.extend$data)) par.extend$data <- list()
     
     name.extend.par <- names(par.extend$model)
     if(!all(name.extend.par %in% namelist.par.extend)){
