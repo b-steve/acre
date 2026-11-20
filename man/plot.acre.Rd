@@ -3,7 +3,7 @@
 \name{plot.acre.data}
 \alias{plot.acre.data}
 \alias{plot.acre}
-\title{Plotting \code{acre} data or model objects}
+\title{Plotting \code{acre} data and model objects}
 \usage{
 \method{plot}{acre.data}(x, type = NULL, call.id = NULL, animal.id = NULL, session = NULL, ...)
 
@@ -18,8 +18,8 @@ a data object, the available options are \code{"survey"} (mask and
 detectors), \code{"capt"} (capture histories), and \code{"covariates"}
 (spatial covariates). From a model object, additional options are
 \code{"detfn"} (estimated detection functions), \code{"Dsurf"} (estimated
-density surface), and \code{"locations"} (estimated call locations).
-See Details below.}
+density surface), \code{"locations"} (estimated call locations), and
+\code{"effect"} (estimated effects of covariates). See Details below.}
 
 \item{call.id}{For \code{type = "capt"} or \code{type = "locations"}, a
 numeric vector containing the ID or IDs of the calls to plot. The
@@ -45,8 +45,6 @@ each plot type.}
 \value{
 \code{NULL}, invisibly. The function is called for its plotting side
 effects.
-
-(Still to write)
 }
 \description{
 Creates plots from either a data object returned by \code{\link[=read.acre]{read.acre()}}
@@ -58,12 +56,22 @@ detection functions, density surfaces, and call locations. The plot
 produced is selected with the \code{type} argument.
 }
 \details{
+For plot types that can produce multiple plots, \code{ask = TRUE} (the
+default) prompts before advancing to the next plot. Set \code{ask = FALSE} for non-interactive use.
+}
+\section{Type "survey"}{
+
+
 When \code{type = "survey"}, the mask and detector locations for one
 session are plotted, and \code{session} defaults to 1. When \code{session} is
 explicitly supplied, the plot is titled with the session label. The
 appearance of the mask can be controlled with \code{pch_mask},
 \code{col_mask}, and \code{cex_mask}; the corresponding detector options are
 \code{pch_trap}, \code{col_trap}, and \code{cex_trap}.
+}
+
+\section{Types "capt" and "locations"}{
+
 
 When \code{type = "capt"}, detector-level capture data are plotted, with
 one plot per detected call. When \code{type = "locations"}, the same
@@ -92,12 +100,20 @@ on. Additional plotting options include \code{arrow_len}, controlling
 bearing-arrow length when distances are unavailable, and
 \code{circle_acc}, controlling the number of points used to draw
 distance circles.
+}
+
+\section{Type "covariates"}{
+
 
 When \code{type = "covariates"}, spatial covariates for one session are
 plotted, the first session by default. Additional plotting options
 include \code{select_cov} or \code{cov_names} to restrict the covariates,
 \code{arg.col} to set the number of colours, and \code{plot.contours = TRUE}
 to add contours to numeric covariates.
+}
+
+\section{Type "detfn"}{
+
 
 When \code{type = "detfn"}, estimated detection functions are plotted. If
 covariates have been used to model detection function parameters,
@@ -109,10 +125,20 @@ argument \code{newdata}, a data frame, can be used to provide new
 covariate data. An estimated detection function is plotted for each
 row. If the additional argument \code{add} is set to \code{TRUE}, then the
 estimated detection functions will be added to an existing plot.
-
-For plot types that can produce multiple plots, \code{ask = TRUE} (the
-default) prompts before advancing to the next plot. Set \code{ask = FALSE} for non-interactive use.
 }
+
+\section{Type "Dsurf"}{
+
+
+(Still to write)
+}
+
+\section{Type "effect"}{
+
+
+(Still to write)
+}
+
 \examples{
 data("bearing_dist_hn")
 
@@ -127,5 +153,4 @@ plot(acre_dat, type = "survey", session = 1)
 
 # Plot the capture history for the first call in session 1.
 plot(acre_dat, type = "capt", session = 1, call.id = 1, ask = FALSE)
-## (Still to write)
 }
