@@ -127,6 +127,22 @@ effect.terms <- function(fit, term, par = "D"){
   stop("'", term, "' is not a term or covariate in the model for ", par, ".", call. = FALSE)
 }
 
+## The effects in the model for a parameter that plot(fit, type = "effect") can show by default:
+## the labels of smooths, and the covariates in parametric terms that are not in a smooth.
+effect.candidates <- function(fit, par){
+  gams <- get.gam(fit, par)
+  out <- character(0)
+  for(info in list(gams$gam_mask$smooth_info, gams$gam_non_mask$smooth_info)){
+    if(is.null(info)) next
+    s_labels <- vapply(info$smooths, function(s) s$sm$label, character(1))
+    s_vars <- unlist(lapply(info$smooths, function(s) s$sm$term))
+    p_labels <- attr(info$G_param$pterms, "term.labels")
+    p_vars <- unique(unlist(lapply(p_labels, function(l) all.vars(str2lang(l)))))
+    out <- c(out, s_labels, setdiff(p_vars, s_vars))
+  }
+  out
+}
+
 ## The terms selected by effect.terms() from one part of a model (a smooth.info() object), or NULL
 ## if there are none.
 select.effect.terms <- function(info, term, par){
@@ -272,7 +288,7 @@ effect.typical.data <- function(G_param, n){
 ## as a list of data frames from term.effect(), named by term.
 ##
 ## term:      Smooth labels, parametric terms' labels, or covariate names, as for effect.terms();
-##            by default, all smooths.
+##            by default, the only effect in the model, from effect.candidates().
 ## par:       The parameter.
 ## newdata:  For effects of two covariates, a data frame of points at which to show it, with x,
 ##            y, and the covariates. By default, the pixels of an x.pixels by y.pixels grid that
@@ -294,13 +310,19 @@ show.effect <- function(fit, term = NULL, par = "D", newdata = NULL, n = 100, se
                         level = 0.95, p.dot.min = NULL, add = FALSE, x.pixels = 100,
                         y.pixels = 100, ask = TRUE, ...){
   if(!(par %in% get.par.extend.name(fit))){
-    stop("The model for ", par, " has no covariates.", call. = FALSE)
+    others <- get.par.extend.name(fit)
+    stop("The model for ", par, " has no covariates",
+         if(length(others) > 0) paste0("; those for ", paste(others, collapse = " and "),
+                                       " do, so use 'par' to choose one"), ".", call. = FALSE)
   }
   if(is.null(term)){
-    gams <- get.gam(fit, par)
-    smooths <- c(gams$gam_mask$smooth_info$smooths, gams$gam_non_mask$smooth_info$smooths)
-    term <- vapply(smooths, function(s) s$sm$label, character(1))
-    if(length(term) == 0) stop("The model for ", par, " has no smooths; use 'term' to select a covariate.", call. = FALSE)
+    ## The effects that could be shown: one for each smooth, and one for each covariate in the
+    ## parametric terms that is not in a smooth.
+    term <- effect.candidates(fit, par)
+    if(length(term) > 1){
+      stop("The model for ", par, " has more than one effect (", paste(term, collapse = ", "),
+           "); use 'term' to choose one.", call. = FALSE)
+    }
   }
   ## The mask points that set the ranges of covariates.
   mask_data <- effect.mask.data(fit)

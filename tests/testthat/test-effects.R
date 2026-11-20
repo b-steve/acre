@@ -103,16 +103,16 @@ test_that("effects of two covariates are surfaces", {
 test_that("effect plots show what they return, over the mask points or detectable ones", {
   fit <- ihd.effect.fit(~ y + s(x, k = 6))
   mask <- get.mask(fit)[[1]]
-  out <- quiet.plot(fit, type = "effect")
+  out <- quiet.plot(fit, type = "effect", term = "s(x)")
   expect_equal(names(out), "s(x)")
   expect_equal(out[[1]]$est, term.effect(fit, "x", out[[1]]$x)$est)
   expect_equal(range(out[[1]]$x), range(mask[, "x"]))
   ## Only the detectable mask points.
   detectable <- p.dot(fit)[[1]] > 0.1
   expect_true(any(detectable) && !all(detectable))
-  out <- quiet.plot(fit, type = "effect", p.dot.min = 0.1)
+  out <- quiet.plot(fit, type = "effect", term = "s(x)", p.dot.min = 0.1)
   expect_equal(range(out[[1]]$x), range(mask[detectable, "x"]))
-  out <- quiet.plot(fit, type = "effect", xlim = c(-5, 5))
+  out <- quiet.plot(fit, type = "effect", term = "s(x)", xlim = c(-5, 5))
   expect_equal(range(out[[1]]$x), c(-5, 5))
   ## Adding to an existing plot, e.g., a linear effect and a smooth one.
   fit_lin <- ihd.effect.fit(~ y + x)
@@ -121,7 +121,9 @@ test_that("effect plots show what they return, over the mask points or detectabl
   out <- plot(fit, type = "effect", term = "x", add = TRUE, col = "red")
   grDevices::dev.off()
   expect_equal(out[[1]]$est, term.effect(fit, "x", out[[1]]$x)$est)
-  expect_error(quiet.plot(ihd.effect.fit(~ y), type = "effect"), "no smooths")
+  ## Without 'term', the only effect in the model is shown, whether or not it is a smooth.
+  expect_error(quiet.plot(fit, type = "effect"), "more than one effect \\(s\\(x\\), y\\)")
+  expect_equal(names(quiet.plot(ihd.effect.fit(~ y + I(y^2)), type = "effect")), "y")
 })
 
 test_that("effects are available for factors, for parameters other than D, and for detector-level covariates", {
@@ -148,5 +150,6 @@ test_that("effects are available for factors, for parameters other than D, and f
   expect_type(quiet.plot(fit, type = "effect", term = "hab", par = "sigma"), "list")
   expect_type(quiet.plot(fit, type = "effect", par = "lambda0"), "list")
   expect_error(term.effect(fit, "hab", par = "g0"), "no covariates")
-  expect_error(quiet.plot(fit, type = "effect", par = "sigma"), "no smooths")
+  expect_error(quiet.plot(fit, type = "effect", par = "sigma"), "more than one effect")
+  expect_error(quiet.plot(fit, type = "effect", par = "g0"), "has no covariates")
 })

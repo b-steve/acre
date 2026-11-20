@@ -254,122 +254,8 @@ show.Dsurf <- function(fit, session = NULL, show.cv = FALSE, newdata = NULL, D.c
 }
 
 
-#' Plotting `acre` data or model objects
-#'
-#' Creates plots from either a data object returned by [read.acre()]
-#' or a fitted model object returned by [fit.acre()]. From a data
-#' object, possibilities include the detector array and mask, capture
-#' histories, or spatial covariates. These options are also possible
-#' from a fitted model object, in addition to plotting of estimated
-#' detection functions, density surfaces, and call locations. The plot
-#' produced is selected with the `type` argument.
-#'
-#' @param x A data object returned by [read.acre()], or a fitted model
-#'   object returned by [fit.acre()].
-#' @param type A character string specifying the plot to produce. From
-#'   a data object, the available options are `"survey"` (mask and
-#'   detectors), `"capt"` (capture histories), and `"covariates"`
-#'   (spatial covariates). From a model object, additional options are
-#'   `"detfn"` (estimated detection functions), `"Dsurf"` (estimated
-#'   density surface), and `"locations"` (estimated call locations).
-#'   See Details below.
-#' @param call.id For `type = "capt"` or `type = "locations"`, a
-#'   numeric vector containing the ID or IDs of the calls to plot. The
-#'   default, `NULL`, plots all calls. A value of 0 also selects all
-#'   calls. If supplied without `session`, session 1 is used.
-#' @param animal.id For `type = "capt"` or `type = "locations"` with
-#'   capture histories that contain an `animal_ID` column, a single
-#'   animal ID to plot. This argument must be supplied when `call.id`
-#'   is used with such data. Ignored for capture histories without
-#'   animal IDs and for other plot types.
-#' @param session A numeric value specifying the capture session to
-#'   plot when the survey contains multiple sessions. For `type =
-#'   "survey"` and `type = "covariates"`, the default is `1`. For
-#'   `type = "capt"` and `type = "locations"`, the default is to plot
-#'   calls from all sessions, unless `call.id` or `animal.id` is
-#'   supplied, in which case session 1 is used.
-#' @param ... Additional plotting options, including `xlim`, `ylim`,
-#'   `ask`, `newdata`, and `add`.  See Details for options specific to
-#'   each plot type.
-#'
-#' @details
-#'
-#' When `type = "survey"`, the mask and detector locations for one
-#' session are plotted, and `session` defaults to 1. When `session` is
-#' explicitly supplied, the plot is titled with the session label. The
-#' appearance of the mask can be controlled with `pch_mask`,
-#' `col_mask`, and `cex_mask`; the corresponding detector options are
-#' `pch_trap`, `col_trap`, and `cex_trap`.
-#'
-#' When `type = "capt"`, detector-level capture data are plotted, with
-#' one plot per detected call. When `type = "locations"`, the same
-#' plots are created, but with estimated call locations. By default,
-#' calls from all sessions are plotted. Use `session` to restrict the
-#' plot to a particular session and `call.id` to select the ID or IDs
-#' of the calls whose capture histories are to be plotted. For
-#' example, `plot(x, type = "capt", session = 1, call.id = 3)` plots
-#' call 3 from the first session. If `call.id` is supplied without
-#' `session`, the first session is used. A `call.id` value of 0, or
-#' omitting `call.id`, selects all calls.  For capture histories
-#' containing an `animal_ID` column, `animal.id` selects an individual
-#' and must be supplied when selecting a `call.id`; within such data,
-#' call IDs are interpreted within the selected animal.
-#'
-#' Capture plots display any auxiliary bearing, distance, or
-#' time-of-arrival data present in the capture history. Arrows are
-#' plotted for estimated bearings, and the arrow length corresponds to
-#' the estimated bearing, if those are also provided. Circles indicate
-#' estimated distances if bearings are not available. When
-#' time-of-arrival data are available, numbers are plotted next to
-#' each detector indicating the order in which the signal arrived,
-#' with a 1 indicating the detector that received the signal first, a
-#' 2 indicating the detector that received the signal second, and so
-#' on. Additional plotting options include `arrow_len`, controlling
-#' bearing-arrow length when distances are unavailable, and
-#' `circle_acc`, controlling the number of points used to draw
-#' distance circles.
-#'
-#' When `type = "covariates"`, spatial covariates for one session are
-#' plotted, the first session by default. Additional plotting options
-#' include `select_cov` or `cov_names` to restrict the covariates,
-#' `arg.col` to set the number of colours, and `plot.contours = TRUE`
-#' to add contours to numeric covariates.
-#'
-#' When `type = "detfn"`, estimated detection functions are plotted. If
-#' covariates have been used to model detection function parameters,
-#' then, by default, only the estimated of the intercept of the linear
-#' predictor is used, so the plotted detection function is the
-#' estimate when categorical predictors are set to their baseline
-#' levels and numeric predictors are set to zero. The additional
-#' argument `newdata`, a data frame, can be used to provide new
-#' covariate data. An estimated detection function is plotted for each
-#' row. If the additional argument `add` is set to `TRUE`, then the
-#' estimated detection functions will be added to an existing plot.
-#'
-#' For plot types that can produce multiple plots, `ask = TRUE` (the
-#' default) prompts before advancing to the next plot. Set `ask =
-#' FALSE` for non-interactive use.
-#'
-#' @return `NULL`, invisibly. The function is called for its plotting side
-#'   effects.
 #' @rdname plot.acre
-#' 
 #' @export
-#'
-#' @examples
-#' data("bearing_dist_hn")
-#'
-#' acre_dat <- read.acre(
-#'   captures = bearing_dist_hn$capt,
-#'   traps = bearing_dist_hn$traps,
-#'   control.mask = bearing_dist_hn$control.mask
-#' )
-#'
-#' # Plot the survey mask and detector locations for session 1.
-#' plot(acre_dat, type = "survey", session = 1)
-#'
-#' # Plot the capture history for the first call in session 1.
-#' plot(acre_dat, type = "capt", session = 1, call.id = 1, ask = FALSE)
 plot.acre.data <- function(x, type = NULL, call.id = NULL, animal.id = NULL,
                            session = NULL, ...){
   
@@ -701,15 +587,137 @@ plot.acre.data <- function(x, type = NULL, call.id = NULL, animal.id = NULL,
 }
 
 
-#' Plotting acre model objects
+#' Plotting `acre` data and model objects
 #'
-#' @inheritParams plot.acre.data
+#' Creates plots from either a data object returned by [read.acre()]
+#' or a fitted model object returned by [fit.acre()]. From a data
+#' object, possibilities include the detector array and mask, capture
+#' histories, or spatial covariates. These options are also possible
+#' from a fitted model object, in addition to plotting of estimated
+#' detection functions, density surfaces, and call locations. The plot
+#' produced is selected with the `type` argument.
+#'
+#' @param x A data object returned by [read.acre()], or a fitted model
+#'   object returned by [fit.acre()].
+#' @param type A character string specifying the plot to produce. From
+#'   a data object, the available options are `"survey"` (mask and
+#'   detectors), `"capt"` (capture histories), and `"covariates"`
+#'   (spatial covariates). From a model object, additional options are
+#'   `"detfn"` (estimated detection functions), `"Dsurf"` (estimated
+#'   density surface), `"locations"` (estimated call locations), and
+#'   `"effect"` (estimated effects of covariates). See Details below.
+#' @param call.id For `type = "capt"` or `type = "locations"`, a
+#'   numeric vector containing the ID or IDs of the calls to plot. The
+#'   default, `NULL`, plots all calls. A value of 0 also selects all
+#'   calls. If supplied without `session`, session 1 is used.
+#' @param animal.id For `type = "capt"` or `type = "locations"` with
+#'   capture histories that contain an `animal_ID` column, a single
+#'   animal ID to plot. This argument must be supplied when `call.id`
+#'   is used with such data. Ignored for capture histories without
+#'   animal IDs and for other plot types.
+#' @param session A numeric value specifying the capture session to
+#'   plot when the survey contains multiple sessions. For `type =
+#'   "survey"` and `type = "covariates"`, the default is `1`. For
+#'   `type = "capt"` and `type = "locations"`, the default is to plot
+#'   calls from all sessions, unless `call.id` or `animal.id` is
+#'   supplied, in which case session 1 is used.
+#' @param ... Additional plotting options, including `xlim`, `ylim`,
+#'   `ask`, `newdata`, and `add`.  See Details for options specific to
+#'   each plot type.
+#'
+#' @details
+#'
+#' For plot types that can produce multiple plots, `ask = TRUE` (the
+#' default) prompts before advancing to the next plot. Set `ask =
+#' FALSE` for non-interactive use.
+#'
+#' @section Type "survey":
+#'
+#' When `type = "survey"`, the mask and detector locations for one
+#' session are plotted, and `session` defaults to 1. When `session` is
+#' explicitly supplied, the plot is titled with the session label. The
+#' appearance of the mask can be controlled with `pch_mask`,
+#' `col_mask`, and `cex_mask`; the corresponding detector options are
+#' `pch_trap`, `col_trap`, and `cex_trap`.
+#'
+#' @section Types "capt" and "locations":
+#'
+#' When `type = "capt"`, detector-level capture data are plotted, with
+#' one plot per detected call. When `type = "locations"`, the same
+#' plots are created, but with estimated call locations. By default,
+#' calls from all sessions are plotted. Use `session` to restrict the
+#' plot to a particular session and `call.id` to select the ID or IDs
+#' of the calls whose capture histories are to be plotted. For
+#' example, `plot(x, type = "capt", session = 1, call.id = 3)` plots
+#' call 3 from the first session. If `call.id` is supplied without
+#' `session`, the first session is used. A `call.id` value of 0, or
+#' omitting `call.id`, selects all calls.  For capture histories
+#' containing an `animal_ID` column, `animal.id` selects an individual
+#' and must be supplied when selecting a `call.id`; within such data,
+#' call IDs are interpreted within the selected animal.
+#'
+#' Capture plots display any auxiliary bearing, distance, or
+#' time-of-arrival data present in the capture history. Arrows are
+#' plotted for estimated bearings, and the arrow length corresponds to
+#' the estimated bearing, if those are also provided. Circles indicate
+#' estimated distances if bearings are not available. When
+#' time-of-arrival data are available, numbers are plotted next to
+#' each detector indicating the order in which the signal arrived,
+#' with a 1 indicating the detector that received the signal first, a
+#' 2 indicating the detector that received the signal second, and so
+#' on. Additional plotting options include `arrow_len`, controlling
+#' bearing-arrow length when distances are unavailable, and
+#' `circle_acc`, controlling the number of points used to draw
+#' distance circles.
+#'
+#' @section Type "covariates":
+#'
+#' When `type = "covariates"`, spatial covariates for one session are
+#' plotted, the first session by default. Additional plotting options
+#' include `select_cov` or `cov_names` to restrict the covariates,
+#' `arg.col` to set the number of colours, and `plot.contours = TRUE`
+#' to add contours to numeric covariates.
+#'
+#' @section Type "detfn":
+#'
+#' When `type = "detfn"`, estimated detection functions are plotted. If
+#' covariates have been used to model detection function parameters,
+#' then, by default, only the estimated of the intercept of the linear
+#' predictor is used, so the plotted detection function is the
+#' estimate when categorical predictors are set to their baseline
+#' levels and numeric predictors are set to zero. The additional
+#' argument `newdata`, a data frame, can be used to provide new
+#' covariate data. An estimated detection function is plotted for each
+#' row. If the additional argument `add` is set to `TRUE`, then the
+#' estimated detection functions will be added to an existing plot.
+#'
+#' @section Type "Dsurf":
+#'
+#' (Still to write)
+#'
+#' @section Type "effect":
+#'
+#' (Still to write)
+#'
+#' @return `NULL`, invisibly. The function is called for its plotting side
+#'   effects.
 #' 
-#' @return (Still to write)
 #' @export
-#' 
+#'
 #' @examples
-#' ## (Still to write)
+#' data("bearing_dist_hn")
+#'
+#' acre_dat <- read.acre(
+#'   captures = bearing_dist_hn$capt,
+#'   traps = bearing_dist_hn$traps,
+#'   control.mask = bearing_dist_hn$control.mask
+#' )
+#'
+#' # Plot the survey mask and detector locations for session 1.
+#' plot(acre_dat, type = "survey", session = 1)
+#'
+#' # Plot the capture history for the first call in session 1.
+#' plot(acre_dat, type = "capt", session = 1, call.id = 1, ask = FALSE)
 plot.acre <- function(x, type = NULL, call.id = NULL, animal.id = NULL, session = NULL, ...){
   extra_args <- list(...)
   
