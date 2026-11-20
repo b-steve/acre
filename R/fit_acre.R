@@ -279,7 +279,7 @@ read.acre <- function(captures, traps, mask = NULL,
 #'
 #' (More to put in here)
 #'
-#' @section Smooth density surfaces:
+#' @section Smooth terms:
 #'
 #' (Still to write)
 #'
@@ -399,10 +399,14 @@ read.acre <- function(captures, traps, mask = NULL,
 #'   model is fitted, and so density is not estimated.
 #' @param two.stage A logical value. If `TRUE`, computations required
 #'   to propagate variance under a two-stage density modelling
-#'   approach are carried out.
+#'   approach are carried out. Penalised splines are not allowed for
+#'   two-stage modelling.
 #' @param unsuitable (Still to write)
 #'
 #' @return (Still to write)
+#'
+#' * `smooth`: (Still to write)
+#' * `re`: (Still to write)
 #' @export
 fit.acre <- function(data, model = NULL, detfn = NULL, ss.opts = NULL,
                     control.mask = NULL, mask = NULL, convert.loc2mask = list(),
@@ -681,10 +685,10 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
   gam_output <- o.par.extend$gam_output
   lst_mean_std <- o.par.extend$lst_mean_std
   is.scale <- o.par.extend$is.scale
-  ## Penalised smooths for D: for each random effect, the index of its standard deviation, and
-  ## labels for the standard deviations.
-  smooth.re <- o.par.extend$smooth.re$D
-  is.D.smooth <- !is.null(smooth.re)
+  ## Penalised smooths: for each random effect, the index of its standard deviation, its
+  ## parameter and its name, and labels for the standard deviations, for all parameters.
+  smooth.re <- collect.smooth.re(o.par.extend$smooth.re, fulllist.par)
+  is.smooth <- !is.null(smooth.re)
 
   ## We didn't convert 'animal_ID' and 'ID' to successive natural numbers earlier because, with 'animal_ID'-level
   ## covariates, the user may want to assign covariates to each 'animal_ID', so we must keep
@@ -854,10 +858,12 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
                index_local = as.numeric(data.ID_mask$local),
                toa_ssq = as.numeric(data.ID_mask$toa_ssq),
 
-               ## Penalised smooths for D, with the standard deviation index of each random effect
-               ## (starting at 0, for TMB).
-               is_D_smooth = as.numeric(is.D.smooth),
-               u_fac = if(is.D.smooth) as.integer(smooth.re$re_fac - 1) else 0L,
+               ## Penalised smooths, with the numbers of random effects in each parameter's
+               ## session- and trap-level and mask-level designs, and the standard deviation index
+               ## of each random effect (starting at 0, for TMB).
+               is_smooth = as.numeric(is.smooth),
+               re_n_col = as.matrix(data.par[, c('n_col_rand_full', 'n_col_rand_mask')]),
+               u_fac = if(is.smooth) as.integer(smooth.re$re_fac - 1) else 0L,
 
                ## Conditional likelihood.
                is_conditional = as.numeric(CL),
@@ -869,9 +875,9 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
   fulllist.par.4cpp <- gsub("\\.", "_", fulllist.par)
   param.og.4cpp <- gsub("\\.", "_", param.og)
 
-  ## The random effects for penalised smooths of D, and their log standard deviations, come
-  ## just before D, as in the TMB template.
-  par.names.4cpp <- append(fulllist.par.4cpp, c("u", "log_sigma_u"), after = which(fulllist.par.4cpp == "D") - 1)
+  ## The random effects for penalised smooths, and their log standard deviations, come first, as
+  ## in the TMB template.
+  par.names.4cpp <- c("u", "log_sigma_u", fulllist.par.4cpp)
   parameters <- vector('list', length(par.names.4cpp))
   names(parameters) <- par.names.4cpp
 
@@ -887,7 +893,7 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
     parameters[[name.cpp]] <- sv.input[[name.r]]
   }
 
-  if(is.D.smooth){
+  if(is.smooth){
     parameters$u <- numeric(length(smooth.re$re_fac))
     parameters$log_sigma_u <- numeric(length(smooth.re$sd_labels))
   } else {
@@ -911,7 +917,7 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
   name.fixed.par.4cpp <- unique(name.fixed.par.4cpp)
 
 
-  if(!is.D.smooth) name.fixed.par.4cpp <- c(name.fixed.par.4cpp, "u", "log_sigma_u")
+  if(!is.smooth) name.fixed.par.4cpp <- c(name.fixed.par.4cpp, "u", "log_sigma_u")
 
 
   map <- vector('list', length(name.fixed.par.4cpp))
@@ -929,14 +935,12 @@ prepare.fit <- function(capt, traps, mask, detfn, sv, bounds, fix, ss.opts, cue.
   ## matrix.
   ## Also note that we need to make sure the parameter names we use match the
   ## output style of TMB.
-  TMB_par_names <- rep(gsub("\\.", "_", param.og), lengths(parameters[gsub("\\.", "_", param.og)]))
+  ## A parameter's estimates include the random effects for its penalised smooths, which are not
+  ## transformed.
+  n.rand <- data.par$n_col_rand[match(param.og, data.par$par)]
+  TMB_par_names <- rep(gsub("\\.", "_", param.og), lengths(parameters[gsub("\\.", "_", param.og)]) + n.rand)
   G_lst <- construct.G.matrix.list(TMB_par_names, name.extend.par, lst_mean_std,
                                    is.scale)
-  ## D's estimates include the random effects, which are not transformed.
-  if(is.D.smooth){
-    n.u <- length(parameters$u)
-    if(nrow(G_lst$D) == length(parameters$D)) G_lst$D <- diag.block.combine(list(G_lst$D, diag(n.u)))
-  }
 
   list(data = data,
        parameters = parameters,
@@ -989,8 +993,12 @@ run.tmb <- function(spec, tracing, gr.skip, two.stage){
   name.fixed.par.4cpp <- spec$name.fixed.par.4cpp
   dims <- spec$dims
   smooth.re <- spec$smooth.re
-  is.D.smooth <- !is.null(smooth.re)
-  if(is.D.smooth && isTRUE(gr.skip)){
+  is.smooth <- !is.null(smooth.re)
+  if(is.smooth && isTRUE(two.stage)){
+    stop("Two-stage fitting is not available with penalised smooths; use s(..., fx = TRUE) for an ",
+         "unpenalised smooth.", call. = FALSE)
+  }
+  if(is.smooth && isTRUE(gr.skip)){
     stop("Penalised smooths require automatic differentiation, so 'gr.skip' cannot be TRUE; ",
          "use s(..., fx = TRUE) for an unpenalised smooth.")
   }
@@ -999,7 +1007,7 @@ run.tmb <- function(spec, tracing, gr.skip, two.stage){
     ## Have TMB build the likelihood function. The random effects for penalised smooths are
     ## integrated out using the Laplace approximation.
     obj <- TMB::MakeADFun(data = data, parameters = parameters, map = map,
-                          random = if(is.D.smooth) "u" else NULL,
+                          random = if(is.smooth) "u" else NULL,
                           silent = TRUE, DLL="acre")
     ## True so that the Hessian is calculated alongside when we optimise.
     obj$hessian <- TRUE
@@ -1011,13 +1019,16 @@ run.tmb <- function(spec, tracing, gr.skip, two.stage){
       par_names <- get.coef.names(names(obj$par), name.extend.par,
                                   data.trap, data.mask)
       G_trace <- G_lst
-      if(is.D.smooth){
+      if(is.smooth){
         ## The random effects are not in the parameter vector, but the standard deviations are.
-        par_names <- par_names[!par_names %in% paste0("D.", smooth.re$z_names)]
+        par_names <- par_names[!par_names %in% smooth.re$z_names]
         i_sd <- which(par_names == "log_sigma_u")
-        par_names <- append(par_names[-i_sd], paste0("log_sigma_u.", smooth.re$sd_labels), after = i_sd - 1)
-        n.D <- length(parameters$D)
-        G_trace$D <- G_lst$D[1:n.D, 1:n.D, drop = FALSE]
+        par_names <- append(par_names[-i_sd], paste0("log_sigma_u.", smooth.re$sd_par, ".", smooth.re$sd_labels),
+                            after = i_sd - 1)
+        for(p in unique(smooth.re$u_par)){
+          i <- fixed.coef.index(spec$data.par[spec$data.par$par == p, ])
+          G_trace[[gsub("\\.", "_", p)]] <- G_lst[[gsub("\\.", "_", p)]][i, i, drop = FALSE]
+        }
         G_trace$log_sigma_u <- diag(length(parameters$log_sigma_u))
       }
 
@@ -1118,12 +1129,12 @@ run.tmb <- function(spec, tracing, gr.skip, two.stage){
 
   ## The standard deviations of the random effects for penalised smooths, which control how
   ## wiggly the smooths are.
-  D.smooth <- NULL
-  if(is.D.smooth){
+  smooth <- NULL
+  if(is.smooth){
     i_sd <- names(o$par.fixed) == "log_sigma_u"
     log_sd <- o$par.fixed[i_sd]
     log_sd_se <- sqrt(diag(o$cov.fixed)[i_sd])
-    D.smooth <- data.frame(term = smooth.re$sd_labels,
+    smooth <- data.frame(par = smooth.re$sd_par, term = smooth.re$sd_labels,
                            n.re = as.vector(table(factor(smooth.re$re_fac, levels = seq_along(log_sd)))),
                            sd = exp(log_sd), se = exp(log_sd) * log_sd_se,
                            log.sd = log_sd, log.sd.se = log_sd_se,
@@ -1155,7 +1166,7 @@ run.tmb <- function(spec, tracing, gr.skip, two.stage){
   o$sd <- sqrt(diag(o$cov))
 
   list(o = o, opt = opt, tmb.output.og = tmb_output_og, esa.partial.derivatives = esa_partial_derivatives,
-       D.smooth = D.smooth, p.dot = p_dot)
+       smooth = smooth, p.dot = p_dot)
 }
 
 ## Builds the fitted object from the prepared fit and the TMB results.
@@ -1193,17 +1204,18 @@ build.fit <- function(spec, tmb){
                cutoff = spec$cutoff,
                CL = spec$CL,
                esa.partial.derivatives = tmb$esa.partial.derivatives)
-  out$D.smooth <- tmb$D.smooth
+  out$smooth <- tmb$smooth
   out$output.tmb$p_dot <- tmb$p.dot
-  out$output.tmb$D_re_names <- spec$smooth.re$z_names
+  out$output.tmb$re_names <- spec$smooth.re$z_names
   ## The predicted random effects for penalised smooths, which coef() and friends leave out, with
   ## the standard deviations of their prediction errors.
   if(!is.null(spec$smooth.re)){
-    re_names <- paste0("D.", spec$smooth.re$z_names, "_link")
-    out$D.re <- data.frame(term = spec$smooth.re$sd_labels[spec$smooth.re$re_fac],
-                           name = spec$smooth.re$z_names,
-                           est = unname(out$coefficients[re_names]),
-                           se = unname(out$se[re_names]))
+    re_names <- paste0(spec$smooth.re$z_names, "_link")
+    out$re <- data.frame(par = spec$smooth.re$u_par,
+                         term = spec$smooth.re$sd_labels[spec$smooth.re$re_fac],
+                         name = substring(spec$smooth.re$z_names, nchar(spec$smooth.re$u_par) + 2),
+                         est = unname(out$coefficients[re_names]),
+                         se = unname(out$se[re_names]))
   }
 
   class(out) <- "acre"

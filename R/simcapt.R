@@ -93,7 +93,8 @@ sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list
 
   ## write.csv(par.extend$data$mask, 'df_m_sim.csv', row.names = F)
   tem <- sim.data.prepare(detfn, param, par.extend, traps, mask,
-                         survey.length, random.location, n.sessions, D.mask.fit)
+                         survey.length, random.location, n.sessions, D.mask.fit,
+                         fit = if(!missing(fit)) fit)
   dat_pars <- tem$dat_pars
   dat.density <- tem$dat.density
   dims <- tem$dims
@@ -142,7 +143,7 @@ sim.capt <- function(fit, detfn, param, model = NULL, traps, control.mask = list
 ## mask point for each session, from a fitted model), it is used for D.
 
 sim.data.prepare <- function(detfn, param, par.extend, traps, mask, survey.length, random.location, n.sessions,
-                             D.mask.fit = NULL){
+                             D.mask.fit = NULL, fit = NULL){
 
   if(is.null(survey.length)){
     survey.length <- rep(1, n.sessions)
@@ -296,6 +297,14 @@ sim.data.prepare <- function(detfn, param, par.extend, traps, mask, survey.lengt
       if(i == 'D' && !is.null(D.mask.fit)){
         D_mask_index <- paste(rep(seq_along(D.mask.fit), lengths(D.mask.fit)), sequence(lengths(D.mask.fit)))
         dat[[i]] <- unlist(D.mask.fit, use.names = FALSE)[match(paste(dat$session, dat$mask), D_mask_index)]
+      } else if(i %in% name.extend.par && !is.null(fit)){
+        ## From a fitted model, the parameter is evaluated with the design objects and coefficients
+        ## (including any random effects) used to fit it, as setting the model up again on these
+        ## data could give smooths a different basis.
+        par_info <- subset(get.data.param(fit), get.data.param(fit)$par == i)
+        values <- get.extended.par.value(get.gam(fit, i), par_info$n_col_full, par_info$n_col_mask,
+                                         as.vector(coef(fit, types = 'linked', pars = i, re = TRUE)), tem_dat)
+        dat[[i]] <- unlink.fun(par_info$link, values)
       } else if(i %in% name.extend.par){
         foo <- stats::as.formula(paste(c('gam.resp', as.character(par.extend$model[[i]])), collapse = ""))
         tem_model <- mgcv::gam(foo, data = tem_dat, fit = FALSE)

@@ -576,15 +576,22 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
         
         
         tem_model <- mgcv::gam(foo_full, data = tem.data, fit = FALSE)
-        check.smooths.fixed(tem_model, i, "session- or trap-level covariates")
         ## As for mask-level covariates, the smooth objects are kept to build design matrices for
-        ## new data, which also names the columns of smooths.
-        tem_model$smooth_info <- smooth.info(tem_model, tem.data, FALSE)
+        ## new data, which also names the columns of smooths. Smooths are penalised unless they
+        ## have fx = TRUE.
+        tem_model$smooth_info <- smooth.info(tem_model, tem.data, TRUE)
         gam_output[[i]][['gam_non_mask']] <- tem_model
-        design.matrix <- smooth.design(tem_model$smooth_info, tem.data, X.param = tem_model$smooth_info$G_param$X)$X
-        n_col_full <- ncol(design.matrix)
+        tem <- smooth.design(tem_model$smooth_info, tem.data, X.param = tem_model$smooth_info$G_param$X)
+        re_full <- smooth.re.info(tem)
+        design.matrix <- tem$X
+        ## The columns for random effects come last, and are not standardised, because that would
+        ## change the penalty.
+        design.matrix.rand <- as.data.frame(tem$Z, stringsAsFactors = FALSE)
+        n_col_rand_full <- ncol(tem$Z)
+        n_col_full <- ncol(design.matrix) + n_col_rand_full
         design.matrix <- as.data.frame(design.matrix, stringsAsFactors = FALSE)
         colnames(design.matrix) <- paste(i, "_", colnames(design.matrix), sep = " ")
+        if(n_col_rand_full > 0) colnames(design.matrix.rand) <- paste(i, "_", colnames(design.matrix.rand), sep = " ")
         
         ## Standardise the design matrix if is.scale.
         if(is.scale){
@@ -601,7 +608,12 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
           sd_matrix[,1] <- 1
           design.matrix <- (design.matrix - mean_matrix)/sd_matrix
         }
-        
+        if(is.scale && n_col_rand_full > 0){
+          lst_mean_std[[i]] <- cbind(lst_mean_std[[i]],
+                                     rbind(col_mean = setNames(rep(0, n_col_rand_full), colnames(design.matrix.rand)),
+                                           col_sd = rep(1, n_col_rand_full)))
+        }
+        design.matrix <- cbind(design.matrix, design.matrix.rand)
         
         design.matrix[['session']] <- tem.data[['session']]
         if(!is.null(tem.data[['trap']])) design.matrix[['trap']] <- tem.data[['trap']]
@@ -616,6 +628,8 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
         ## there is no intercept column in data.mask.
         data.par.non.mask[[paste0(i, ' _ (Intercept)')]] <- 1
         n_col_full <- 1
+        n_col_rand_full <- 0
+        re_full <- NULL
         if(is.scale){
           lst_mean_std[[i]] <- matrix(c(1, 0), nrow = 2, dimnames = list(c('col_mean', 'col_sd'), 
                                                                         paste0(i, ' _ (Intercept)')))
@@ -645,14 +659,11 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
         tem_model <- mgcv::gam(foo_mask, data = tem.data, fit = FALSE)
         ## Smooth terms' design matrices for new data are built from the smooth objects, so they
         ## are kept with the gam() setup object.
-        ## Smooths are penalised unless they have fx = TRUE; penalisation is only available for D.
-        if(i != 'D') check.smooths.fixed(tem_model, i, "parameters other than D")
-        tem_model$smooth_info <- smooth.info(tem_model, tem.data, i == 'D')
+        ## Smooths are penalised unless they have fx = TRUE.
+        tem_model$smooth_info <- smooth.info(tem_model, tem.data, TRUE)
         gam_output[[i]][['gam_mask']] <- tem_model
         tem <- smooth.design(tem_model$smooth_info, tem.data, X.param = tem_model$smooth_info$G_param$X)
-        if(ncol(tem$Z) > 0){
-          smooth_re[[i]] <- list(re_fac = tem$re_fac, sd_labels = tem$sd_labels, z_names = colnames(tem$Z))
-        }
+        re_mask <- smooth.re.info(tem)
         ## Delete the first column, which is the intercept.
         design.matrix <- tem$X[, -1, drop = FALSE]
         ## The columns for random effects come last, and are not standardised, because that
@@ -693,9 +704,15 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
       } else {
         n_col_mask <- 0
         n_col_rand <- 0
+        re_mask <- NULL
+      }
+      ## The random effects for this parameter's penalised smooths: those in its session- and
+      ## trap-level design, then those in its mask-level design.
+      if(!is.null(re_full) || !is.null(re_mask)){
+        smooth_re[[i]] <- combine.smooth.re(re_full, re_mask)
       }
       
-      param_distribution[[i]] <- c(n_col_full, n_col_mask, n_col_rand)
+      param_distribution[[i]] <- c(n_col_full, n_col_mask, n_col_rand_full, n_col_rand)
     }
     
     
@@ -721,7 +738,7 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
     for(i in fulllist.par){
       if(!(i %in% name.extend.par)){
         data.trap[[paste0(i, ' _ (Intercept)')]] <- 1
-        param_distribution[[i]] <- c(1, 0, 0)
+        param_distribution[[i]] <- c(1, 0, 0, 0)
       }
     }
     ## Key component ends.
@@ -730,7 +747,7 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
   } else {
     for(i in fulllist.par){
       data.trap[[paste0(i, ' _ (Intercept)')]] <- 1
-      param_distribution[[i]] <- c(1, 0, 0)
+      param_distribution[[i]] <- c(1, 0, 0, 0)
     }
     name.extend.par <- NULL
     gam_output <- NULL
@@ -738,9 +755,12 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
   
   ## Finally, record the link. Here we only check whether the name is in the full list of parameters,
   ## so technically the user could assign a link function to any parameter here, but this is not recommended.
-  ## The last n_col_rand of the n_col_mask mask-level columns are for random effects.
+  ## The last n_col_rand_full of the n_col_full session- and trap-level columns, and the last
+  ## n_col_rand_mask of the n_col_mask mask-level columns, are for random effects; n_col_rand is
+  ## the total.
   df.par <- data.frame(par = character(0), link = character(0), n_col_full = numeric(0),
-                      n_col_mask = numeric(0), n_col_rand = numeric(0), stringsAsFactors = FALSE)
+                      n_col_mask = numeric(0), n_col_rand_full = numeric(0), n_col_rand_mask = numeric(0),
+                      n_col_rand = numeric(0), stringsAsFactors = FALSE)
   
   link <- par.extend$link
   
@@ -755,7 +775,9 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
     df.par[j, 'par'] <- i
     df.par[j, 'n_col_full'] <- param_distribution[[i]][1]
     df.par[j, 'n_col_mask'] <- param_distribution[[i]][2]
-    df.par[j, 'n_col_rand'] <- param_distribution[[i]][3]
+    df.par[j, 'n_col_rand_full'] <- param_distribution[[i]][3]
+    df.par[j, 'n_col_rand_mask'] <- param_distribution[[i]][4]
+    df.par[j, 'n_col_rand'] <- param_distribution[[i]][3] + param_distribution[[i]][4]
     if(i %in% names(link)){
       ## If 'link' is provided, check whether it is a valid input;
       ## currently we only support three link functions.
@@ -1231,7 +1253,7 @@ param.detfn.fun <- function(animal.model, sv, fix, bounds, name.extend.par, detf
         design.matrices.full[[i]] <- design.matrices.full[[i]][, 1, drop = FALSE]
         design.matrices.mask[[i]] <- matrix(0, ncol = 2, nrow = 2)
         data.par[index_par, 'n_col_mask'] <- 0
-        data.par[index_par, 'n_col_rand'] <- 0
+        data.par[index_par, c('n_col_rand', 'n_col_rand_full', 'n_col_rand_mask')] <- 0
         data.par[index_par, 'n_col_full'] <- 1
         name.extend.par <- name.extend.par[-which(name.extend.par == i)]
       }
@@ -1743,11 +1765,13 @@ outFUN <- function(data.par, data.full, data.trap, data.traps, data.mask, data.d
 #'                                control = list(trace = 0))
 #' }
 #'
-#' @notes
-#' - `iter` counts **printed rows** (accepted, paired evaluations), not
-#'   `nlminb`'s internal major-iteration counter. Official counts are in
+#' @note
+#' \itemize{
+#'  \item The `iter` column counts **printed rows** (accepted, paired evaluations), not
+#'   the internal major-iteration counter of [nlminb()]. Official counts are in
 #'   `opt$iterations` / `opt$evaluations`.
-#' - `mgc` and `step` are on the **TMB parameterization** scale.
+#'  \item The `mgc` and `step` columns are on the **TMB parameterization** scale.
+#' }
 #'
 #' @seealso [TMB::MakeADFun()], [stats::nlminb()]
 #' @keywords internal

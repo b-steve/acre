@@ -65,6 +65,55 @@ smooth.design <- function(info, newdata, X.param = NULL){
   list(X = X, Z = Z, re_fac = re_fac, sd_labels = sd_labels)
 }
 
+## The random effects in a design from smooth.design(): for each, the index of its standard
+## deviation, labels for the standard deviations, and the names of the random effects' columns.
+## NULL if there are none.
+smooth.re.info <- function(design){
+  if(ncol(design$Z) == 0) return(NULL)
+  list(re_fac = design$re_fac, sd_labels = design$sd_labels, z_names = colnames(design$Z))
+}
+
+## The random effects for one parameter, from smooth.re.info() for its session- and trap-level
+## design and for its mask-level design (either of which can be NULL), in that order, which is
+## the order of their columns in the parameter's coefficients.
+combine.smooth.re <- function(re.full, re.mask){
+  n_sd_full <- length(re.full$sd_labels)
+  list(re_fac = c(re.full$re_fac, n_sd_full + re.mask$re_fac),
+       sd_labels = c(re.full$sd_labels, re.mask$sd_labels),
+       z_names = c(re.full$z_names, re.mask$z_names))
+}
+
+## The random effects for all parameters, from a list of combine.smooth.re() objects named by
+## parameter, in the order of pars, which is the order of the random effects in the TMB
+## template. Returns NULL if there are none, or a list with, for each random effect, the index
+## of its standard deviation (re_fac), the parameter (u_par), and its coefficient's name
+## (z_names, e.g., "D.s(x,y).r1"); and, for each standard deviation, the parameter (sd_par) and
+## the smooth's label (sd_labels).
+collect.smooth.re <- function(smooth.re, pars){
+  out <- list(re_fac = integer(0), u_par = character(0), z_names = character(0),
+              sd_par = character(0), sd_labels = character(0))
+  for(p in intersect(pars, names(smooth.re))){
+    r <- smooth.re[[p]]
+    out$re_fac <- c(out$re_fac, length(out$sd_labels) + r$re_fac)
+    out$u_par <- c(out$u_par, rep(p, length(r$z_names)))
+    out$z_names <- c(out$z_names, paste0(p, ".", r$z_names))
+    out$sd_par <- c(out$sd_par, rep(p, length(r$sd_labels)))
+    out$sd_labels <- c(out$sd_labels, r$sd_labels)
+  }
+  if(length(out$re_fac) == 0) NULL else out
+}
+
+## The positions of the fixed coefficients among all of a parameter's coefficients, which are
+## those for its session- and trap-level design followed by those for its mask-level design,
+## each with the columns for random effects last.
+##
+## n: A row of the data.par data frame, with n_col_full, n_col_mask, n_col_rand_full and
+##    n_col_rand_mask.
+fixed.coef.index <- function(n){
+  c(seq_len(n$n_col_full - n$n_col_rand_full),
+    n$n_col_full + seq_len(n$n_col_mask - n$n_col_rand_mask))
+}
+
 ## The design matrix columns for one smooth, for new data, as in smooth.design(), but with re_fac
 ## indexing this smooth's standard deviations only.
 ##
@@ -533,31 +582,17 @@ non.mask.design.new <- function(gam.non.mask, newdata){
     ## Fits from earlier versions of the package.
     return(get.DX.new.gam(gam.non.mask, newdata))
   }
-  smooth.design(gam.non.mask$smooth_info, newdata)$X
-}
-
-## Smooths are penalised unless they have fx = TRUE, but penalisation is only available for
-## mask-level covariates in the model for D, so stops if any other smooth is not fixed.
-##
-## G:     A gam() setup object.
-## par:   The name of the parameter.
-## where: A description of the smooths that cannot be penalised, for the error message.
-check.smooths.fixed <- function(G, par, where){
-  penalised <- !vapply(G$smooth, function(sm) isTRUE(sm$fixed), logical(1))
-  if(any(penalised)){
-    labels <- vapply(G$smooth[penalised], function(sm) sm$label, character(1))
-    stop("Penalised smooths are not available for ", where, " (", paste(labels, collapse = ", "),
-         " in the model for ", par, "); use s(..., fx = TRUE) for an unpenalised smooth.", call. = FALSE)
-  }
+  d <- smooth.design(gam.non.mask$smooth_info, newdata)
+  cbind(d$X, d$Z)
 }
 
 ## Removes the predicted random effects for penalised smooths from the output of coef(), vcov(),
-## stdEr() or confint(). They are not parameters, so they are reported in the fit's D.re component
-## instead. Internal callers that need them alongside D's coefficients (e.g., to predict density,
+## stdEr() or confint(). They are not parameters, so they are reported in the fit's re component
+## instead. Internal callers that need them alongside the coefficients (e.g., to predict density,
 ## or to record bootstrap estimates) pass re = TRUE, which reaches this function through "...".
 drop.re <- function(x, object, re = FALSE, ...){
-  if(isTRUE(re) || is.null(object$D.smooth)) return(x)
-  re_names <- paste0("D.", object$output.tmb$D_re_names)
+  if(isTRUE(re) || is.null(object$smooth)) return(x)
+  re_names <- object$output.tmb$re_names
   re_names <- c(re_names, paste0(re_names, "_link"))
   cl <- oldClass(x)
   if(is.list(x)){

@@ -95,6 +95,29 @@ void linear_predictor(const vector<Type> &beta, const matrix<Type> &DX, const ma
   }
 }
 
+//The coefficients for parameter k: those in fixed, with the random effects for the parameter's
+//penalised smooths, from u, after the fixed coefficients for each design matrix. Row k of
+//re_n_col has the numbers of random effects for its design matrix for session-trap rows and
+//for its mask-level design matrix, and the random effects for earlier parameters come first in u.
+template<class Type>
+vector<Type> with_re(const vector<Type> &fixed, const vector<Type> &u, const matrix<int> &par_n_col,
+                     const matrix<int> &re_n_col, int k){
+  int rf = re_n_col(k, 0);
+  int rm = re_n_col(k, 1);
+  if(rf + rm == 0) return fixed;
+  int start = 0;
+  for(int j = 0; j < k; j++) start += re_n_col(j, 0) + re_n_col(j, 1);
+  int nf = par_n_col(k, 0) - rf;
+  int nm = par_n_col(k, 1) - rm;
+  vector<Type> out(nf + rf + nm + rm);
+  int i = 0;
+  for(int j = 0; j < nf; j++) out(i++) = fixed(j);
+  for(int j = 0; j < rf; j++) out(i++) = u(start + j);
+  for(int j = 0; j < nm; j++) out(i++) = fixed(nf + j);
+  for(int j = 0; j < rm; j++) out(i++) = u(start + rf + j);
+  return out;
+}
+
 //the value of x back-transformed by the link function
 template<class Type>
 Type linked(Type x, const int &link){
@@ -269,7 +292,8 @@ Type acreTMB(objective_function<Type>* obj)
   // Conditional likelihood 
   DATA_INTEGER(is_conditional);
   //penalised smooths for D, and the index of each random effect's standard deviation
-  DATA_INTEGER(is_D_smooth);
+  DATA_INTEGER(is_smooth);
+  DATA_IMATRIX(re_n_col);
   DATA_IVECTOR(u_fac);
   DATA_INTEGER(is_two_stage);
   
@@ -394,103 +418,62 @@ Type acreTMB(objective_function<Type>* obj)
   //define the parameter vector which will be used later
   vector<Type> detfn_param(n_detfn_param);
   
+  //Random effects for penalised smooths, for all parameters, and the logs of their standard
+  //deviations; without penalised smooths, both are placeholders that are not estimated. The
+  //random effects are ordered by parameter, as below, and within each parameter, those for its
+  //design matrix for session-trap rows come before those for its mask-level design matrix.
+  PARAMETER_VECTOR(u);
+  PARAMETER_VECTOR(log_sigma_u);
+
   //Each parameter's coefficients are those for the columns of its design matrix for session-trap
   //rows (*_DX) followed by those for its mask-level design matrix (*_DX_mask), on the scale of
-  //its link function. Parameters not used by the model are fixed in MakeADFun() via 'map'.
-  PARAMETER_VECTOR(g0);
-  vector<Type> g0_vec_full, g0_vec_mask;
-  linear_predictor(g0, g0_DX, g0_DX_mask, g0_bound, par_n_col, 0, nrow_data_mask, nll, g0_vec_full, g0_vec_mask);
-  if(incheck_scalar(1, param_og) == 1) ADREPORT(g0);
-  PARAMETER_VECTOR(sigma);
-  vector<Type> sigma_vec_full, sigma_vec_mask;
-  linear_predictor(sigma, sigma_DX, sigma_DX_mask, sigma_bound, par_n_col, 1, nrow_data_mask, nll, sigma_vec_full, sigma_vec_mask);
-  if(incheck_scalar(2, param_og) == 1) ADREPORT(sigma);
-  PARAMETER_VECTOR(lambda0);
-  vector<Type> lambda0_vec_full, lambda0_vec_mask;
-  linear_predictor(lambda0, lambda0_DX, lambda0_DX_mask, lambda0_bound, par_n_col, 2, nrow_data_mask, nll, lambda0_vec_full, lambda0_vec_mask);
-  if(incheck_scalar(3, param_og) == 1) ADREPORT(lambda0);
-  PARAMETER_VECTOR(z);
-  vector<Type> z_vec_full, z_vec_mask;
-  linear_predictor(z, z_DX, z_DX_mask, z_bound, par_n_col, 3, nrow_data_mask, nll, z_vec_full, z_vec_mask);
-  if(incheck_scalar(4, param_og) == 1) ADREPORT(z);
-  PARAMETER_VECTOR(shape_1);
-  vector<Type> shape_1_vec_full, shape_1_vec_mask;
-  linear_predictor(shape_1, shape_1_DX, shape_1_DX_mask, shape_1_bound, par_n_col, 4, nrow_data_mask, nll, shape_1_vec_full, shape_1_vec_mask);
-  if(incheck_scalar(5, param_og) == 1) ADREPORT(shape_1);
-  PARAMETER_VECTOR(shape_2);
-  vector<Type> shape_2_vec_full, shape_2_vec_mask;
-  linear_predictor(shape_2, shape_2_DX, shape_2_DX_mask, shape_2_bound, par_n_col, 5, nrow_data_mask, nll, shape_2_vec_full, shape_2_vec_mask);
-  if(incheck_scalar(6, param_og) == 1) ADREPORT(shape_2);
-  PARAMETER_VECTOR(shape);
-  vector<Type> shape_vec_full, shape_vec_mask;
-  linear_predictor(shape, shape_DX, shape_DX_mask, shape_bound, par_n_col, 6, nrow_data_mask, nll, shape_vec_full, shape_vec_mask);
-  if(incheck_scalar(7, param_og) == 1) ADREPORT(shape);
-  PARAMETER_VECTOR(scale);
-  vector<Type> scale_vec_full, scale_vec_mask;
-  linear_predictor(scale, scale_DX, scale_DX_mask, scale_bound, par_n_col, 7, nrow_data_mask, nll, scale_vec_full, scale_vec_mask);
-  if(incheck_scalar(8, param_og) == 1) ADREPORT(scale);
-  PARAMETER_VECTOR(b0_ss);
-  vector<Type> b0_ss_vec_full, b0_ss_vec_mask;
-  linear_predictor(b0_ss, b0_ss_DX, b0_ss_DX_mask, b0_ss_bound, par_n_col, 8, nrow_data_mask, nll, b0_ss_vec_full, b0_ss_vec_mask);
-  if(incheck_scalar(9, param_og) == 1) ADREPORT(b0_ss);
-  PARAMETER_VECTOR(b1_ss);
-  vector<Type> b1_ss_vec_full, b1_ss_vec_mask;
-  linear_predictor(b1_ss, b1_ss_DX, b1_ss_DX_mask, b1_ss_bound, par_n_col, 9, nrow_data_mask, nll, b1_ss_vec_full, b1_ss_vec_mask);
-  if(incheck_scalar(10, param_og) == 1) ADREPORT(b1_ss);
-  PARAMETER_VECTOR(b2_ss);
-  vector<Type> b2_ss_vec_full, b2_ss_vec_mask;
-  linear_predictor(b2_ss, b2_ss_DX, b2_ss_DX_mask, b2_ss_bound, par_n_col, 10, nrow_data_mask, nll, b2_ss_vec_full, b2_ss_vec_mask);
-  if(incheck_scalar(11, param_og) == 1) ADREPORT(b2_ss);
-  PARAMETER_VECTOR(sigma_ss);
-  vector<Type> sigma_ss_vec_full, sigma_ss_vec_mask;
-  linear_predictor(sigma_ss, sigma_ss_DX, sigma_ss_DX_mask, sigma_ss_bound, par_n_col, 11, nrow_data_mask, nll, sigma_ss_vec_full, sigma_ss_vec_mask);
-  if(incheck_scalar(12, param_og) == 1) ADREPORT(sigma_ss);
-  PARAMETER_VECTOR(kappa);
-  vector<Type> kappa_vec_full, kappa_vec_mask;
-  linear_predictor(kappa, kappa_DX, kappa_DX_mask, kappa_bound, par_n_col, 12, nrow_data_mask, nll, kappa_vec_full, kappa_vec_mask);
-  if(incheck_scalar(13, param_og) == 1) ADREPORT(kappa);
-  PARAMETER_VECTOR(alpha);
-  vector<Type> alpha_vec_full, alpha_vec_mask;
-  linear_predictor(alpha, alpha_DX, alpha_DX_mask, alpha_bound, par_n_col, 13, nrow_data_mask, nll, alpha_vec_full, alpha_vec_mask);
-  if(incheck_scalar(14, param_og) == 1) ADREPORT(alpha);
-  PARAMETER_VECTOR(sigma_toa);
-  vector<Type> sigma_toa_vec_full, sigma_toa_vec_mask;
-  linear_predictor(sigma_toa, sigma_toa_DX, sigma_toa_DX_mask, sigma_toa_bound, par_n_col, 14, nrow_data_mask, nll, sigma_toa_vec_full, sigma_toa_vec_mask);
-  if(incheck_scalar(15, param_og) == 1) ADREPORT(sigma_toa);
+  //its link function. In each design matrix, the columns for random effects come last; their
+  //coefficients are in u, and the parameter vector has the others. Parameters not used by the
+  //model are fixed in MakeADFun() via 'map'. The reported estimates include the random effects.
+#define ACRE_LINEAR_PREDICTOR(NAME, K, REPORT)                                                   \
+  PARAMETER_VECTOR(NAME);                                                                        \
+  vector<Type> NAME##_vec_full, NAME##_vec_mask;                                                 \
+  {                                                                                              \
+    vector<Type> NAME##_all = with_re(NAME, u, par_n_col, re_n_col, K);                          \
+    linear_predictor(NAME##_all, NAME##_DX, NAME##_DX_mask, NAME##_bound, par_n_col, K,          \
+                     nrow_data_mask, nll, NAME##_vec_full, NAME##_vec_mask);                     \
+    if(REPORT){                                                                                  \
+      vector<Type> NAME = NAME##_all;                                                            \
+      ADREPORT(NAME);                                                                            \
+    }                                                                                            \
+  }
+  ACRE_LINEAR_PREDICTOR(g0, 0, incheck_scalar(1, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(sigma, 1, incheck_scalar(2, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(lambda0, 2, incheck_scalar(3, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(z, 3, incheck_scalar(4, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(shape_1, 4, incheck_scalar(5, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(shape_2, 5, incheck_scalar(6, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(shape, 6, incheck_scalar(7, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(scale, 7, incheck_scalar(8, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(b0_ss, 8, incheck_scalar(9, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(b1_ss, 9, incheck_scalar(10, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(b2_ss, 10, incheck_scalar(11, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(sigma_ss, 11, incheck_scalar(12, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(kappa, 12, incheck_scalar(13, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(alpha, 13, incheck_scalar(14, param_og) == 1);
+  ACRE_LINEAR_PREDICTOR(sigma_toa, 14, incheck_scalar(15, param_og) == 1);
   //sigma_b0_ss is not extendable, so it is a scalar
   PARAMETER(sigma_b0_ss);
   if(sigma_b0_ss < sigma_b0_ss_bound(0, 0) || sigma_b0_ss > sigma_b0_ss_bound(1, 0)) nll += std::numeric_limits<double>::infinity();
   if(incheck_scalar(16, param_og) == 1) ADREPORT(sigma_b0_ss);
-  //random effects for penalised smooths of D, and the logs of their standard deviations;
-  //without penalised smooths, both are placeholders that are not estimated
-  PARAMETER_VECTOR(u);
-  PARAMETER_VECTOR(log_sigma_u);
   //D is used by every model, so it is always reported
-  PARAMETER_VECTOR(D);
-  vector<Type> D_vec_full, D_vec_mask;
-  if(is_D_smooth == 1){
-    //the last columns of D_DX_mask are for the random effects, so their coefficients follow D's,
-    //and are reported with them
-    vector<Type> D_u(D.size() + u.size());
-    D_u << D, u;
-    linear_predictor(D_u, D_DX, D_DX_mask, D_bound, par_n_col, 16, nrow_data_mask, nll, D_vec_full, D_vec_mask);
+  ACRE_LINEAR_PREDICTOR(D, 16, true);
+  //mu is the call rate in the animal model
+  ACRE_LINEAR_PREDICTOR(mu, 17, incheck_scalar(18, param_og) == 1);
+#undef ACRE_LINEAR_PREDICTOR
+
+  //The random effects are independent and normal, with the standard deviation for their smooth.
+  if(is_smooth == 1){
     vector<Type> sigma_u = exp(log_sigma_u);
     for(int i = 0; i < u.size(); i++){
       nll -= dnorm(u(i), Type(0.0), sigma_u(u_fac(i)), true);
     }
-    {
-      vector<Type> D = D_u;
-      ADREPORT(D);
-    }
-  } else {
-    ADREPORT(D);
-    linear_predictor(D, D_DX, D_DX_mask, D_bound, par_n_col, 16, nrow_data_mask, nll, D_vec_full, D_vec_mask);
   }
-  //mu is the call rate in the animal model
-  PARAMETER_VECTOR(mu);
-  vector<Type> mu_vec_full, mu_vec_mask;
-  linear_predictor(mu, mu_DX, mu_DX_mask, mu_bound, par_n_col, 17, nrow_data_mask, nll, mu_vec_full, mu_vec_mask);
-  if(incheck_scalar(18, param_og) == 1) ADREPORT(mu);
   
   //---------------------------------------------------------------------------------------
   //The likelihood.

@@ -559,7 +559,7 @@ AIC.acre <- function(..., k = 2) {
     n_fixed <- length(get.fixed.par.name(model))
     ## The standard deviations of the random effects for penalised smooths are parameters, but
     ## are not in coef().
-    n_sd <- if(is.null(model$D.smooth)) 0 else nrow(model$D.smooth)
+    n_sd <- if(is.null(model$smooth)) 0 else nrow(model$smooth)
     aic_values[i] <- k * (length(coef(model)) + n_sd - n_fixed) - 2 * model$loglik
     n_par[i] <- length(coef(model)) + n_sd
   
@@ -685,7 +685,7 @@ summary.acre <- function(object, derived.print = FALSE, ...){
                 is_boot = is_boot, infotypes = infotypes, detfn = detfn,
                 n.sessions = n.sessions, pars_ext_links = pars_ext_links,
                 ss_opts = ss_opts, derived_print = derived.print, CL = CL,
-                D_smooth = object$D.smooth)
+                smooth = object$smooth)
   class(output) <- c("summary.acre", class(output))
   return(output)
 }
@@ -759,10 +759,11 @@ print.summary.acre <- function(x, ...){
     }
   }
   
-  if(!is.null(x$D_smooth)){
-    cat("\n", "\n", "Penalised smooths for D (standard deviations of random effects):", "\n")
-    mat_smooth <- cbind(x$D_smooth$n.re, x$D_smooth$sd, x$D_smooth$se)
-    dimnames(mat_smooth) <- list(x$D_smooth$term, c("No. random effects", "Std. Dev.", "Std. Error"))
+  if(!is.null(x$smooth)){
+    cat("\n", "\n", "Penalised smooths (standard deviations of random effects):", "\n")
+    mat_smooth <- cbind(x$smooth$n.re, x$smooth$sd, x$smooth$se)
+    dimnames(mat_smooth) <- list(paste0(x$smooth$par, ": ", x$smooth$term),
+                                 c("No. random effects", "Std. Dev.", "Std. Error"))
     print(mat_smooth, digits = 4)
   }
   

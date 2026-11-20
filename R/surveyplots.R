@@ -695,9 +695,40 @@ plot.acre.data <- function(x, type = NULL, call.id = NULL, animal.id = NULL,
 #'
 #' (Still to write)
 #'
+#' Additional arguments:
+#'
+#' * `show.cv`: (Still to write)
+#' * `newdata`: (Still to write)
+#' * `D.cov`: (Still to write)
+#' * `xlim`: (Still to write)
+#' * `ylim`: (Still to write)
+#' * `x.pixels`: (Still to write)
+#' * `y.pixels`: (Still to write)
+#' * `zlim`: (Still to write)
+#' * `scale`: (Still to write)
+#' * `plot.contours`: (Still to write)
+#' * `add`: (Still to write)
+#' * `convert.loc2mask`: (Still to write)
+#' * `arg.col`: (Still to write)
+#' * `trap.plot`: (Still to write)
+#'
 #' @section Type "effect":
 #'
 #' (Still to write)
+#'
+#' Additional arguments:
+#'
+#' * `term`: (Still to write)
+#' * `par`: (Still to write)
+#' * `newdata`: (Still to write)
+#' * `n`: (Still to write)
+#' * `se`: (Still to write)
+#' * `shade`: (Still to write)
+#' * `level`: (Still to write)
+#' * `p.dot.min`: (Still to write)
+#' * `add`: (Still to write)
+#' * `x.pixels`: (Still to write)
+#' * `y.pixels`: (Still to write)
 #'
 #' @return `NULL`, invisibly. The function is called for its plotting side
 #'   effects.
