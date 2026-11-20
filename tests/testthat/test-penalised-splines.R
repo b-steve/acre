@@ -181,6 +181,7 @@ test_that("the session index is available as a covariate", {
   ref <- fit.quietly(ses, list(model = list(D = ~ s.fac, sigma = ~ s.num), detfn = "hn"))
   expect_equal(unname(coef(fit)), unname(coef(ref)), tolerance = 1e-4)
   expect_true(all(c("D.factor(session)2_link", "sigma.session_link") %in% names(coef(fit))))
+  expect_equal(term.effect(fit, "factor(session)")$est, c(0, coef(fit)[["D.factor(session)2_link"]]))
   ## The density surface for each session uses that session's level.
   p <- predict(fit, newdata = data.frame(session = 1:2))$D$Estimate
   for(s in 1:2) expect_equal(unique(round(acre:::D.predict.for.plot(fit, session.select = s)$est, 6)), round(p[s], 6))

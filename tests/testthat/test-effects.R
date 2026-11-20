@@ -123,3 +123,30 @@ test_that("effect plots show what they return, over the mask points or detectabl
   expect_equal(out[[1]]$est, term.effect(fit, "x", out[[1]]$x)$est)
   expect_error(quiet.plot(ihd.effect.fit(~ y), type = "effect"), "no smooths")
 })
+
+test_that("effects are available for factors, for parameters other than D, and for detector-level covariates", {
+  mask <- create.mask(simple_hhn$traps, buffer = simple_hhn$control.mask$buffer, nx = 10)
+  mask$hab <- factor(ifelse(mask$x > 0, "open", "forest"))
+  dat <- read.acre(captures = simple_hhn$capt, traps = simple_hhn$traps, mask = mask,
+                   trap.cov = data.frame(trap = 1:6, height = c(1, 3, 2, 5, 4, 2)))
+  fit <- fit.quietly(dat, list(model = list(D = ~ hab, sigma = ~ hab + x,
+                                            lambda0 = ~ s(height, k = 3, fx = TRUE)), detfn = "hhn"))
+  ## A factor's effect is the difference from the baseline level.
+  eff <- term.effect(fit, "hab")
+  expect_equal(as.character(eff$hab), c("forest", "open"))
+  expect_equal(eff$est, c(0, coef(fit)[["D.habopen_link"]]))
+  expect_equal(eff$se, c(0, stdEr(fit)[["D.habopen_link"]]))
+  expect_equal(term.effect(fit, "hab", par = "sigma")$est, c(0, coef(fit)[["sigma.habopen_link"]]))
+  expect_equal(diff(term.effect(fit, "x", c(0, 1), par = "sigma")$est), coef(fit)[["sigma.x_link"]])
+  ## A smooth of a detector-level covariate, which predictions agree with, including for a single
+  ## value.
+  eff <- term.effect(fit, "s(height)", c(1, 5), par = "lambda0")
+  p <- sapply(c(1, 5), function(h) predict(fit, newdata = data.frame(height = h), type = "link",
+                                           realnames = "lambda0")$lambda0$Estimate)
+  expect_equal(diff(eff$est), diff(p), tolerance = 1e-8)
+  expect_true(any(grepl("^lambda0\\.s\\(height\\)\\.1", names(coef(fit)))))
+  expect_type(quiet.plot(fit, type = "effect", term = "hab", par = "sigma"), "list")
+  expect_type(quiet.plot(fit, type = "effect", par = "lambda0"), "list")
+  expect_error(term.effect(fit, "hab", par = "g0"), "no covariates")
+  expect_error(quiet.plot(fit, type = "effect", par = "sigma"), "no smooths")
+})

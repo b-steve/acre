@@ -577,8 +577,11 @@ par.extend.fun <- function(par.extend, data.full, data.traps, data.mask, animal.
         
         tem_model <- mgcv::gam(foo_full, data = tem.data, fit = FALSE)
         check.smooths.fixed(tem_model, i, "session- or trap-level covariates")
+        ## As for mask-level covariates, the smooth objects are kept to build design matrices for
+        ## new data, which also names the columns of smooths.
+        tem_model$smooth_info <- smooth.info(tem_model, tem.data, FALSE)
         gam_output[[i]][['gam_non_mask']] <- tem_model
-        design.matrix <- tem_model$X
+        design.matrix <- smooth.design(tem_model$smooth_info, tem.data, X.param = tem_model$smooth_info$G_param$X)$X
         n_col_full <- ncol(design.matrix)
         design.matrix <- as.data.frame(design.matrix, stringsAsFactors = FALSE)
         colnames(design.matrix) <- paste(i, "_", colnames(design.matrix), sep = " ")

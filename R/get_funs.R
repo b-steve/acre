@@ -312,8 +312,7 @@ numeric.factor.levels <- function(mod, var){
 get.extended.par.value <- function(gam, n.col.full, n.col.mask, par.value.linked, newdata,
                                   DX.output = FALSE, matrix.par.value = FALSE){
   if(n.col.full > 1){
-    gam.model <- gam$gam_non_mask
-    DX_full_new <- get.DX.new.gam(gam.model, newdata)
+    DX_full_new <- non.mask.design.new(gam$gam_non_mask, newdata)
   } else {
     ## An intercept-only model needs no new data, and has a single value.
     DX_full_new <- matrix(1, ncol = 1, nrow = if(is.null(newdata)) 1 else nrow(newdata))

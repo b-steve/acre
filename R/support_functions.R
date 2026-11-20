@@ -870,8 +870,7 @@ delta.method.acre <- function(cov.linked, param.values, link.funs = NULL, newdat
         G_grad[[i]] <- matrix(0, nrow = n_new_df, ncol = m)
         w <- matrix(0, nrow = n_new_df, ncol = n_col_full + n_col_mask)
         if(n_col_full > 1){
-          gam.model <- gam.output[[par_name]][["gam_non_mask"]]
-          w[, 1:n_col_full] <- get.DX.new.gam(gam.model, newdata)
+          w[, 1:n_col_full] <- non.mask.design.new(gam.output[[par_name]][["gam_non_mask"]], newdata)
         } else {
           w[, 1] <- matrix(1, nrow = n_new_df, ncol = 1)
         }

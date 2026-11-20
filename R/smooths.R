@@ -36,7 +36,7 @@ smooth.info <- function(G, data, penalise){
     }
     smooths[[j]] <- list(sm = sm, re = re)
   }
-  list(G_param = G_param, smooths = smooths)
+  list(G_param = G_param, smooths = smooths, var.summary = G$var.summary)
 }
 
 ## The design matrix for a mask-level linear predictor, built from a smooth.info() object.
@@ -96,36 +96,59 @@ smooth.columns <- function(s, newdata){
   list(X = X, Z = Z, re_fac = re_fac, sd_labels = sd_labels)
 }
 
-## The terms in the model for D whose effect is plotted by plot(fit, type = "effect").
+## The terms in the model for a parameter whose effect is plotted by plot(fit, type = "effect").
 ##
 ## fit:  A fitted model object.
-## term: A smooth's label (e.g., "s(VILLAGE)"), for that smooth alone, or the name of a covariate
-##       (e.g., "VILLAGE"), for all the terms that involve it: smooths, and parametric terms such
-##       as VILLAGE and I(VILLAGE^2).
+## term: A smooth's label (e.g., "s(VILLAGE)"), for that smooth alone, a parametric term's label
+##       (e.g., "factor(session)"), for that term alone, or the name of a covariate (e.g.,
+##       "VILLAGE"), for all the terms that involve it: smooths, and parametric terms such as
+##       VILLAGE and I(VILLAGE^2).
+## par:  The parameter.
 ##
-## Returns a list with the selected smooths (components of a smooth.info() object), the columns of
-## the parametric design matrix for the selected parametric terms, the covariates the effect
-## depends on, and a label.
-effect.terms <- function(fit, term){
-  info <- if('D' %in% get.par.extend.name(fit)) get.gam(fit, 'D')$gam_mask$smooth_info
-  if(is.null(info)){
-    stop("Effects can only be plotted for models for D with mask-level covariates.", call. = FALSE)
+## Returns a list with the level of the covariates ("mask", or "non_mask" for session- and
+## trap-level covariates), the selected smooths (components of a smooth.info() object), the
+## columns of the parametric design matrix for the selected parametric terms, the covariates the
+## effect depends on, a label, the levels of a categorical covariate (NULL otherwise), and the
+## summary of the covariates used to fit the model.
+effect.terms <- function(fit, term, par = "D"){
+  if(!(par %in% get.par.extend.name(fit))){
+    stop("The model for ", par, " has no covariates.", call. = FALSE)
   }
+  gams <- get.gam(fit, par)
+  parts <- Filter(Negate(is.null), list(mask = gams$gam_mask$smooth_info,
+                                        non_mask = gams$gam_non_mask$smooth_info))
+  for(level in names(parts)){
+    et <- select.effect.terms(parts[[level]], term, par)
+    if(!is.null(et)){
+      et$level <- level
+      return(et)
+    }
+  }
+  stop("'", term, "' is not a term or covariate in the model for ", par, ".", call. = FALSE)
+}
+
+## The terms selected by effect.terms() from one part of a model (a smooth.info() object), or NULL
+## if there are none.
+select.effect.terms <- function(info, term, par){
   smooths <- info$smooths
   names(smooths) <- vapply(smooths, function(s) s$sm$label, character(1))
   G <- info$G_param
   p_labels <- attr(G$pterms, "term.labels")
   p_vars <- lapply(p_labels, function(l) all.vars(str2lang(l)))
+  ## A covariate's name selects all the terms that involve it, so a term's label is only used to
+  ## select it if it is not also a covariate's name.
+  s_vars <- unlist(lapply(smooths, function(s) s$sm$term))
   if(term %in% names(smooths)){
     sel_s <- smooths[term]
     sel_p <- integer(0)
-  } else {
+  } else if(term %in% c(unlist(p_vars), s_vars)){
     sel_s <- Filter(function(s) term %in% s$sm$term, smooths)
     sel_p <- which(vapply(p_vars, function(v) term %in% v, logical(1)))
+  } else {
+    sel_s <- list()
+    sel_p <- which(p_labels == term)
   }
-  if(length(sel_s) + length(sel_p) == 0){
-    stop("'", term, "' is not a term or covariate in the model for D.", call. = FALSE)
-  }
+  if(length(sel_s) + length(sel_p) == 0) return(NULL)
   if(any(lengths(p_vars[sel_p]) > 1)){
     stop("Effects of covariates in interactions (", paste(p_labels[sel_p][lengths(p_vars[sel_p]) > 1], collapse = ", "),
          ") are not available.", call. = FALSE)
@@ -134,14 +157,26 @@ effect.terms <- function(fit, term){
     stop("Effects of smooths with a 'by' variable are not available.", call. = FALSE)
   }
   vars <- unique(c(unlist(p_vars[sel_p]), unlist(lapply(sel_s, function(s) s$sm$term))))
-  if(any(vapply(G$var.summary[intersect(vars, names(G$var.summary))], is.factor, logical(1)))){
-    stop("Effects of factors are not available.", call. = FALSE)
-  }
   if(length(vars) > 2){
     stop("Effects of more than two covariates are not available.", call. = FALSE)
   }
+  ## A categorical covariate: a factor, or a numeric covariate made into one in the formula, as
+  ## with factor(session).
+  levels <- NULL
+  categorical <- vapply(sel_p, function(k){
+    v <- p_vars[[k]]
+    is.factor(G$var.summary[[v]]) || !is.null(numeric.factor.levels(G, v))
+  }, logical(1))
+  if(any(categorical)){
+    if(length(sel_p) + length(sel_s) > 1){
+      stop("The effect of the categorical term ", p_labels[sel_p][categorical][1], " in the model for ", par,
+           " must be shown on its own; select it with 'term'.", call. = FALSE)
+    }
+    levels <- if(is.factor(G$var.summary[[vars]])) levels(G$var.summary[[vars]]) else numeric.factor.levels(G, vars)
+  }
   list(smooths = sel_s, cols = colnames(G$X)[G$assign %in% sel_p], vars = vars,
-       label = paste(c(p_labels[sel_p], names(sel_s)), collapse = " + "), G_param = G)
+       label = paste(c(p_labels[sel_p], names(sel_s)), collapse = " + "), G_param = G,
+       levels = levels, var.summary = info$var.summary)
 }
 
 ## The covariates at the mask points used to fit the model, for all sessions, including the mask
@@ -161,20 +196,27 @@ effect.mask.data <- function(fit){
   mask_data
 }
 
-## The estimated effect of terms in the model for D, on the scale of the linear predictor, with
-## standard errors from the covariance of their coefficients (including random effects) only.
-## Smooths are centred by their identifiability constraints, like mgcv's plot.gam() shows them,
-## so they average zero over the mask points used to fit the model, and parametric terms are
-## centred to do the same, like termplot().
+## The estimated effect of terms in the model for a parameter, on the scale of its linear
+## predictor, with standard errors from the covariance of their coefficients (including random
+## effects) only. Smooths are centred by their identifiability constraints, like mgcv's
+## plot.gam() shows them, so they average zero over the data used to fit the model, and
+## parametric terms in numeric covariates are centred to do the same, like termplot(). The effect
+## of a categorical covariate is the difference from its baseline (first) level, so that level's
+## effect is zero, without a standard error.
 ##
 ## fit:     A fitted model object.
 ## term:    As for effect.terms().
 ## newdata: A data frame with the covariates the effect depends on, or, if it depends on one
-##          covariate, a vector of its values.
+##          covariate, a vector of its values. By default, the levels of a categorical covariate.
+## par:     The parameter.
 ##
 ## Returns a data frame with those covariates, and columns est and se.
-term.effect <- function(fit, term, newdata){
-  et <- effect.terms(fit, term)
+term.effect <- function(fit, term, newdata = NULL, par = "D"){
+  et <- effect.terms(fit, term, par)
+  if(is.null(newdata)){
+    if(is.null(et$levels)) stop("'newdata' must be provided.", call. = FALSE)
+    newdata <- et$levels
+  }
   if(!is.data.frame(newdata)){
     if(length(et$vars) > 1) stop("'newdata' must be a data frame with ", paste(et$vars, collapse = " and "), ".")
     newdata <- stats::setNames(data.frame(newdata), et$vars)
@@ -184,23 +226,25 @@ term.effect <- function(fit, term, newdata){
   }
   X <- matrix(0, nrow = nrow(newdata), ncol = 0)
   if(length(et$cols) > 0){
-    ## The other parametric covariates are held at their values at the first mask point, which do
-    ## not affect the selected columns.
-    nd <- effect.mask.data(fit)[rep(1, nrow(newdata)), , drop = FALSE]
-    nd[et$vars] <- newdata[et$vars]
+    ## The other parametric covariates are held at values used to fit the model, which do not
+    ## affect the selected columns.
+    nd <- effect.typical.data(et$G_param, nrow(newdata) + 1)
+    nd[et$vars] <- rbind(newdata[et$vars], if(is.null(et$levels)) newdata[1, et$vars, drop = FALSE] else
+                                             stats::setNames(data.frame(et$levels[1]), et$vars))
     X_p <- param.design.new(et$G_param, nd)
     colnames(X_p) <- colnames(et$G_param$X)
-    X_p <- sweep(X_p[, et$cols, drop = FALSE], 2, colMeans(et$G_param$X[, et$cols, drop = FALSE]))
-    X <- cbind(X, X_p)
+    X_p <- X_p[, et$cols, drop = FALSE]
+    centre <- if(is.null(et$levels)) colMeans(et$G_param$X[, et$cols, drop = FALSE]) else X_p[nrow(X_p), ]
+    X <- cbind(X, sweep(X_p[-nrow(X_p), , drop = FALSE], 2, centre))
   }
   for(s in et$smooths){
     cols <- smooth.columns(s, newdata)
     X <- cbind(X, cols$X, cols$Z)
   }
-  coef_names <- paste0("D.", colnames(X), "_link")
-  b <- coef(fit, types = "linked", pars = "D", re = TRUE)
+  coef_names <- paste0(par, ".", colnames(X), "_link")
+  b <- coef(fit, types = "linked", pars = par, re = TRUE)
   b <- stats::setNames(as.vector(b), if(is.null(dim(b))) names(b) else rownames(b))
-  V <- vcov(fit, types = "linked", pars = "D", re = TRUE)
+  V <- vcov(fit, types = "linked", pars = par, re = TRUE)
   if(is.list(V)) V <- V[[1]]
   V <- V[coef_names, coef_names, drop = FALSE]
   out <- newdata[, et$vars, drop = FALSE]
@@ -210,13 +254,26 @@ term.effect <- function(fit, term, newdata){
   out
 }
 
-## Plots the estimated effects of terms in the model for D, on the scale of the linear predictor,
-## from term.effect(). An effect of one covariate is a curve, with a shaded band (or dashed lines)
-## for a confidence interval. An effect of two covariates (e.g., s(x, y)) is a surface over space,
+## A data frame with n rows of covariate values used to fit a model, for the covariates of the
+## parametric part of the model, G_param: each numeric covariate's minimum, and each factor's
+## first level.
+effect.typical.data <- function(G_param, n){
+  vs <- G_param$var.summary
+  out <- lapply(vs, function(v) if(is.factor(v)) rep(as.character(levels(v)[1]), n) else rep(v[1], n))
+  as.data.frame(out, stringsAsFactors = FALSE, optional = TRUE)[seq_len(n), , drop = FALSE]
+}
+
+## Plots the estimated effects of terms in the model for a parameter, on the scale of its linear
+## predictor, from term.effect(). An effect of one numeric covariate is a curve, with a shaded
+## band (or dashed lines) for a confidence interval. An effect of a categorical covariate is a
+## point for each level, with error bars for confidence intervals for its difference from the
+## baseline level. An effect of two covariates (e.g., s(x, y)) is a surface over space,
 ## optionally followed by a surface of its standard errors. Returns the plotted effects invisibly,
 ## as a list of data frames from term.effect(), named by term.
 ##
-## term:      Smooth labels or covariate names, as for effect.terms(); by default, all smooths.
+## term:      Smooth labels, parametric terms' labels, or covariate names, as for effect.terms();
+##            by default, all smooths.
+## par:       The parameter.
 ## newdata:  For effects of two covariates, a data frame of points at which to show it, with x,
 ##            y, and the covariates. By default, the pixels of an x.pixels by y.pixels grid that
 ##            are within the masks' buffers of the detectors, including unsuitable habitat (or,
@@ -233,13 +290,17 @@ term.effect <- function(fit, term, newdata){
 ## ask:       Whether to ask before showing each plot after the first.
 ## ...:       Other arguments for plot() or fields::imagePlot(), e.g., xlim, ylim, main, and for
 ##            curves, col, lty and lwd.
-show.effect <- function(fit, term = NULL, newdata = NULL, n = 100, se = NULL, shade = TRUE,
+show.effect <- function(fit, term = NULL, par = "D", newdata = NULL, n = 100, se = NULL, shade = TRUE,
                         level = 0.95, p.dot.min = NULL, add = FALSE, x.pixels = 100,
                         y.pixels = 100, ask = TRUE, ...){
+  if(!(par %in% get.par.extend.name(fit))){
+    stop("The model for ", par, " has no covariates.", call. = FALSE)
+  }
   if(is.null(term)){
-    info <- if('D' %in% get.par.extend.name(fit)) get.gam(fit, 'D')$gam_mask$smooth_info
-    term <- vapply(info$smooths, function(s) s$sm$label, character(1))
-    if(length(term) == 0) stop("The model for D has no smooths; use 'term' to select a covariate.", call. = FALSE)
+    gams <- get.gam(fit, par)
+    smooths <- c(gams$gam_mask$smooth_info$smooths, gams$gam_non_mask$smooth_info$smooths)
+    term <- vapply(smooths, function(s) s$sm$label, character(1))
+    if(length(term) == 0) stop("The model for ", par, " has no smooths; use 'term' to select a covariate.", call. = FALSE)
   }
   ## The mask points that set the ranges of covariates.
   mask_data <- effect.mask.data(fit)
@@ -254,13 +315,49 @@ show.effect <- function(fit, term = NULL, newdata = NULL, n = 100, se = NULL, sh
   output <- list()
   n_plots <- 0
   for(j in seq_along(term)){
-    et <- effect.terms(fit, term[j])
+    et <- effect.terms(fit, term[j], par)
+    label <- paste0(par, ": ", et$label)
     plot.args <- list(...)
-    if(length(et$vars) == 1){
+    if(!is.null(et$levels)){
+      ## Points with error bars.
+      covariate <- et$vars
+      eff <- term.effect(fit, term[j], et$levels, par = par)
+      x <- seq_len(nrow(eff))
+      show.se <- if(is.null(se)) TRUE else se
+      lower <- eff$est - z_mult*eff$se
+      upper <- eff$est + z_mult*eff$se
+      col <- if(is.null(plot.args$col)) 1 else plot.args$col
+      lwd <- if(is.null(plot.args$lwd)) 1 else plot.args$lwd
+      pch <- if(is.null(plot.args$pch)) 16 else plot.args$pch
+      plot.args[c("col", "lty", "lwd", "pch")] <- NULL
+      if(!add){
+        if(ask && n_plots > 0) ask.user.for.next.plot()
+        n_plots <- n_plots + 1
+        if(is.null(plot.args$xlab)) plot.args$xlab <- covariate
+        if(is.null(plot.args$ylab)) plot.args$ylab <- label
+        if(is.null(plot.args$ylim)) plot.args$ylim <- range(if(show.se) c(lower, upper) else eff$est)
+        if(is.null(plot.args$xlim)) plot.args$xlim <- c(0.5, length(x) + 0.5)
+        do.call(graphics::plot, c(list(x = x, y = eff$est, type = "n", xaxt = "n"), plot.args))
+        graphics::axis(1, at = x, labels = as.character(eff[[covariate]]))
+        graphics::abline(h = 0, lty = 3, col = "grey50")
+      }
+      if(show.se){
+        bars <- eff$se > 0
+        graphics::arrows(x[bars], lower[bars], x[bars], upper[bars], angle = 90, code = 3,
+                         length = 0.05, col = col, lwd = lwd)
+      }
+      graphics::points(x, eff$est, pch = pch, col = col)
+    } else if(length(et$vars) == 1){
       ## A curve.
       covariate <- et$vars
-      xlim <- if(is.null(plot.args$xlim)) range(mask_data[[covariate]]) else plot.args$xlim
-      eff <- term.effect(fit, term[j], seq(xlim[1], xlim[2], length.out = n))
+      if(!is.null(plot.args$xlim)){
+        xlim <- plot.args$xlim
+      } else if(et$level == "mask"){
+        xlim <- range(mask_data[[covariate]])
+      } else {
+        xlim <- range(et$var.summary[[covariate]])
+      }
+      eff <- term.effect(fit, term[j], seq(xlim[1], xlim[2], length.out = n), par = par)
       x <- eff[[covariate]]
       show.se <- if(is.null(se)) TRUE else se
       lower <- eff$est - z_mult*eff$se
@@ -273,7 +370,7 @@ show.effect <- function(fit, term = NULL, newdata = NULL, n = 100, se = NULL, sh
         if(ask && n_plots > 0) ask.user.for.next.plot()
         n_plots <- n_plots + 1
         if(is.null(plot.args$xlab)) plot.args$xlab <- covariate
-        if(is.null(plot.args$ylab)) plot.args$ylab <- et$label
+        if(is.null(plot.args$ylab)) plot.args$ylab <- label
         if(is.null(plot.args$ylim)) plot.args$ylim <- range(if(show.se) c(lower, upper) else eff$est)
         do.call(graphics::plot, c(list(x = x, y = eff$est, type = "n"), plot.args))
       }
@@ -289,6 +386,9 @@ show.effect <- function(fit, term = NULL, newdata = NULL, n = 100, se = NULL, sh
       graphics::lines(x, eff$est, col = col, lty = lty, lwd = lwd)
     } else {
       ## A surface over space.
+      if(et$level != "mask"){
+        stop("Effects of two session- or trap-level covariates are not available.", call. = FALSE)
+      }
       if(!is.null(newdata)){
         points <- as.data.frame(newdata)
         if(!all(c("x", "y") %in% names(points))) stop("'newdata' must include x and y.", call. = FALSE)
@@ -322,7 +422,7 @@ show.effect <- function(fit, term = NULL, newdata = NULL, n = 100, se = NULL, sh
           points <- data.frame(x = gx[cells[, 1]], y = gy[cells[, 2]])
         }
       }
-      eff <- term.effect(fit, term[j], points)
+      eff <- term.effect(fit, term[j], points, par = par)
       if(!all(c("x", "y") %in% names(eff))) eff <- cbind(points[, c("x", "y")], eff)
       ux <- sort(unique(eff$x))
       uy <- sort(unique(eff$y))
@@ -342,11 +442,11 @@ show.effect <- function(fit, term = NULL, newdata = NULL, n = 100, se = NULL, sh
           zmax <- max(abs(eff$est))
           if(is.null(args$zlim)) args$zlim <- c(-zmax, zmax)
           if(is.null(args$col)) args$col <- grDevices::hcl.colors(100, "Blue-Red 3")
-          if(is.null(args$main)) args$main <- et$label
+          if(is.null(args$main)) args$main <- label
         } else {
           args$zlim <- NULL
           args$col <- grDevices::hcl.colors(100, "viridis")
-          args$main <- paste("Standard error:", et$label)
+          args$main <- paste("Standard error:", label)
         }
         if(is.null(args$xlab)) args$xlab <- "x"
         if(is.null(args$ylab)) args$ylab <- "y"
@@ -402,6 +502,16 @@ mask.design.new <- function(gam.mask, newdata){
   }
   d <- smooth.design(gam.mask$smooth_info, newdata)
   cbind(d$X[, -1, drop = FALSE], d$Z)
+}
+
+## The design matrix for the session- and trap-level part of an extended parameter's linear
+## predictor, for new data, including the intercept, in the order used to fit the model.
+non.mask.design.new <- function(gam.non.mask, newdata){
+  if(is.null(gam.non.mask$smooth_info)){
+    ## Fits from earlier versions of the package.
+    return(get.DX.new.gam(gam.non.mask, newdata))
+  }
+  smooth.design(gam.non.mask$smooth_info, newdata)$X
 }
 
 ## Smooths are penalised unless they have fx = TRUE, but penalisation is only available for
