@@ -70,7 +70,8 @@ below on optimiser settings.}
 
 \item{two.stage}{A logical value. If \code{TRUE}, computations required
 to propagate variance under a two-stage density modelling
-approach are carried out.}
+approach are carried out. Penalised splines are not allowed for
+two-stage modelling.}
 
 \item{CL}{A logical value. If \code{TRUE}, a conditional likelihood
 model is fitted, and so density is not estimated.}
@@ -79,6 +80,10 @@ model is fitted, and so density is not estimated.}
 }
 \value{
 (Still to write)
+\itemize{
+\item \code{smooth}: (Still to write)
+\item \code{re}: (Still to write)
+}
 }
 \description{
 Fits an a spatial capture-recapture model to a data object returned by \code{\link[=read.acre]{read.acre()}}.
@@ -91,7 +96,7 @@ Specify models using the \code{model} argument.
 (More to put in here)
 }
 
-\section{Smooth density surfaces}{
+\section{Smooth terms}{
 
 
 (Still to write)

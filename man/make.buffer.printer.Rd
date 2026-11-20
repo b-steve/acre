@@ -59,6 +59,14 @@ Columns are \code{iter} (count of printed rows), \code{fval}, optional \code{mgc
 \code{step} (Euclidean or max coordinate change since the previous \emph{printed} row),
 followed by the parameter columns in \code{trace.cols}.
 }
+\note{
+\itemize{
+\item The \code{iter} column counts \strong{printed rows} (accepted, paired evaluations), not
+the internal major-iteration counter of \code{\link[=nlminb]{nlminb()}}. Official counts are in
+\code{opt$iterations} / \code{opt$evaluations}.
+\item The \code{mgc} and \code{step} columns are on the \strong{TMB parameterization} scale.
+}
+}
 \section{Usage}{
 
 \preformatted{

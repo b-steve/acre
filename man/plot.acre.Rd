@@ -131,12 +131,45 @@ estimated detection functions will be added to an existing plot.
 
 
 (Still to write)
+
+Additional arguments:
+\itemize{
+\item \code{show.cv}: (Still to write)
+\item \code{newdata}: (Still to write)
+\item \code{D.cov}: (Still to write)
+\item \code{xlim}: (Still to write)
+\item \code{ylim}: (Still to write)
+\item \code{x.pixels}: (Still to write)
+\item \code{y.pixels}: (Still to write)
+\item \code{zlim}: (Still to write)
+\item \code{scale}: (Still to write)
+\item \code{plot.contours}: (Still to write)
+\item \code{add}: (Still to write)
+\item \code{convert.loc2mask}: (Still to write)
+\item \code{arg.col}: (Still to write)
+\item \code{trap.plot}: (Still to write)
+}
 }
 
 \section{Type "effect"}{
 
 
 (Still to write)
+
+Additional arguments:
+\itemize{
+\item \code{term}: (Still to write)
+\item \code{par}: (Still to write)
+\item \code{newdata}: (Still to write)
+\item \code{n}: (Still to write)
+\item \code{se}: (Still to write)
+\item \code{shade}: (Still to write)
+\item \code{level}: (Still to write)
+\item \code{p.dot.min}: (Still to write)
+\item \code{add}: (Still to write)
+\item \code{x.pixels}: (Still to write)
+\item \code{y.pixels}: (Still to write)
+}
 }
 
 \examples{
